@@ -4,7 +4,7 @@ import { useTrades } from "@/contexts/TradeContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
-import { MonthlyTradeCalendar } from "@/components/dashboard/MonthlyTradeCalendar";
+import { TradeCalendar } from "@/components/dashboard/TradeCalendar";
 import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
 import { calculateProfitLoss, formatCurrency } from "@/lib/trade-utils";
 import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database } from "lucide-react";
@@ -186,7 +186,7 @@ export default function DashboardPage() {
 
           <PerformanceChart trades={closedTrades} isLoading={isLoading} />
           
-          <MonthlyTradeCalendar trades={trades} isLoading={isLoading} />
+          <TradeCalendar trades={trades} isLoading={isLoading} />
           
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => setActiveTab("advanced")}>
