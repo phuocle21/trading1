@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 93.3%; /* #EEEEEE Light Gray */
+    --foreground: 240 10% 3.9%; /* Default Dark for text on light background */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 233 64% 30%; /* #1A237E Dark Blue */
+    --primary-foreground: 0 0% 98%; /* White */
+
+    --secondary: 220 10% 90%; /* Neutral Gray for secondary elements */
+    --secondary-foreground: 240 5.9% 10%; /* Dark text on secondary */
+
+    --muted: 220 10% 85%; /* Muted gray */
+    --muted-foreground: 240 3.8% 46.1%; /* Text on muted */
+
+    --accent: 187 100% 38%; /* #00ACC1 Teal */
+    --accent-foreground: 0 0% 98%; /* White text on accent */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 10% 80%; /* Border color */
+    --input: 220 10% 85%; /* Input background */
+    --ring: 187 100% 38%; /* Accent for focus rings */
+    
+    --chart-1: 233 64% 30%; /* Primary */
+    --chart-2: 187 100% 38%; /* Accent */
+    --chart-3: 0 84.2% 60.2%; /* Destructive */
+    --chart-4: 43 74% 66%; 
+    --chart-5: 27 87% 67%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 233 64% 25%; /* Darker Blue for sidebar background */
+    --sidebar-foreground: 0 0% 90%; /* Light text for dark sidebar */
+    --sidebar-primary: 187 100% 38%; /* Teal for active/highlighted items in sidebar */
+    --sidebar-primary-foreground: 0 0% 98%; /* White text for active items */
+    --sidebar-accent: 233 64% 35%; /* Hover color for sidebar items, slightly lighter primary */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 233 64% 20%; /* Border color within sidebar, darker primary */
+    --sidebar-ring: 187 100% 45%; /* Ring color for focus, slightly lighter accent */
+  }
+
+  .dark {
+    --background: 240 10% 3.9%; 
+    --foreground: 0 0% 93.3%; 
+
+    --card: 240 5% 10%; 
+    --card-foreground: 0 0% 93.3%;
+
+    --popover: 240 5% 8%; 
+    --popover-foreground: 0 0% 93.3%;
+
+    --primary: 233 64% 45%; 
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4% 15%; 
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 240 4% 20%; 
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 187 100% 45%; 
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 25%;
+    --input: 240 4% 20%;
+    --ring: 187 100% 45%;
+    
+    --chart-1: 233 64% 45%;
+    --chart-2: 187 100% 45%;
+    --chart-3: 0 70% 50%;
+    --chart-4: 43 74% 56%;
+    --chart-5: 27 87% 57%;
+
+    /* Sidebar specific colors for dark mode */
+    --sidebar-background: 233 60% 15%; 
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 187 100% 45%; 
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 233 60% 20%; 
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 233 60% 10%;
+    --sidebar-ring: 187 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
