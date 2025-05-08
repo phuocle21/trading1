@@ -4,15 +4,17 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Menu, PlusCircle, Bell, User, Globe } from "lucide-react";
+import { Menu, PlusCircle, Bell, User, Globe, Settings, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -22,17 +24,37 @@ const getPageTitle = (pathname: string, t: (key: string) => string): string => {
   if (pathname === "/add-trade") return t('tradeForm.title.add');
   if (pathname.startsWith("/edit-trade/")) return t('tradeForm.title.edit');
   if (pathname === "/playbooks") return t('playbooks.title');
+  if (pathname === "/account") return "My Account";
+  if (pathname === "/admin") return "Admin Panel";
   return t('app.name');
 };
 
 export function Header() {
   const pathname = usePathname();
   const { t, language, setLanguage } = useLanguage();
+  const { currentUser, signOut } = useAuth();
   const pageTitle = getPageTitle(pathname, t);
   const { openMobile, setOpenMobile } = useSidebar();
 
   const toggleMobileMenu = () => {
     setOpenMobile(!openMobile);
+  };
+
+  // Generate avatar initials from email
+  const getInitials = () => {
+    if (!currentUser?.email) return "?";
+    return currentUser.email
+      .split('@')[0]
+      .split(/[^a-zA-Z]/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = "/auth/login";
   };
 
   return (
@@ -105,14 +127,57 @@ export function Header() {
           </Button>
         )}
 
-        {/* User avatar */}
-        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 p-0">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary text-sm">
-              TN
-            </AvatarFallback>
-          </Avatar>
-        </Button>
+        {/* User avatar and dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 p-0">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                  {currentUser ? getInitials() : "?"}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {currentUser ? (
+              <>
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{currentUser.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentUser.isAdmin ? "Administrator" : "User"}
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="cursor-pointer flex w-full">
+                    <User className="mr-2 h-4 w-4" />
+                    My Account
+                  </Link>
+                </DropdownMenuItem>
+                {currentUser.isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="cursor-pointer flex w-full">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem asChild>
+                <Link href="/auth/login" className="cursor-pointer flex w-full">
+                  <User className="mr-2 h-4 w-4" />
+                  Sign In
+                </Link>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -12,7 +12,9 @@ import {
   ChevronRight,
   BookOpen,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  User,
+  Settings
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mainNavItems = (t: (key: string) => string) => [
   { href: "/journals", label: t('sidebar.journals'), icon: BookOpen },
@@ -44,12 +47,25 @@ const actionNavItems = (t: (key: string) => string) => [
   { href: "/add-trade", label: t('sidebar.addNewTrade'), icon: PlusCircle },
 ];
 
+const accountNavItems = (t: (key: string) => string, isAdmin: boolean) => {
+  const items = [
+    { href: "/account", label: "Tài khoản", icon: User },
+  ];
+  
+  if (isAdmin) {
+    items.push({ href: "/admin", label: "Quản trị", icon: Settings });
+  }
+  
+  return items;
+};
+
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { open, setOpen, state, openMobile, setOpenMobile, isMobile } = useSidebar();
   const mobileCheck = useIsMobile();
   const { t } = useLanguage();
+  const { currentUser } = useAuth();
 
   // Handle auto-closing menu on mobile when clicking an item
   const handleMenuItemClick = (href: string) => {
@@ -138,6 +154,40 @@ export function AppSidebar() {
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {currentUser && (
+          <>
+            <SidebarSeparator className="my-2" />
+            
+            {/* Account Navigation */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 mb-1">
+                Tài khoản
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {accountNavItems(t, currentUser.isAdmin).map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
+                      className={cn(
+                        "justify-start mb-1 font-medium",
+                        pathname === item.href
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto"
+                      )}
+                      onClick={() => handleMenuItemClick(item.href)}
+                    >
+                      <item.icon className="h-5 w-5 group-data-[collapsible=icon]:mx-auto" />
+                      <span className="group-data-[collapsible=icon]:hidden ml-2">{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
       
       <SidebarFooter className="flex flex-col gap-3 p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
