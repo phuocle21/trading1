@@ -29,7 +29,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Save, Info, AlertCircle, BookOpenText, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Info, AlertCircle, BookOpenText, Clock, ArrowRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, parse } from 'date-fns';
@@ -331,12 +331,13 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t('tradeForm.entryInfo')}
                   </h3>
-                  <div className="grid grid-cols-1 gap-4">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
                       control={form.control}
                       name="entryDateTime"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="col-span-1 md:col-span-1">
                           <FormLabel>{t('tradeForm.entryDateTime')}*</FormLabel>
                           <FormControl>
                             <Input 
@@ -348,20 +349,18 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                   field.onChange(new Date(value));
                                 }
                               }}
-                              className="w-auto text-left"
+                              className="w-full"
                             />
                           </FormControl>
-                          <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            {t('tradeForm.dateTimeDescription')} (dd/MM/yyyy)
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {t('tradeForm.dateTimeDescription')}
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="quantity"
@@ -378,7 +377,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                 const val = e.target.value;
                                 field.onChange(val === '' ? undefined : parseFloat(val));
                               }}
-                              className="w-32 text-left"
+                              className="w-full"
                               inputMode="numeric"
                             />
                           </FormControl>
@@ -386,6 +385,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="entryPrice"
@@ -403,7 +403,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? undefined : parseFloat(val));
                               }}
-                              className="w-32 text-left"
+                              className="w-full"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -416,15 +416,16 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
 
                 <div className="bg-accent/10 rounded-lg p-4 space-y-4">
                   <h3 className="text-base font-medium flex items-center">
-                    <ArrowLeft className="mr-2 h-4 w-4 rotate-180" />
+                    <ArrowRight className="mr-2 h-4 w-4" />
                     {t('tradeForm.exitInfo')}
                   </h3>
-                  <div className="grid grid-cols-1 gap-4">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="exitDateTime"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="col-span-1">
                           <FormLabel>{t('tradeForm.exitDateTime')}</FormLabel>
                           <FormControl>
                             <Input 
@@ -432,47 +433,50 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               value={field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ''} 
                               onChange={(e) => {
                                 const value = e.target.value;
-                                field.onChange(value ? new Date(value) : null);
+                                if (value) {
+                                  field.onChange(new Date(value));
+                                } else {
+                                  field.onChange(null);
+                                }
                               }}
-                              min={form.getValues("entryDateTime") ? format(form.getValues("entryDateTime"), "yyyy-MM-dd'T'HH:mm") : undefined}
-                              className="w-auto text-left"
+                              className="w-full text-left"
                             />
                           </FormControl>
-                          <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            {t('tradeForm.dateTimeDescription')} (dd/MM/yyyy)
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {t('tradeForm.dateTimeDescription')}
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="exitPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('tradeForm.exitPrice')}</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder={t('tradeForm.pricePlaceholder')} 
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={e => {
-                               const val = e.target.value;
-                               field.onChange(val === '' ? null : parseFloat(val));
-                            }}
-                            className="w-32 text-left"
-                            inputMode="decimal"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="exitPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('tradeForm.exitPrice')}</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder={t('tradeForm.pricePlaceholder')} 
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={e => {
+                                 const val = e.target.value;
+                                 field.onChange(val === '' ? undefined : parseFloat(val));
+                              }}
+                              className="w-full text-left"
+                              inputMode="decimal"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <div className="bg-accent/10 rounded-lg p-4 space-y-4">
@@ -498,7 +502,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? null : parseFloat(val));
                               }}
-                              className="w-32 text-left"
+                              className="w-full text-left"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -524,7 +528,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? null : parseFloat(val));
                               }}
-                              className="w-32 text-left"
+                              className="w-full text-left"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -535,32 +539,34 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="fees"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('tradeForm.tradingFees')}</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder={t('tradeForm.feesPlaceholder')} 
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={e => {
-                               const val = e.target.value;
-                               field.onChange(val === '' ? null : parseFloat(val));
-                            }}
-                            className="w-32 text-left"
-                            inputMode="decimal"
-                          />
-                        </FormControl>
-                        <FormDescription>{t('tradeForm.feesDesc')}</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="fees"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('tradeForm.tradingFees')}</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder={t('tradeForm.feesPlaceholder')} 
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={e => {
+                                 const val = e.target.value;
+                                 field.onChange(val === '' ? null : parseFloat(val));
+                              }}
+                              className="w-full text-left"
+                              inputMode="decimal"
+                            />
+                          </FormControl>
+                          <FormDescription>{t('tradeForm.feesDesc')}</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
 
