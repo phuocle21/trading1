@@ -10,8 +10,6 @@ import {
   BookOpenText,
   ChevronLeft,
   ChevronRight,
-  HelpCircle,
-  Settings,
   BookOpen
 } from "lucide-react";
 import {
@@ -22,6 +20,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
   useSidebar
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -30,12 +31,15 @@ import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const navItems = (t: (key: string) => string) => [
-  { href: "/dashboard", label: t('sidebar.dashboard'), icon: LayoutDashboard },
+const mainNavItems = (t: (key: string) => string) => [
   { href: "/journals", label: t('sidebar.journals'), icon: BookOpen },
+  { href: "/dashboard", label: t('sidebar.dashboard'), icon: LayoutDashboard },
   { href: "/history", label: t('sidebar.tradeHistory'), icon: History },
-  { href: "/add-trade", label: t('sidebar.addNewTrade'), icon: PlusCircle },
   { href: "/playbooks", label: t('sidebar.playbooks'), icon: BookOpenText },
+];
+
+const actionNavItems = (t: (key: string) => string) => [
+  { href: "/add-trade", label: t('sidebar.addNewTrade'), icon: PlusCircle },
 ];
 
 export function AppSidebar() {
@@ -64,7 +68,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4 flex justify-between items-center">
+      <SidebarHeader className="px-4 py-5 flex justify-between items-center">
         <Link href="/dashboard" className="flex items-center gap-2 text-sidebar-foreground hover:text-sidebar-primary transition-colors">
           <BarChartBig className="h-7 w-7 text-sidebar-primary" />
           <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
@@ -72,9 +76,9 @@ export function AppSidebar() {
           </span>
         </Link>
         <Button 
-          variant="ghost" 
+          variant="outline" 
           size="icon" 
-          className="h-7 w-7 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-3 group-data-[collapsible=icon]:top-4 hidden md:flex"
+          className="h-8 w-8 rounded-full bg-sidebar-accent/10 border-sidebar-accent/20 hover:bg-sidebar-accent/20 hover:border-sidebar-accent/30 text-sidebar-foreground hidden md:flex"
           onClick={() => setOpen(!open)}
         >
           {state === "expanded" ? (
@@ -87,53 +91,67 @@ export function AppSidebar() {
           </span>
         </Button>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {navItems(t).map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
-                tooltip={item.label}
-                className={cn(
-                  "justify-start",
-                  (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
-                onClick={() => handleMenuItemClick(item.href)}
-              >
-                <item.icon className="h-5 w-5" />
-                <span className="group-data-[collapsible=icon]:hidden ml-2">{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-        
-        <div className="mt-4 px-3 pt-4 border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
-          <h3 className="mb-2 text-xs font-medium text-sidebar-foreground/70 px-2">{t('sidebar.support')}</h3>
+      
+      <SidebarContent className="px-2">
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-3 mb-1">
+            {t('sidebar.mainNavigation')}
+          </SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={t('sidebar.helpDocumentation')}
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <HelpCircle className="h-5 w-5" />
-                <span className="ml-2 group-data-[collapsible=icon]:hidden">{t('sidebar.helpCenter')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={t('sidebar.settings')}
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <Settings className="h-5 w-5" />
-                <span className="ml-2 group-data-[collapsible=icon]:hidden">{t('sidebar.settings')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {mainNavItems(t).map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
+                  tooltip={item.label}
+                  className={cn(
+                    "justify-start mb-1 font-medium",
+                    (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                  onClick={() => handleMenuItemClick(item.href)}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="group-data-[collapsible=icon]:hidden ml-2">{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
-        </div>
+        </SidebarGroup>
+
+        <SidebarSeparator className="my-2" />
+        
+        {/* Quick Actions */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-3 mb-1">
+            {t('sidebar.quickActions')}
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            {actionNavItems(t).map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
+                  variant="outline"
+                  className={cn(
+                    "justify-start mb-1",
+                    pathname === item.href
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                      : "bg-sidebar-accent/10 hover:bg-sidebar-accent/20"
+                  )}
+                  onClick={() => handleMenuItemClick(item.href)}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="group-data-[collapsible=icon]:hidden ml-2 font-medium">{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-2 group-data-[collapsible=icon]:hidden">
+      
+      <SidebarFooter className="p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
         <p className="text-xs text-sidebar-foreground/70 text-center">
           &copy; {new Date().getFullYear()} {t('app.name')}
         </p>

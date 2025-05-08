@@ -480,6 +480,14 @@ export const translations: Translations = {
     en: "Journals",
     vi: "Nhật ký"
   },
+  "sidebar.mainNavigation": {
+    en: "Main Navigation",
+    vi: "Điều hướng chính"
+  },
+  "sidebar.quickActions": {
+    en: "Quick Actions",
+    vi: "Thao tác nhanh"
+  },
   // Trade Form
   "tradeForm.description": {
     en: "Record your trade details for better tracking and analysis",
