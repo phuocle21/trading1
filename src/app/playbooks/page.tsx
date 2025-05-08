@@ -181,14 +181,14 @@ export default function PlaybooksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('playbooks.title')}</h1>
           <p className="text-muted-foreground">
             {t('playbooks.description')}
           </p>
         </div>
-        <Button onClick={handleAddNew}>
+        <Button onClick={handleAddNew} className="self-start sm:self-auto">
           <PlusCircle className="mr-2 h-4 w-4" />
           {t('playbooks.addPlaybook')}
         </Button>
@@ -200,13 +200,19 @@ export default function PlaybooksPage() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list">
-            <LayoutList className="mr-2 h-4 w-4" />
-            {t('playbooks.playbookList')}
+          <TabsTrigger value="list" className="flex items-center gap-1">
+            <LayoutList className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">{t('playbooks.playbookList')}</span>
+            <span className="sm:hidden">List</span>
           </TabsTrigger>
-          <TabsTrigger value="edit">
-            <BookOpenText className="mr-2 h-4 w-4" />
-            {editingPlaybook ? t('playbooks.editPlaybook') : t('playbooks.createPlaybook')}
+          <TabsTrigger value="edit" className="flex items-center gap-1">
+            <BookOpenText className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">
+              {editingPlaybook ? t('playbooks.editPlaybook') : t('playbooks.createPlaybook')}
+            </span>
+            <span className="sm:hidden">
+              {editingPlaybook ? "Edit" : "Create"}
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -226,11 +232,11 @@ export default function PlaybooksPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {playbooks.map((playbook) => (
                 <Card key={playbook.id} className="overflow-hidden">
                   <CardHeader className="pb-3">
-                    <CardTitle>{playbook.name}</CardTitle>
+                    <CardTitle className="text-lg">{playbook.name}</CardTitle>
                     <CardDescription className="line-clamp-2">
                       {playbook.strategy}
                     </CardDescription>
@@ -256,21 +262,22 @@ export default function PlaybooksPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="border-t bg-muted/50 p-3">
-                    <div className="flex justify-between w-full">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between w-full">
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleEdit(playbook)}
+                        className="justify-start sm:justify-center"
                       >
                         <Edit className="h-4 w-4 mr-1" /> {t('playbooks.edit')}
                       </Button>
-                      <div className="space-x-1">
+                      <div className="flex gap-1 justify-end">
                         <Button 
                           variant="ghost" 
                           size="sm"
                           className="text-blue-500"
                         >
-                          <BarChart className="h-4 w-4 mr-1" /> {t('playbooks.stats')}
+                          <BarChart className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.stats')}</span>
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -278,7 +285,7 @@ export default function PlaybooksPage() {
                           onClick={() => handleDelete(playbook.id)}
                           className="text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" /> {t('playbooks.delete')}
+                          <Trash2 className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.delete')}</span>
                         </Button>
                       </div>
                     </div>
@@ -302,7 +309,7 @@ export default function PlaybooksPage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="name"
@@ -385,7 +392,7 @@ export default function PlaybooksPage() {
                     )}
                   />
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="entryTriggers"
@@ -459,7 +466,7 @@ export default function PlaybooksPage() {
                     )}
                   />
 
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -467,6 +474,7 @@ export default function PlaybooksPage() {
                         setActiveTab("list");
                         setEditingPlaybook(null);
                       }}
+                      className="mt-2 sm:mt-0"
                     >
                       {t('playbooks.cancel')}
                     </Button>
