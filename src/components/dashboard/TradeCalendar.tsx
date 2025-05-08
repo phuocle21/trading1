@@ -161,9 +161,9 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
       </CardHeader>
       <CardContent className="px-2 sm:px-6">
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {/* Day labels */}
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-            <div key={day} className="text-center text-xs sm:text-sm font-medium py-1">
+          {/* Day labels - Use index in key to ensure uniqueness */}
+          {['S', 'M', 'Tu', 'W', 'Th', 'F', 'S'].map((day, i) => (
+            <div key={`day-${i}`} className="text-center text-xs sm:text-sm font-medium py-1">
               {day}
             </div>
           ))}

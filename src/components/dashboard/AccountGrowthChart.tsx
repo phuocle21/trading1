@@ -228,11 +228,12 @@ export function AccountGrowthChart({
               activeDot={{ r: 6 }}
               // Use different colors for positive vs negative values
               strokeColor={({ value }) => (value >= 0 ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-3))')}
-              dot={({ payload }) => {
+              dot={({ payload, index }) => {
                 const value = payload.growthPercent;
                 const fill = value >= 0 ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-3))';
                 return (
                   <circle 
+                    key={`dot-${index}`} // Adding unique key for each dot
                     cx={0}
                     cy={0}
                     r={4}
