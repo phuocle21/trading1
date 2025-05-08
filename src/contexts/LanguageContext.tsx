@@ -223,7 +223,7 @@ export const translations: Translations = {
     en: "Cancel",
     vi: "Hủy",
   },
-  selectPlaybook: {
+  "tradeForm.selectPlaybook": {
     en: "Select Playbook",
     vi: "Chọn chiến lược",
   },
@@ -773,6 +773,35 @@ export const translations: Translations = {
     en: "New trade successfully recorded.",
     vi: "Giao dịch mới đã được ghi lại thành công."
   },
+  // Các mục mới thêm cho TradeForm
+  "tradeForm.strategyAndPsychology": {
+    en: "Strategy & Psychology",
+    vi: "Chiến lược & Tâm lý"
+  },
+  "tradeForm.choosePlaybook": {
+    en: "Choose a playbook",
+    vi: "Chọn một chiến lược"
+  },
+  "tradeForm.playbookDescription": {
+    en: "Select a playbook to associate with this trade",
+    vi: "Chọn một chiến lược để liên kết với giao dịch này"
+  },
+  "tradeForm.viewSelectedPlaybook": {
+    en: "View selected playbook",
+    vi: "Xem chiến lược đã chọn"
+  },
+  "tradeForm.entryDateTime": {
+    en: "Entry Date & Time",
+    vi: "Ngày & Giờ Vào Lệnh"
+  },
+  "tradeForm.exitDateTime": {
+    en: "Exit Date & Time",
+    vi: "Ngày & Giờ Thoát Lệnh"
+  },
+  "tradeForm.dateTimeDescription": {
+    en: "Format: DD/MM/YYYY HH:MM",
+    vi: "Định dạng: DD/MM/YYYY HH:MM"
+  },
   // Playbooks Page
   "playbooks.title": {
     en: "Trading Playbooks",
@@ -1024,6 +1053,28 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     // Kiểm tra nếu key tồn tại trực tiếp
     if (translations[key]) {
       return translations[key][language];
+    }
+    
+    // Try to handle nested keys (e.g., "tradeForm.selectPlaybook")
+    const parts = key.split('.');
+    if (parts.length > 1) {
+      let currentObj = translations;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i === parts.length - 1) {
+          // Last part should be the actual key
+          if (currentObj[part]) {
+            return currentObj[part][language];
+          }
+        } else {
+          // Navigate to nested object
+          if (currentObj[part]) {
+            currentObj = currentObj[part];
+          } else {
+            break;
+          }
+        }
+      }
     }
     
     // Hiển thị cảnh báo trong console và trả về key gốc
