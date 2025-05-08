@@ -32,6 +32,16 @@
             "exitPrice": 2000000,
             "fees": 1,
             "id": "353aae60-904f-4072-be24-8b82054c4f47"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "22:15",
+            "symbol": "BTC",
+            "tradeType": "buy",
+            "quantity": 1,
+            "entryPrice": 1111110.97,
+            "fees": 0,
+            "id": "dbc2d67e-3bc7-4624-afeb-6da2bb3c783a"
           }
         ],
         "settings": {
@@ -40,7 +50,7 @@
         },
         "id": "8c196521-0f40-4781-83e3-d69572347a9d",
         "createdAt": "2025-05-08T14:43:50.522Z",
-        "updatedAt": "2025-05-08T14:51:17.442Z"
+        "updatedAt": "2025-05-08T15:15:46.995Z"
       }
     ],
     "user-1746715567065-rx1r0qs7f": [
@@ -79,6 +89,32 @@
             "entryPrice": 11122123,
             "fees": 0,
             "id": "4d7db95d-7787-42d9-9f06-560bfa7a2846"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "22:08",
+            "exitDate": "2025-05-09",
+            "exitTime": "00:08",
+            "symbol": "ETH",
+            "tradeType": "sell",
+            "quantity": 1.1,
+            "entryPrice": 90000,
+            "exitPrice": 1000000,
+            "fees": 0,
+            "id": "4a2dba61-2dff-44b1-b326-ea2f6f7ba492"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "22:09",
+            "exitDate": "2025-05-24",
+            "exitTime": "22:09",
+            "symbol": "ETH",
+            "tradeType": "sell",
+            "quantity": 11,
+            "entryPrice": 10000,
+            "exitPrice": 200000,
+            "fees": 0,
+            "id": "884dc175-16dc-4d2e-ba9f-b3cc8aa05b53"
           }
         ],
         "settings": {
@@ -87,7 +123,7 @@
         },
         "id": "2430268d-abe0-4188-97a9-859a94d127db",
         "createdAt": "2025-05-08T14:59:25.097Z",
-        "updatedAt": "2025-05-08T15:08:05.568Z"
+        "updatedAt": "2025-05-08T15:10:01.778Z"
       }
     ]
   },

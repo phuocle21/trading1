@@ -45,7 +45,7 @@ async function loadData<T>(filePath: string, defaultData: T): Promise<T> {
 
 // Lấy ID người dùng hiện tại - đã sửa để sử dụng async/await
 async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const userIdCookie = cookieStore.get('userId');
   return userIdCookie ? userIdCookie.value : null;
 }
@@ -228,5 +228,4 @@ export async function migrateJournalData(): Promise<void> {
     console.log(`Old data backed up to ${backupFile}`);
   } catch (error) {
     console.error('Error migrating journal data:', error);
-  }
-}
+ 
