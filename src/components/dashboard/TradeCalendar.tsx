@@ -125,11 +125,11 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Monthly Trading Calendar</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Monthly Trading Calendar</CardTitle>
           <CardDescription>View your trades by day</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         </CardContent>
       </Card>
     );
@@ -140,37 +140,37 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
   
   return (
     <Card className="shadow-lg">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-2 sm:pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle>Monthly Trading Calendar</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Monthly Trading Calendar</CardTitle>
             <CardDescription>View your trades by day</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" onClick={prevMonth}>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={prevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="font-medium">
+            <span className="font-medium text-sm sm:text-base min-w-20 text-center">
               {format(currentMonth, 'MMMM yyyy')}
             </span>
-            <Button variant="outline" size="icon" onClick={nextMonth}>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={nextMonth}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-1">
+      <CardContent className="px-2 sm:px-6">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {/* Day labels */}
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-            <div key={day} className="text-center text-sm font-medium py-2">
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+            <div key={day} className="text-center text-xs sm:text-sm font-medium py-1">
               {day}
             </div>
           ))}
           
           {/* Empty cells for offset */}
           {Array.from({ length: firstDayOffset }).map((_, index) => (
-            <div key={`empty-${index}`} className="aspect-square p-1 bg-muted/30 rounded-md" />
+            <div key={`empty-${index}`} className="aspect-square p-0.5 sm:p-1 bg-muted/30 rounded-md" />
           ))}
           
           {/* Calendar days */}
@@ -185,25 +185,25 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                 key={dateKey}
                 onClick={() => hasTrades && handleDayClick(day)}
                 className={`
-                  aspect-square p-1 rounded-md border flex flex-col
+                  aspect-square p-0.5 sm:p-1 rounded-md border flex flex-col
                   ${hasTrades ? 'cursor-pointer hover:border-primary hover:bg-primary/5' : 'bg-background'}
                   ${isToday(day) ? 'border-primary/50 bg-primary/10' : 'border-border/50'}
                 `}
               >
-                <div className="text-right text-sm font-medium mb-1">
+                <div className="text-right text-xs font-medium mb-0.5">
                   {format(day, 'd')}
                 </div>
                 
                 {hasTrades && stats && (
                   <div className="flex-1 flex flex-col justify-between">
-                    <div className="flex items-center justify-center space-x-1">
-                      <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                    <div className="flex items-center justify-center">
+                      <Badge variant="outline" className="text-[0.65rem] px-0.5 py-0 h-3 sm:text-xs sm:h-4">
                         {dayTrades.length}
                       </Badge>
                     </div>
                     
                     <div 
-                      className={`text-xs text-center font-medium 
+                      className={`text-[0.65rem] sm:text-xs text-center font-medium 
                         ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
                       {formatCurrency(stats.totalPnL, 'USD', true)}
@@ -218,10 +218,10 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
       
       {/* Dialog for day detail */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5" />
               Trades on {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''}
             </DialogTitle>
             <DialogDescription>
@@ -229,7 +229,7 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {selectedDate && (
               <>
                 {/* Daily stats summary */}
@@ -238,40 +238,40 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                   if (!stats) return null;
                   
                   return (
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div className="bg-muted/30 p-3 rounded-md">
-                        <div className="text-sm font-medium text-muted-foreground">Win Rate</div>
-                        <div className="text-lg font-semibold">{stats.winRate.toFixed(0)}%</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Win Rate</div>
+                        <div className="text-sm sm:text-lg font-semibold">{stats.winRate.toFixed(0)}%</div>
                       </div>
-                      <div className="bg-muted/30 p-3 rounded-md">
-                        <div className="text-sm font-medium text-muted-foreground">Total P/L</div>
-                        <div className={`text-lg font-semibold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Total P/L</div>
+                        <div className={`text-sm sm:text-lg font-semibold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(stats.totalPnL)}
                         </div>
                       </div>
-                      <div className="bg-muted/30 p-3 rounded-md">
-                        <div className="text-sm font-medium text-muted-foreground">Winners</div>
-                        <div className="text-lg font-semibold text-green-600">{stats.winCount}</div>
+                      <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Winners</div>
+                        <div className="text-sm sm:text-lg font-semibold text-green-600">{stats.winCount}</div>
                       </div>
-                      <div className="bg-muted/30 p-3 rounded-md">
-                        <div className="text-sm font-medium text-muted-foreground">Losers</div>
-                        <div className="text-lg font-semibold text-red-600">{stats.lossCount}</div>
+                      <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Losers</div>
+                        <div className="text-sm sm:text-lg font-semibold text-red-600">{stats.lossCount}</div>
                       </div>
                     </div>
                   );
                 })()}
                 
                 {/* Trades table */}
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Symbol</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Entry Price</TableHead>
-                        <TableHead>Exit Price</TableHead>
-                        <TableHead className="text-right">P/L</TableHead>
+                        <TableHead className="w-[80px]">Symbol</TableHead>
+                        <TableHead className="w-[70px]">Type</TableHead>
+                        <TableHead className="w-[70px]">Qty</TableHead>
+                        <TableHead className="w-[90px]">Entry</TableHead>
+                        <TableHead className="w-[90px]">Exit</TableHead>
+                        <TableHead className="text-right w-[80px]">P/L</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -280,23 +280,23 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                         
                         return (
                           <TableRow key={trade.id}>
-                            <TableCell className="font-medium">{trade.symbol}</TableCell>
-                            <TableCell>
+                            <TableCell className="font-medium text-xs sm:text-sm py-2">{trade.symbol}</TableCell>
+                            <TableCell className="py-2">
                               {trade.tradeType === 'buy' ? (
-                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-[0.65rem] sm:text-xs px-1 py-0">
                                   Long
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200">
+                                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 text-[0.65rem] sm:text-xs px-1 py-0">
                                   Short
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell>{trade.quantity}</TableCell>
-                            <TableCell>{formatCurrency(trade.entryPrice)}</TableCell>
-                            <TableCell>{trade.exitPrice ? formatCurrency(trade.exitPrice) : 'Open'}</TableCell>
+                            <TableCell className="text-xs sm:text-sm py-2">{trade.quantity}</TableCell>
+                            <TableCell className="text-xs sm:text-sm py-2">{formatCurrency(trade.entryPrice)}</TableCell>
+                            <TableCell className="text-xs sm:text-sm py-2">{trade.exitPrice ? formatCurrency(trade.exitPrice) : 'Open'}</TableCell>
                             <TableCell 
-                              className={`text-right font-medium ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                              className={`text-right font-medium text-xs sm:text-sm py-2 ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
                             >
                               {pnl !== null ? formatCurrency(pnl) : '—'}
                             </TableCell>

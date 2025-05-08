@@ -106,7 +106,7 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Monthly Trading Activity</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Monthly Trading Activity</CardTitle>
           <CardDescription>Your trading results for the past 30 days</CardDescription>
         </CardHeader>
         <CardContent>
@@ -120,11 +120,11 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Monthly Trading Activity</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Monthly Trading Activity</CardTitle>
           <CardDescription>Your trading results for the past 30 days</CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <p className="text-muted-foreground">No trades completed in the past 30 days.</p>
+        <CardContent className="text-center py-6 sm:py-8">
+          <p className="text-muted-foreground text-sm sm:text-base">No trades completed in the past 30 days.</p>
         </CardContent>
       </Card>
     );
@@ -133,21 +133,21 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Monthly Trading Activity</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Monthly Trading Activity</CardTitle>
+        <CardDescription className="text-sm">
           {periodStats.days} trading days with {periodStats.count} trades in the past month
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
+      <CardContent className="px-2 sm:px-6">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-center">Trades</TableHead>
-                <TableHead className="text-center">Win/Loss</TableHead>
-                <TableHead className="text-right">P/L</TableHead>
-                <TableHead className="text-right">Win Rate</TableHead>
+                <TableHead className="w-[90px] text-xs sm:text-sm">Date</TableHead>
+                <TableHead className="text-center w-[60px] text-xs sm:text-sm">Trades</TableHead>
+                <TableHead className="text-center w-[80px] text-xs sm:text-sm">Win/Loss</TableHead>
+                <TableHead className="text-right w-[70px] text-xs sm:text-sm">P/L</TableHead>
+                <TableHead className="text-right w-[70px] text-xs sm:text-sm">Win %</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -155,43 +155,43 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
                 const winRate = day.count > 0 ? (day.winCount / day.count) * 100 : 0;
                 return (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{format(day.date, 'MMM dd, yyyy')}</TableCell>
-                    <TableCell className="text-center">{day.count}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="font-medium text-xs sm:text-sm py-2">{format(day.date, 'MMM dd')}</TableCell>
+                    <TableCell className="text-center text-xs sm:text-sm py-2">{day.count}</TableCell>
+                    <TableCell className="text-center text-xs sm:text-sm py-2">
                       <span className="text-green-600">{day.winCount}</span>
-                      {' / '}
+                      <span className="text-muted-foreground">/</span>
                       <span className="text-red-600">{day.lossCount}</span>
                     </TableCell>
                     <TableCell 
-                      className={`text-right ${day.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                      className={`text-right text-xs sm:text-sm py-2 ${day.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
-                      {formatCurrency(day.totalPnL)}
+                      {formatCurrency(day.totalPnL, 'USD', true)}
                     </TableCell>
                     <TableCell 
-                      className={`text-right font-medium ${winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}
+                      className={`text-right font-medium text-xs sm:text-sm py-2 ${winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}
                     >
-                      {winRate.toFixed(1)}%
+                      {winRate.toFixed(0)}%
                     </TableCell>
                   </TableRow>
                 );
               })}
               <TableRow className="bg-muted/30 font-medium">
-                <TableCell>Period Total</TableCell>
-                <TableCell className="text-center">{periodStats.count}</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium text-xs sm:text-sm py-2">Period Total</TableCell>
+                <TableCell className="text-center text-xs sm:text-sm py-2">{periodStats.count}</TableCell>
+                <TableCell className="text-center text-xs sm:text-sm py-2">
                   <span className="text-green-600">{periodStats.winCount}</span>
-                  {' / '}
+                  <span className="text-muted-foreground">/</span>
                   <span className="text-red-600">{periodStats.lossCount}</span>
                 </TableCell>
                 <TableCell 
-                  className={`text-right ${periodStats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  className={`text-right text-xs sm:text-sm py-2 ${periodStats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
-                  {formatCurrency(periodStats.totalPnL)}
+                  {formatCurrency(periodStats.totalPnL, 'USD', true)}
                 </TableCell>
                 <TableCell 
-                  className={`text-right font-medium ${periodStats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}
+                  className={`text-right font-medium text-xs sm:text-sm py-2 ${periodStats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}
                 >
-                  {periodStats.winRate.toFixed(1)}%
+                  {periodStats.winRate.toFixed(0)}%
                 </TableCell>
               </TableRow>
             </TableBody>
