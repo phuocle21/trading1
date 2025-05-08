@@ -4,6 +4,7 @@ import './globals.css';
 import { JournalProvider } from '@/contexts/JournalContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { PlaybookProvider } from '@/contexts/PlaybookContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { Header } from '@/components/layout/Header';
@@ -44,19 +45,21 @@ export default function RootLayout({
           <AuthProvider>
             <AuthMiddleware>
               <JournalProvider>
-                <SidebarProvider>
-                  <div className="flex min-h-screen w-full">
-                    <AppSidebar />
-                    <div className="flex flex-1 flex-col w-full max-w-full">
-                      <Header />
-                      <main className="flex-1 p-2 sm:p-4 md:p-6 lg:p-8 bg-secondary/50 w-full overflow-x-hidden">
-                        <div className="max-w-full">
-                          {children}
-                        </div>
-                      </main>
+                <PlaybookProvider>
+                  <SidebarProvider>
+                    <div className="flex min-h-screen w-full">
+                      <AppSidebar />
+                      <div className="flex flex-1 flex-col w-full max-w-full">
+                        <Header />
+                        <main className="flex-1 p-2 sm:p-4 md:p-6 lg:p-8 bg-secondary/50 w-full overflow-x-hidden">
+                          <div className="max-w-full">
+                            {children}
+                          </div>
+                        </main>
+                      </div>
                     </div>
-                  </div>
-                </SidebarProvider>
+                  </SidebarProvider>
+                </PlaybookProvider>
               </JournalProvider>
             </AuthMiddleware>
           </AuthProvider>

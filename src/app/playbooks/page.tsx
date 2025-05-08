@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,12 +31,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlaybooks, Playbook } from "@/contexts/PlaybookContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpenText, PlusCircle, Trash2, Edit, 
-  Save, LayoutList, ArrowRightLeft, BarChart
+  Save, LayoutList, ArrowRightLeft, BarChart, Loader2
 } from "lucide-react";
 
 // Define the form schema
@@ -63,43 +64,20 @@ const playBookFormSchema = z.object({
 
 type PlaybookFormValues = z.infer<typeof playBookFormSchema>;
 
-// Mock data for the playbooks
-const mockPlaybooks = [
-  {
-    id: "1",
-    name: "Trend Following Breakout",
-    strategy: "Momentum strategy that captures breakouts from consolidation periods",
-    timeframe: "Daily",
-    setupCriteria: "Price in a consolidation pattern for at least 10 days with decreasing volume",
-    entryTriggers: "Price breaks above the upper trendline or resistance with increased volume",
-    exitRules: "Either a trailing stop at 2x ATR or when price closes below a 20-day moving average",
-    riskManagement: "Risk 1% per trade, with position sizing calculated based on the distance to stop loss",
-    notes: "Works best in trending markets, avoid during choppy or sideways markets",
-    winRate: 62,
-    avgProfit: 2.8,
-    totalTrades: 48,
-  },
-  {
-    id: "2",
-    name: "Pullback Strategy",
-    strategy: "Buy pullbacks in an established uptrend",
-    timeframe: "4-hour",
-    setupCriteria: "Stock in an uptrend with moving averages aligned (8EMA > 21EMA > 50SMA)",
-    entryTriggers: "Price pulls back to the 21 EMA and shows a reversal candlestick pattern",
-    exitRules: "Take profit at previous swing high or 3:1 reward:risk ratio",
-    riskManagement: "Stop loss below the swing low of the pullback or below the 50 SMA",
-    notes: "Confirm with RSI showing bullish divergence for better results",
-    winRate: 58,
-    avgProfit: 2.1,
-    totalTrades: 65,
-  },
-];
-
 export default function PlaybooksPage() {
-  const [playbooks, setPlaybooks] = useState(mockPlaybooks);
   const [activeTab, setActiveTab] = useState("list");
-  const [editingPlaybook, setEditingPlaybook] = useState<any>(null);
+  const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const { 
+    playbooks, 
+    loading, 
+    error, 
+    fetchPlaybooks, 
+    addPlaybook, 
+    updatePlaybook, 
+    deletePlaybook 
+  } = usePlaybooks();
 
   // Initialize form
   const form = useForm<PlaybookFormValues>({
@@ -116,40 +94,49 @@ export default function PlaybooksPage() {
     },
   });
 
-  function onSubmit(data: PlaybookFormValues) {
-    if (editingPlaybook) {
-      // Update existing playbook
-      const updatedPlaybooks = playbooks.map(p => 
-        p.id === editingPlaybook.id ? { ...p, ...data } : p
-      );
-      setPlaybooks(updatedPlaybooks);
+  // Load playbooks when component mounts
+  useEffect(() => {
+    fetchPlaybooks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to run only on mount
+
+  async function onSubmit(data: PlaybookFormValues) {
+    try {
+      if (editingPlaybook) {
+        // Update existing playbook
+        const result = await updatePlaybook({
+          ...editingPlaybook,
+          ...data
+        });
+        
+        if (result) {
+          // Reset form and go back to list view only if successful
+          form.reset();
+          setActiveTab("list");
+          setEditingPlaybook(null);
+        }
+      } else {
+        // Add new playbook
+        const result = await addPlaybook(data);
+        
+        if (result) {
+          // Reset form and go back to list view only if successful
+          form.reset();
+          setActiveTab("list");
+          setEditingPlaybook(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting playbook:", error);
       toast({
-        title: t('playbooks.playbookUpdated'),
-        description: t('playbooks.playbookUpdatedDesc').replace('{name}', data.name),
-      });
-    } else {
-      // Add new playbook
-      const newPlaybook = {
-        id: Date.now().toString(),
-        ...data,
-        winRate: 0,
-        avgProfit: 0,
-        totalTrades: 0,
-      };
-      setPlaybooks([...playbooks, newPlaybook]);
-      toast({
-        title: t('playbooks.playbookCreated'),
-        description: t('playbooks.playbookCreatedDesc').replace('{name}', data.name),
+        title: t('error'),
+        description: t('errors.unexpectedError'),
+        variant: 'destructive',
       });
     }
-    
-    // Reset form and go back to list view
-    form.reset();
-    setActiveTab("list");
-    setEditingPlaybook(null);
   }
 
-  function handleEdit(playbook: any) {
+  function handleEdit(playbook: Playbook) {
     setEditingPlaybook(playbook);
     form.reset({
       name: playbook.name,
@@ -164,13 +151,24 @@ export default function PlaybooksPage() {
     setActiveTab("edit");
   }
 
-  function handleDelete(id: string) {
-    const updatedPlaybooks = playbooks.filter(p => p.id !== id);
-    setPlaybooks(updatedPlaybooks);
-    toast({
-      title: t('playbooks.playbookDeleted'),
-      description: t('playbooks.playbookDeletedDesc'),
-    });
+  async function handleDelete(id: string) {
+    try {
+      const success = await deletePlaybook(id);
+      if (!success) {
+        toast({
+          title: t('error'),
+          description: t('errors.failedToDeletePlaybook'),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting playbook:", error);
+      toast({
+        title: t('error'),
+        description: t('errors.unexpectedError'),
+        variant: 'destructive',
+      });
+    }
   }
 
   function handleAddNew() {
@@ -217,7 +215,22 @@ export default function PlaybooksPage() {
         </TabsList>
 
         <TabsContent value="list" className="space-y-4 mt-6">
-          {playbooks.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-lg">Loading playbooks...</span>
+            </div>
+          ) : error ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <h3 className="mt-4 text-lg font-medium text-destructive">Error loading playbooks</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+                <Button className="mt-4" onClick={() => fetchPlaybooks()}>
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : playbooks.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center">
                 <BookOpenText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />

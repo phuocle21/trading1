@@ -45,6 +45,24 @@ export interface Journal {
   };
 }
 
+export interface Playbook {
+  id: string;
+  name: string;
+  strategy: string;
+  timeframe: string;
+  setupCriteria: string;
+  entryTriggers: string;
+  exitRules: string;
+  riskManagement: string;
+  notes?: string;
+  winRate: number;
+  avgProfit: number;
+  totalTrades: number;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface PasswordResetRequest {
   email: string;
   requestedAt: number;

@@ -9,11 +9,17 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const JOURNALS_FILE = path.join(DATA_DIR, 'journals.json');
 const TRADES_FILE = path.join(DATA_DIR, 'trades.json');
 const USER_PREFERENCES_FILE = path.join(DATA_DIR, 'user-preferences.json');
+const PLAYBOOKS_FILE = path.join(DATA_DIR, 'playbooks.json');
 
 // Interface cho cấu trúc dữ liệu journals mới, phân tách theo userId
 interface JournalData {
   journals: { [userId: string]: Journal[] };
   currentJournals: { [userId: string]: string };
+}
+
+// Interface cho cấu trúc dữ liệu playbooks
+interface PlaybooksData {
+  [userId: string]: any[]; // Array of playbooks for each user
 }
 
 // Đảm bảo thư mục tồn tại
@@ -228,4 +234,105 @@ export async function migrateJournalData(): Promise<void> {
     console.log(`Old data backed up to ${backupFile}`);
   } catch (error) {
     console.error('Error migrating journal data:', error);
- 
+  }
+}
+
+// Create a new class to handle data operations
+class DataStore {
+  // Get all playbooks for a specific user
+  async getPlaybooks(userId: string) {
+    const playbooksData = await this.loadPlaybooksData();
+    return playbooksData[userId] || [];
+  }
+
+  // Add a new playbook for a user
+  async addPlaybook(userId: string, playbook: any) {
+    const playbooksData = await this.loadPlaybooksData();
+    
+    if (!playbooksData[userId]) {
+      playbooksData[userId] = [];
+    }
+    
+    playbooksData[userId].push(playbook);
+    await this.savePlaybooksData(playbooksData);
+    
+    return playbook;
+  }
+
+  // Update an existing playbook
+  async updatePlaybook(userId: string, updatedPlaybook: any) {
+    const playbooksData = await this.loadPlaybooksData();
+    
+    if (!playbooksData[userId]) {
+      return null;
+    }
+    
+    const index = playbooksData[userId].findIndex(
+      (p: any) => p.id === updatedPlaybook.id
+    );
+    
+    if (index === -1) {
+      return null;
+    }
+    
+    playbooksData[userId][index] = updatedPlaybook;
+    await this.savePlaybooksData(playbooksData);
+    
+    return updatedPlaybook;
+  }
+
+  // Delete a playbook
+  async deletePlaybook(userId: string, playbookId: string) {
+    const playbooksData = await this.loadPlaybooksData();
+    
+    if (!playbooksData[userId]) {
+      return false;
+    }
+    
+    const initialLength = playbooksData[userId].length;
+    playbooksData[userId] = playbooksData[userId].filter(
+      (p: any) => p.id !== playbookId
+    );
+    
+    if (playbooksData[userId].length === initialLength) {
+      return false; // No playbook was deleted
+    }
+    
+    await this.savePlaybooksData(playbooksData);
+    return true;
+  }
+
+  // Get a specific playbook by ID
+  async getPlaybookById(userId: string, playbookId: string) {
+    const playbooksData = await this.loadPlaybooksData();
+    
+    if (!playbooksData[userId]) {
+      return null;
+    }
+    
+    return playbooksData[userId].find((p: any) => p.id === playbookId) || null;
+  }
+
+  // Load playbooks data from file
+  private async loadPlaybooksData(): Promise<PlaybooksData> {
+    return loadData<PlaybooksData>(PLAYBOOKS_FILE, {});
+  }
+
+  // Save playbooks data to file
+  private async savePlaybooksData(data: PlaybooksData): Promise<void> {
+    return saveData(PLAYBOOKS_FILE, data);
+  }
+
+  // ... Add methods for journals, trades, and other operations
+}
+
+// Singleton instance of the DataStore
+let dataStoreInstance: DataStore | null = null;
+
+// Get or create a DataStore instance
+export function getDataStore(): DataStore {
+  if (!dataStoreInstance) {
+    dataStoreInstance = new DataStore();
+  }
+  return dataStoreInstance;
+}
