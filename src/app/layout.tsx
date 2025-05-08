@@ -9,6 +9,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { Header } from '@/components/layout/Header';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import AuthMiddleware from '@/components/auth/AuthMiddleware';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -41,21 +42,23 @@ export default function RootLayout({
       <body className={cn(inter.variable, robotoMono.variable, 'antialiased font-sans overflow-x-hidden')}>
         <LanguageProvider>
           <AuthProvider>
-            <JournalProvider>
-              <SidebarProvider>
-                <div className="flex min-h-screen w-full">
-                  <AppSidebar />
-                  <div className="flex flex-1 flex-col w-full max-w-full">
-                    <Header />
-                    <main className="flex-1 p-2 sm:p-4 md:p-6 lg:p-8 bg-secondary/50 w-full overflow-x-hidden">
-                      <div className="max-w-full">
-                        {children}
-                      </div>
-                    </main>
+            <AuthMiddleware>
+              <JournalProvider>
+                <SidebarProvider>
+                  <div className="flex min-h-screen w-full">
+                    <AppSidebar />
+                    <div className="flex flex-1 flex-col w-full max-w-full">
+                      <Header />
+                      <main className="flex-1 p-2 sm:p-4 md:p-6 lg:p-8 bg-secondary/50 w-full overflow-x-hidden">
+                        <div className="max-w-full">
+                          {children}
+                        </div>
+                      </main>
+                    </div>
                   </div>
-                </div>
-              </SidebarProvider>
-            </JournalProvider>
+                </SidebarProvider>
+              </JournalProvider>
+            </AuthMiddleware>
           </AuthProvider>
         </LanguageProvider>
         <Toaster />
