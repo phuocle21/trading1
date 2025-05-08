@@ -96,7 +96,7 @@ export function AppSidebar() {
                     (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:px-0"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
@@ -127,7 +127,7 @@ export function AppSidebar() {
                     pathname === item.href
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                       : "bg-sidebar-accent/10 hover:bg-sidebar-accent/20",
-                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:px-0"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
