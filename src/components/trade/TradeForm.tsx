@@ -282,8 +282,11 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-base font-medium">{t('tradeForm.stockInfo')}</h3>
+                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
+                  <h3 className="text-base font-medium flex items-center">
+                    <Info className="mr-2 h-4 w-4" />
+                    {t('tradeForm.stockInfo')}
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -323,10 +326,11 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                   </div>
                 </div>
 
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h3 className="text-base font-medium">{t('tradeForm.entryInfo')}</h3>
+                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
+                  <h3 className="text-base font-medium flex items-center">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('tradeForm.entryInfo')}
+                  </h3>
                   <div className="grid grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
@@ -344,6 +348,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                   field.onChange(new Date(value));
                                 }
                               }}
+                              className="w-auto text-left"
                             />
                           </FormControl>
                           <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
@@ -373,7 +378,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                 const val = e.target.value;
                                 field.onChange(val === '' ? undefined : parseFloat(val));
                               }}
-                              className="text-right"
+                              className="w-32 text-left"
                               inputMode="numeric"
                             />
                           </FormControl>
@@ -398,7 +403,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? undefined : parseFloat(val));
                               }}
-                              className="text-right"
+                              className="w-32 text-left"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -409,10 +414,11 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-base font-medium">{t('tradeForm.exitInfo')}</h3>
+                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
+                  <h3 className="text-base font-medium flex items-center">
+                    <ArrowLeft className="mr-2 h-4 w-4 rotate-180" />
+                    {t('tradeForm.exitInfo')}
+                  </h3>
                   <div className="grid grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
@@ -429,6 +435,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                 field.onChange(value ? new Date(value) : null);
                               }}
                               min={form.getValues("entryDateTime") ? format(form.getValues("entryDateTime"), "yyyy-MM-dd'T'HH:mm") : undefined}
+                              className="w-auto text-left"
                             />
                           </FormControl>
                           <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
@@ -458,7 +465,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                const val = e.target.value;
                                field.onChange(val === '' ? null : parseFloat(val));
                             }}
-                            className="text-right"
+                            className="w-32 text-left"
                             inputMode="decimal"
                           />
                         </FormControl>
@@ -468,10 +475,11 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                   />
                 </div>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-base font-medium">{t('tradeForm.riskManagement')}</h3>
+                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
+                  <h3 className="text-base font-medium flex items-center">
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    {t('tradeForm.riskManagement')}
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -490,7 +498,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? null : parseFloat(val));
                               }}
-                              className="text-right"
+                              className="w-32 text-left"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -516,7 +524,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                  const val = e.target.value;
                                  field.onChange(val === '' ? null : parseFloat(val));
                               }}
-                              className="text-right"
+                              className="w-32 text-left"
                               inputMode="decimal"
                             />
                           </FormControl>
@@ -544,7 +552,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                const val = e.target.value;
                                field.onChange(val === '' ? null : parseFloat(val));
                             }}
-                            className="text-right"
+                            className="w-32 text-left"
                             inputMode="decimal"
                           />
                         </FormControl>
