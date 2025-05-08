@@ -1,43 +1,88 @@
-[
-  {
-    "name": "Giao Dịch Vàng",
-    "description": "",
-    "icon": "chart",
-    "color": "#e5e048",
-    "trades": [
+{
+  "journals": {
+    "admin-uid": [
       {
-        "entryDate": "2025-05-08",
-        "entryTime": "21:44",
-        "symbol": "BTC",
-        "tradeType": "buy",
-        "quantity": 1,
-        "entryPrice": 111111,
-        "fees": 0,
-        "id": "2bfac0c8-1b9d-4329-8629-3718e19e60f9",
-        "exitDate": "2025-05-08",
-        "exitTime": "23:49",
-        "exitPrice": 1200000
-      },
-      {
-        "entryDate": "2025-05-08",
-        "entryTime": "21:50",
-        "exitDate": "2025-05-08",
-        "exitTime": "00:50",
-        "symbol": "ETH",
-        "tradeType": "sell",
-        "quantity": 0.111,
-        "entryPrice": 20000,
-        "exitPrice": 2000000,
-        "fees": 1,
-        "id": "353aae60-904f-4072-be24-8b82054c4f47"
+        "name": "Giao Dịch Vàng",
+        "description": "",
+        "icon": "chart",
+        "color": "#e5e048",
+        "trades": [
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "21:44",
+            "symbol": "BTC",
+            "tradeType": "buy",
+            "quantity": 1,
+            "entryPrice": 111111,
+            "fees": 0,
+            "id": "2bfac0c8-1b9d-4329-8629-3718e19e60f9",
+            "exitDate": "2025-05-08",
+            "exitTime": "23:49",
+            "exitPrice": 1200000
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "21:50",
+            "exitDate": "2025-05-08",
+            "exitTime": "00:50",
+            "symbol": "ETH",
+            "tradeType": "sell",
+            "quantity": 0.111,
+            "entryPrice": 20000,
+            "exitPrice": 2000000,
+            "fees": 1,
+            "id": "353aae60-904f-4072-be24-8b82054c4f47"
+          }
+        ],
+        "settings": {
+          "initialCapital": 10000,
+          "currency": "USD"
+        },
+        "id": "8c196521-0f40-4781-83e3-d69572347a9d",
+        "createdAt": "2025-05-08T14:43:50.522Z",
+        "updatedAt": "2025-05-08T14:51:17.442Z"
       }
     ],
-    "settings": {
-      "initialCapital": 10000,
-      "currency": "USD"
-    },
-    "id": "8c196521-0f40-4781-83e3-d69572347a9d",
-    "createdAt": "2025-05-08T14:43:50.522Z",
-    "updatedAt": "2025-05-08T14:51:17.442Z"
+    "user-1746715567065-rx1r0qs7f": [
+      {
+        "name": "Giao dịch vàng",
+        "description": "",
+        "icon": "chart",
+        "color": "#1c7a10",
+        "trades": [
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "21:59",
+            "symbol": "ETH",
+            "tradeType": "buy",
+            "quantity": 1,
+            "entryPrice": 1111,
+            "fees": 0,
+            "id": "b4b1d29b-32ec-4f68-9a07-ebfc326779c6"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "21:59",
+            "symbol": "ETH",
+            "tradeType": "sell",
+            "quantity": 1,
+            "entryPrice": 12220.99,
+            "fees": 0,
+            "id": "c84da5d4-701b-462c-b4d9-d627b45a8e55"
+          }
+        ],
+        "settings": {
+          "initialCapital": 10000,
+          "currency": "USD"
+        },
+        "id": "2430268d-abe0-4188-97a9-859a94d127db",
+        "createdAt": "2025-05-08T14:59:25.097Z",
+        "updatedAt": "2025-05-08T15:00:05.327Z"
+      }
+    ]
+  },
+  "currentJournals": {
+    "admin-uid": "8c196521-0f40-4781-83e3-d69572347a9d",
+    "user-1746715567065-rx1r0qs7f": "2430268d-abe0-4188-97a9-859a94d127db"
   }
-]
+}
