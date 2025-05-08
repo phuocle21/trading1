@@ -65,7 +65,7 @@ export const translations: Translations = {
   },
   "tradeHistory.allTrades": {
     en: "All Trades",
-    vi: "Tất Cả Giao Dịch"
+    vi: "Tất Cả GD"
   },
   "tradeHistory.open": {
     en: "Open",

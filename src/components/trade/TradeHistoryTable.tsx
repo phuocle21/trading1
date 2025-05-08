@@ -643,7 +643,7 @@ export function TradeHistoryTable() {
     <div className="space-y-4">
       <Card className="shadow-lg">
         <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-4 gap-3">
             <div>
               <CardTitle className="text-xl sm:text-2xl">{t('tradeHistory.title')}</CardTitle>
               <CardDescription>
@@ -700,17 +700,17 @@ export function TradeHistoryTable() {
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-4 gap-3">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "open" | "closed")} className="w-full sm:w-auto">
               <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-                <TabsTrigger value="all">
+                <TabsTrigger value="all" className="text-xs sm:text-sm px-2 sm:px-3">
                   {t('tradeHistory.allTrades')}
-                  <Badge variant="secondary" className="ml-2">{trades.length}</Badge>
+                  <Badge variant="secondary" className="ml-1 sm:ml-2">{trades.length}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="open">
+                <TabsTrigger value="open" className="text-xs sm:text-sm px-2 sm:px-3">
                   {t('tradeHistory.open')}
-                  <Badge variant="secondary" className="ml-2">{stats.openTrades}</Badge>
+                  <Badge variant="secondary" className="ml-1 sm:ml-2">{stats.openTrades}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="closed">
+                <TabsTrigger value="closed" className="text-xs sm:text-sm px-2 sm:px-3">
                   {t('tradeHistory.closed')}
-                  <Badge variant="secondary" className="ml-2">{stats.closedTrades}</Badge>
+                  <Badge variant="secondary" className="ml-1 sm:ml-2">{stats.closedTrades}</Badge>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
