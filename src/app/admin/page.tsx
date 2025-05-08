@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { User } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +14,7 @@ import { useRouter } from "next/navigation";
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const { currentUser, getUsersList, updateUserAdmin } = useAuth();
+  const { currentUser, getUsersList, updateUserAdmin, approveUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -60,6 +61,29 @@ export default function AdminPage() {
       console.error(error);
       toast({
         title: "Không thể cập nhật người dùng",
+        description: error instanceof Error ? error.message : "Đã xảy ra lỗi.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleApproval = async (userId: string, isCurrentlyApproved: boolean) => {
+    try {
+      await approveUser(userId, !isCurrentlyApproved);
+      
+      // Update local state after successful API call
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, isApproved: !isCurrentlyApproved } : user
+      ));
+      
+      toast({
+        title: "Đã cập nhật trạng thái phê duyệt",
+        description: `Người dùng đã được ${!isCurrentlyApproved ? "phê duyệt" : "hủy phê duyệt"}.`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Không thể cập nhật trạng thái phê duyệt",
         description: error instanceof Error ? error.message : "Đã xảy ra lỗi.",
         variant: "destructive",
       });
@@ -127,7 +151,8 @@ export default function AdminPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Ngày đăng ký</TableHead>
                   <TableHead>Đăng nhập gần đây</TableHead>
-                  <TableHead>Trạng thái Admin</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Quyền Admin</TableHead>
                   <TableHead>Hành động</TableHead>
                 </TableRow>
               </TableHeader>
@@ -137,6 +162,24 @@ export default function AdminPage() {
                     <TableCell className="font-medium">{user.email}</TableCell>
                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(user.lastLogin).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={user.isApproved} 
+                          onCheckedChange={() => handleToggleApproval(user.id, user.isApproved)}
+                          disabled={user.email === "mrtinanpha@gmail.com"}
+                        />
+                        {user.isApproved ? (
+                          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
+                            Đã phê duyệt
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                            Chờ duyệt
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Switch 
@@ -151,20 +194,29 @@ export default function AdminPage() {
                       {user.email === "mrtinanpha@gmail.com" ? (
                         <span className="text-sm text-muted-foreground">Admin chính</span>
                       ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
-                        >
-                          {user.isAdmin ? "Thu hồi quyền Admin" : "Cấp quyền Admin"}
-                        </Button>
+                        <div className="flex flex-col space-y-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleToggleApproval(user.id, user.isApproved)}
+                          >
+                            {user.isApproved ? "Hủy phê duyệt" : "Phê duyệt"}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
+                          >
+                            {user.isAdmin ? "Thu hồi quyền Admin" : "Cấp quyền Admin"}
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">Không tìm thấy người dùng nào</TableCell>
+                    <TableCell colSpan={6} className="text-center">Không tìm thấy người dùng nào</TableCell>
                   </TableRow>
                 )}
               </TableBody>

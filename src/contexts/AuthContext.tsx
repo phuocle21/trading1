@@ -7,6 +7,7 @@ export interface User {
   id: string;
   email: string;
   isAdmin: boolean;
+  isApproved: boolean; // Thêm trạng thái phê duyệt
   createdAt: number;
   lastLogin: number;
 }
@@ -22,6 +23,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   getUsersList: () => Promise<User[]>;
   updateUserAdmin: (userId: string, isAdmin: boolean) => Promise<void>;
+  approveUser: (userId: string, isApproved: boolean) => Promise<void>; // Thêm phương thức phê duyệt
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Initialize users array from localStorage
-  const getUsers = (): Record<string, { email: string; password: string; isAdmin: boolean; createdAt: number; lastLogin: number }> => {
+  const getUsers = (): Record<string, { email: string; password: string; isAdmin: boolean; isApproved: boolean; createdAt: number; lastLogin: number }> => {
     if (typeof window === 'undefined') return {};
     
     const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
@@ -53,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: "mrtinanpha@gmail.com",
           password: encryptPassword("Tin@123"),
           isAdmin: true,
+          isApproved: true, // Admin mặc định được phê duyệt
           createdAt: Date.now(),
           lastLogin: Date.now()
         }
@@ -110,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: userId,
         email: email,
         isAdmin: false, // Only the predefined admin is admin
+        isApproved: false, // Người dùng mới chưa được phê duyệt
         createdAt: Date.now(),
         lastLogin: Date.now()
       };
@@ -119,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email,
         password: encryptPassword(password),
         isAdmin: newUser.isAdmin,
+        isApproved: newUser.isApproved,
         createdAt: newUser.createdAt,
         lastLogin: newUser.lastLogin
       };
@@ -146,6 +151,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const [userId, userData] = userEntry;
+
+      // Cho phép admin đăng nhập bất kể trạng thái phê duyệt
+      if (!userData.isApproved && !userData.isAdmin) {
+        throw new Error("User is not approved");
+      }
+      
+      // Nếu là admin chưa được phê duyệt, tự động phê duyệt
+      if (userData.isAdmin && !userData.isApproved) {
+        userData.isApproved = true;
+      }
       
       // Update last login
       userData.lastLogin = Date.now();
@@ -157,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: userId,
         email: userData.email,
         isAdmin: userData.isAdmin,
+        isApproved: userData.isApproved,
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin
       };
@@ -220,6 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id,
       email: userData.email,
       isAdmin: userData.isAdmin,
+      isApproved: userData.isApproved,
       createdAt: userData.createdAt,
       lastLogin: userData.lastLogin
     }));
@@ -242,6 +259,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     users[userId].isAdmin = isAdmin;
+    
+    // Nếu người dùng được cấp quyền admin, tự động phê duyệt họ
+    if (isAdmin) {
+      users[userId].isApproved = true;
+    }
+    
+    saveUsers(users);
+  };
+
+  // Approve user (admin only)
+  const approveUser = async (userId: string, isApproved: boolean): Promise<void> => {
+    if (!currentUser?.isAdmin) {
+      throw new Error("Permission denied: Only admins can approve users");
+    }
+
+    const users = getUsers();
+    if (!users[userId]) {
+      throw new Error("User not found");
+    }
+
+    users[userId].isApproved = isApproved;
     saveUsers(users);
   };
 
@@ -254,7 +292,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     changePassword,
     resetPassword,
     getUsersList,
-    updateUserAdmin
+    updateUserAdmin,
+    approveUser // Thêm phương thức phê duyệt vào context
   };
 
   return (
