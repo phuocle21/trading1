@@ -27,12 +27,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/history", label: "Trade History", icon: History },
-  { href: "/add-trade", label: "Add New Trade", icon: PlusCircle },
-  { href: "/playbooks", label: "Playbooks", icon: BookOpenText },
+const navItems = (t: (key: string) => string) => [
+  { href: "/dashboard", label: t('sidebar.dashboard'), icon: LayoutDashboard },
+  { href: "/history", label: t('sidebar.tradeHistory'), icon: History },
+  { href: "/add-trade", label: t('sidebar.addNewTrade'), icon: PlusCircle },
+  { href: "/playbooks", label: t('sidebar.playbooks'), icon: BookOpenText },
 ];
 
 export function AppSidebar() {
@@ -40,6 +41,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { open, setOpen, state, openMobile, setOpenMobile, isMobile } = useSidebar();
   const mobileCheck = useIsMobile();
+  const { t } = useLanguage();
 
   // Handle auto-closing menu on mobile when clicking an item
   const handleMenuItemClick = (href: string) => {
@@ -64,7 +66,7 @@ export function AppSidebar() {
         <Link href="/dashboard" className="flex items-center gap-2 text-sidebar-foreground hover:text-sidebar-primary transition-colors">
           <BarChartBig className="h-7 w-7 text-sidebar-primary" />
           <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
-            Trade Insights
+            {t('app.name')}
           </span>
         </Link>
         <Button 
@@ -79,13 +81,13 @@ export function AppSidebar() {
             <ChevronRight className="h-4 w-4" />
           )}
           <span className="sr-only">
-            {state === "expanded" ? "Collapse Sidebar" : "Expand Sidebar"}
+            {state === "expanded" ? t('sidebar.collapseSidebar') : t('sidebar.expandSidebar')}
           </span>
         </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
+          {navItems(t).map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
@@ -106,24 +108,24 @@ export function AppSidebar() {
         </SidebarMenu>
         
         <div className="mt-4 px-3 pt-4 border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
-          <h3 className="mb-2 text-xs font-medium text-sidebar-foreground/70 px-2">SUPPORT</h3>
+          <h3 className="mb-2 text-xs font-medium text-sidebar-foreground/70 px-2">{t('sidebar.support')}</h3>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip="Help & Documentation"
+                tooltip={t('sidebar.helpDocumentation')}
                 className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <HelpCircle className="h-5 w-5" />
-                <span className="ml-2 group-data-[collapsible=icon]:hidden">Help Center</span>
+                <span className="ml-2 group-data-[collapsible=icon]:hidden">{t('sidebar.helpCenter')}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip="Settings"
+                tooltip={t('sidebar.settings')}
                 className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <Settings className="h-5 w-5" />
-                <span className="ml-2 group-data-[collapsible=icon]:hidden">Settings</span>
+                <span className="ml-2 group-data-[collapsible=icon]:hidden">{t('sidebar.settings')}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -131,7 +133,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:hidden">
         <p className="text-xs text-sidebar-foreground/70 text-center">
-          &copy; {new Date().getFullYear()} Trade Insights
+          &copy; {new Date().getFullYear()} {t('app.name')}
         </p>
       </SidebarFooter>
     </Sidebar>

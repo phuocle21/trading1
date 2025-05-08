@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpenText, PlusCircle, Trash2, Edit, 
@@ -98,6 +99,7 @@ export default function PlaybooksPage() {
   const [playbooks, setPlaybooks] = useState(mockPlaybooks);
   const [activeTab, setActiveTab] = useState("list");
   const [editingPlaybook, setEditingPlaybook] = useState<any>(null);
+  const { t } = useLanguage();
 
   // Initialize form
   const form = useForm<PlaybookFormValues>({
@@ -122,8 +124,8 @@ export default function PlaybooksPage() {
       );
       setPlaybooks(updatedPlaybooks);
       toast({
-        title: "Playbook updated",
-        description: `Successfully updated "${data.name}" playbook.`,
+        title: t('playbooks.playbookUpdated'),
+        description: t('playbooks.playbookUpdatedDesc').replace('{name}', data.name),
       });
     } else {
       // Add new playbook
@@ -136,8 +138,8 @@ export default function PlaybooksPage() {
       };
       setPlaybooks([...playbooks, newPlaybook]);
       toast({
-        title: "Playbook created",
-        description: `Successfully created "${data.name}" playbook.`,
+        title: t('playbooks.playbookCreated'),
+        description: t('playbooks.playbookCreatedDesc').replace('{name}', data.name),
       });
     }
     
@@ -166,8 +168,8 @@ export default function PlaybooksPage() {
     const updatedPlaybooks = playbooks.filter(p => p.id !== id);
     setPlaybooks(updatedPlaybooks);
     toast({
-      title: "Playbook deleted",
-      description: "The playbook has been deleted.",
+      title: t('playbooks.playbookDeleted'),
+      description: t('playbooks.playbookDeletedDesc'),
     });
   }
 
@@ -181,14 +183,14 @@ export default function PlaybooksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Trading Playbooks</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('playbooks.title')}</h1>
           <p className="text-muted-foreground">
-            Document and track your trading strategies to improve consistency
+            {t('playbooks.description')}
           </p>
         </div>
         <Button onClick={handleAddNew}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Playbook
+          {t('playbooks.addPlaybook')}
         </Button>
       </div>
 
@@ -200,11 +202,11 @@ export default function PlaybooksPage() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="list">
             <LayoutList className="mr-2 h-4 w-4" />
-            Playbook List
+            {t('playbooks.playbookList')}
           </TabsTrigger>
           <TabsTrigger value="edit">
             <BookOpenText className="mr-2 h-4 w-4" />
-            {editingPlaybook ? "Edit Playbook" : "Create Playbook"}
+            {editingPlaybook ? t('playbooks.editPlaybook') : t('playbooks.createPlaybook')}
           </TabsTrigger>
         </TabsList>
 
@@ -213,13 +215,13 @@ export default function PlaybooksPage() {
             <Card>
               <CardContent className="py-10 text-center">
                 <BookOpenText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-                <h3 className="mt-4 text-lg font-medium">No playbooks yet</h3>
+                <h3 className="mt-4 text-lg font-medium">{t('playbooks.noPlaybooksYet')}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Create your first trading playbook to document your strategy.
+                  {t('playbooks.createFirstPlaybook')}
                 </p>
                 <Button className="mt-4" onClick={handleAddNew}>
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Playbook
+                  {t('playbooks.createPlaybook')}
                 </Button>
               </CardContent>
             </Card>
@@ -236,19 +238,19 @@ export default function PlaybooksPage() {
                   <CardContent className="space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="flex flex-col">
-                        <span className="font-medium">Win Rate</span>
+                        <span className="font-medium">{t('playbooks.winRate')}</span>
                         <span className="text-lg">{playbook.winRate}%</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium">Avg R/R</span>
+                        <span className="font-medium">{t('playbooks.avgRR')}</span>
                         <span className="text-lg">{playbook.avgProfit}R</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium">Timeframe</span>
-                        <span>{playbook.timeframe || "N/A"}</span>
+                        <span className="font-medium">{t('playbooks.timeframe')}</span>
+                        <span>{playbook.timeframe || t('playbooks.na')}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium">Total Trades</span>
+                        <span className="font-medium">{t('playbooks.totalTrades')}</span>
                         <span>{playbook.totalTrades}</span>
                       </div>
                     </div>
@@ -260,7 +262,7 @@ export default function PlaybooksPage() {
                         size="sm" 
                         onClick={() => handleEdit(playbook)}
                       >
-                        <Edit className="h-4 w-4 mr-1" /> Edit
+                        <Edit className="h-4 w-4 mr-1" /> {t('playbooks.edit')}
                       </Button>
                       <div className="space-x-1">
                         <Button 
@@ -268,7 +270,7 @@ export default function PlaybooksPage() {
                           size="sm"
                           className="text-blue-500"
                         >
-                          <BarChart className="h-4 w-4 mr-1" /> Stats
+                          <BarChart className="h-4 w-4 mr-1" /> {t('playbooks.stats')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -276,7 +278,7 @@ export default function PlaybooksPage() {
                           onClick={() => handleDelete(playbook.id)}
                           className="text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          <Trash2 className="h-4 w-4 mr-1" /> {t('playbooks.delete')}
                         </Button>
                       </div>
                     </div>
@@ -291,10 +293,10 @@ export default function PlaybooksPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {editingPlaybook ? "Edit Playbook" : "Create New Playbook"}
+                {editingPlaybook ? t('playbooks.editPlaybook') : t('playbooks.createNewPlaybook')}
               </CardTitle>
               <CardDescription>
-                Document your trading strategy with clear rules for setup, entry, and exit.
+                {t('playbooks.documentStrategyDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -306,9 +308,9 @@ export default function PlaybooksPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Playbook Name</FormLabel>
+                          <FormLabel>{t('playbooks.playbookName')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="E.g., Trend Following Breakout" {...field} />
+                            <Input placeholder={t('playbooks.playbookNamePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -319,26 +321,26 @@ export default function PlaybooksPage() {
                       name="timeframe"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Timeframe</FormLabel>
+                          <FormLabel>{t('playbooks.timeframe')}</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select timeframe" />
+                                <SelectValue placeholder={t('playbooks.selectTimeframe')} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="1min">1 Minute</SelectItem>
-                              <SelectItem value="5min">5 Minutes</SelectItem>
-                              <SelectItem value="15min">15 Minutes</SelectItem>
-                              <SelectItem value="30min">30 Minutes</SelectItem>
-                              <SelectItem value="1hour">1 Hour</SelectItem>
-                              <SelectItem value="4hour">4 Hours</SelectItem>
-                              <SelectItem value="Daily">Daily</SelectItem>
-                              <SelectItem value="Weekly">Weekly</SelectItem>
-                              <SelectItem value="Monthly">Monthly</SelectItem>
+                              <SelectItem value="1min">{t('playbooks.timeframes.1min')}</SelectItem>
+                              <SelectItem value="5min">{t('playbooks.timeframes.5min')}</SelectItem>
+                              <SelectItem value="15min">{t('playbooks.timeframes.15min')}</SelectItem>
+                              <SelectItem value="30min">{t('playbooks.timeframes.30min')}</SelectItem>
+                              <SelectItem value="1hour">{t('playbooks.timeframes.1hour')}</SelectItem>
+                              <SelectItem value="4hour">{t('playbooks.timeframes.4hour')}</SelectItem>
+                              <SelectItem value="Daily">{t('playbooks.timeframes.daily')}</SelectItem>
+                              <SelectItem value="Weekly">{t('playbooks.timeframes.weekly')}</SelectItem>
+                              <SelectItem value="Monthly">{t('playbooks.timeframes.monthly')}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -352,10 +354,10 @@ export default function PlaybooksPage() {
                     name="strategy"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Strategy Description</FormLabel>
+                        <FormLabel>{t('playbooks.strategyDescription')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Briefly describe your trading strategy..."
+                            placeholder={t('playbooks.strategyPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
@@ -370,10 +372,10 @@ export default function PlaybooksPage() {
                     name="setupCriteria"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Setup Criteria</FormLabel>
+                        <FormLabel>{t('playbooks.setupCriteria')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="What market conditions or indicators do you look for?"
+                            placeholder={t('playbooks.setupCriteriaPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
@@ -389,10 +391,10 @@ export default function PlaybooksPage() {
                       name="entryTriggers"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Entry Triggers</FormLabel>
+                          <FormLabel>{t('playbooks.entryTriggers')}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="What signals your entry into the trade?"
+                              placeholder={t('playbooks.entryTriggersPlaceholder')}
                               className="min-h-20"
                               {...field}
                             />
@@ -407,10 +409,10 @@ export default function PlaybooksPage() {
                       name="exitRules"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Exit Rules</FormLabel>
+                          <FormLabel>{t('playbooks.exitRules')}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="What are your take profit and stop loss criteria?"
+                              placeholder={t('playbooks.exitRulesPlaceholder')}
                               className="min-h-20"
                               {...field}
                             />
@@ -426,10 +428,10 @@ export default function PlaybooksPage() {
                     name="riskManagement"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Risk Management</FormLabel>
+                        <FormLabel>{t('playbooks.riskManagement')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Describe your position sizing and risk management rules..."
+                            placeholder={t('playbooks.riskManagementPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
@@ -444,10 +446,10 @@ export default function PlaybooksPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional Notes</FormLabel>
+                        <FormLabel>{t('playbooks.additionalNotes')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Any other important information about this strategy..."
+                            placeholder={t('playbooks.notesPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
@@ -466,11 +468,11 @@ export default function PlaybooksPage() {
                         setEditingPlaybook(null);
                       }}
                     >
-                      Cancel
+                      {t('playbooks.cancel')}
                     </Button>
                     <Button type="submit">
                       <Save className="mr-2 h-4 w-4" />
-                      {editingPlaybook ? "Update Playbook" : "Save Playbook"}
+                      {editingPlaybook ? t('playbooks.updatePlaybook') : t('playbooks.savePlaybook')}
                     </Button>
                   </div>
                 </form>

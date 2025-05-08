@@ -1,13 +1,14 @@
 // src/components/trade/TradeHistoryTable.tsx
 "use client";
 
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { ColumnDef, SortingState, VisibilityState } from "@tanstack/react-table";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
   getPaginationRowModel,
+  getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -19,6 +20,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowUpDown,
   Edit3,
@@ -27,9 +35,19 @@ import {
   TrendingDown,
   Minus,
   PlusCircle,
-  History as HistoryIcon, // Renamed to avoid conflict with navigation history
+  History as HistoryIcon,
+  ChevronDown,
+  FilterX,
+  Clock,
+  Search,
+  Star,
+  Shield,
+  Target,
+  Eye,
+  Thermometer
 } from "lucide-react";
 import { useTrades } from "@/contexts/TradeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Trade, TradeWithProfit } from "@/types";
 import { calculateProfitLoss, formatCurrency, formatDate } from "@/lib/trade-utils";
 import React, { useMemo, useState } from "react";
@@ -45,39 +63,104 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 
 const columnHelper = createColumnHelper<TradeWithProfit>();
 
 export function TradeHistoryTable() {
   const { trades, deleteTrade, isLoading } = useTrades();
+  const { t } = useLanguage();
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    entryTime: false,
+    exitTime: false,
+    stopLoss: false,
+    takeProfit: false,
+    fees: false,
+    setup: false,
+    risk: false,
+    mood: false,
+    rating: false,
+  });
+  
+  const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
 
   const data = useMemo(() => {
     if (isLoading) return [];
-    return trades.map(trade => ({
+    
+    let filteredTrades = trades.map(trade => ({
       ...trade,
       profitOrLoss: calculateProfitLoss(trade),
-    })).sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()); // Default sort by most recent entry date
-  }, [trades, isLoading]);
+      stockSymbol: trade.symbol // Map symbol to stockSymbol for compatibility
+    }));
+    
+    // Filter by tab
+    if (activeTab === "open") {
+      filteredTrades = filteredTrades.filter(trade => !trade.exitDate);
+    } else if (activeTab === "closed") {
+      filteredTrades = filteredTrades.filter(trade => trade.exitDate);
+    }
+    
+    return filteredTrades.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+  }, [trades, isLoading, activeTab]);
 
   const columns = useMemo<ColumnDef<TradeWithProfit, any>[]>(() => [
-    columnHelper.accessor("entryDate", {
+    // Main columns
+    columnHelper.accessor((row) => row, {
+      id: "date",
       header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-1 sm:px-2"
         >
-          Entry Date
+          {t('trade.date')}
           <ArrowUpDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       ),
-      cell: (info) => formatDate(info.getValue()),
-      sortingFn: 'datetime',
+      cell: (info) => {
+        const trade = info.getValue();
+        return (
+          <div className="min-w-[120px]">
+            <div className="font-medium">{formatDate(trade.entryDate)}</div>
+            {trade.exitDate && (
+              <div className="text-xs text-muted-foreground">
+                to {formatDate(trade.exitDate)}
+              </div>
+            )}
+          </div>
+        );
+      },
+      sortingFn: (a, b, columnId) => {
+        const aDate = new Date(a.original.entryDate).getTime();
+        const bDate = new Date(b.original.entryDate).getTime();
+        return aDate - bDate;
+      },
+    }),
+    columnHelper.accessor("entryTime", {
+      header: t('trade.entryTime'),
+      cell: (info) => info.getValue() || <Minus className="h-3 w-3 text-muted-foreground mx-auto" />,
+    }),
+    columnHelper.accessor("exitTime", {
+      header: t('trade.exitTime'),
+      cell: (info) => info.getValue() || <Minus className="h-3 w-3 text-muted-foreground mx-auto" />,
     }),
     columnHelper.accessor("stockSymbol", {
       header: ({ column }) => (
@@ -86,38 +169,137 @@ export function TradeHistoryTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-1 sm:px-2"
         >
-          Symbol
+          {t('trade.symbol')}
           <ArrowUpDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       ),
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <div className="font-medium">{info.getValue()}</div>
+      ),
     }),
-     columnHelper.accessor("tradeType", {
-      header: "Type",
+    columnHelper.accessor("tradeType", {
+      header: t('trade.direction'),
       cell: (info) => {
         const type = info.getValue();
         return type === 'buy' ? (
-          <span className="inline-flex items-center text-green-600">
-            <TrendingUp className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Long</span>
-          </span>
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
+            <TrendingUp className="mr-1 h-3 w-3" /> {t('trade.long')}
+          </Badge>
         ) : (
-          <span className="inline-flex items-center text-red-600">
-            <TrendingDown className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Short</span>
-          </span>
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50">
+            <TrendingDown className="mr-1 h-3 w-3" /> {t('trade.short')}
+          </Badge>
         );
       },
     }),
     columnHelper.accessor("quantity", {
-      header: "Qty", // Shorter header for mobile
-      cell: (info) => info.getValue(),
+      header: t('trade.quantity'),
+      cell: (info) => (
+        <div className="text-right font-medium">{info.getValue()}</div>
+      ),
     }),
-    columnHelper.accessor("entryPrice", {
-      header: "Entry", // Shorter header
-      cell: (info) => formatCurrency(info.getValue()),
+    columnHelper.accessor((row) => row, {
+      id: "prices",
+      header: t('trade.price'),
+      cell: (info) => {
+        const trade = info.getValue();
+        return (
+          <div className="min-w-[120px]">
+            <div className="font-medium">
+              {formatCurrency(trade.entryPrice)}
+            </div>
+            {trade.exitPrice ? (
+              <div className="text-xs text-muted-foreground">
+                → {formatCurrency(trade.exitPrice)}
+              </div>
+            ) : null}
+          </div>
+        );
+      },
     }),
-    columnHelper.accessor("exitPrice", {
-      header: "Exit", // Shorter header
-      cell: (info) => info.getValue() ? formatCurrency(info.getValue()) : <Minus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mx-auto" />,
+    columnHelper.accessor("stopLoss", {
+      header: t('trade.stopLoss'),
+      cell: (info) => {
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+      },
+    }),
+    columnHelper.accessor("takeProfit", {
+      header: t('trade.takeProfit'),
+      cell: (info) => {
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+      },
+    }),
+    columnHelper.accessor("fees", {
+      header: t('trade.fees'),
+      cell: (info) => {
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+      },
+    }),
+    columnHelper.accessor("setup", {
+      header: t('trade.setup'),
+      cell: (info) => {
+        const setup = info.getValue();
+        if (!setup) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        
+        const setupDisplay = setup.replace(/_/g, ' ');
+        return (
+          <Badge variant="outline" className="capitalize">
+            {setupDisplay}
+          </Badge>
+        );
+      },
+    }),
+    columnHelper.accessor("risk", {
+      header: t('trade.risk'),
+      cell: (info) => {
+        const risk = info.getValue();
+        if (!risk) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        
+        let badgeClass = "capitalize";
+        if (risk === "low") badgeClass += " bg-green-50 text-green-700 border-green-200";
+        if (risk === "medium") badgeClass += " bg-yellow-50 text-yellow-700 border-yellow-200";
+        if (risk === "high") badgeClass += " bg-red-50 text-red-700 border-red-200";
+        
+        return (
+          <Badge variant="outline" className={badgeClass}>
+            {risk}
+          </Badge>
+        );
+      },
+    }),
+    columnHelper.accessor("mood", {
+      header: t('trade.mood'),
+      cell: (info) => {
+        const mood = info.getValue();
+        if (!mood) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        
+        return (
+          <Badge variant="outline" className="capitalize">
+            {mood}
+          </Badge>
+        );
+      },
+    }),
+    columnHelper.accessor("rating", {
+      header: t('trade.rating'),
+      cell: (info) => {
+        const rating = info.getValue();
+        if (!rating) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        
+        return (
+          <div className="flex items-center justify-center">
+            {Array.from({ length: rating }).map((_, i) => (
+              <Star key={i} className="h-3 w-3 fill-primary text-primary" />
+            ))}
+            {Array.from({ length: 5 - rating }).map((_, i) => (
+              <Star key={i + rating} className="h-3 w-3 text-muted-foreground/30" />
+            ))}
+          </div>
+        );
+      },
     }),
     columnHelper.accessor("profitOrLoss", {
       header: ({ column }) => (
@@ -126,7 +308,7 @@ export function TradeHistoryTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-1 sm:px-2"
         >
-          P/L
+          {t('trade.pl')}
           <ArrowUpDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       ),
@@ -134,41 +316,65 @@ export function TradeHistoryTable() {
         const profit = info.getValue();
         if (profit === null || profit === undefined) return <Minus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mx-auto" />;
         const profitColor = profit > 0 ? "text-green-600" : profit < 0 ? "text-red-600" : "text-foreground";
-        return <span className={profitColor}>{formatCurrency(profit)}</span>;
+        return (
+          <div className={`font-medium ${profitColor} text-right`}>
+            {formatCurrency(profit)}
+          </div>
+        );
       },
       sortingFn: 'alphanumeric', 
     }),
-    columnHelper.display({
+    columnHelper.accessor((row) => row, {
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => {
         const trade = row.original;
         return (
-          <div className="flex space-x-1 sm:space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8"
-              onClick={() => router.push(`/edit-trade/${trade.id}`)}
-              aria-label="Edit trade"
-            >
-              <Edit3 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-            </Button>
+          <div className="flex space-x-1 justify-end">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => router.push(`/edit-trade/${trade.id}`)}
+                  >
+                    <Edit3 className="h-3 w-3 text-blue-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('trade.editTrade')}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
             <AlertDialog open={showDeleteConfirm === trade.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => setShowDeleteConfirm(trade.id)} aria-label="Delete trade">
-                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-                </Button>
-              </AlertDialogTrigger>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7" 
+                        onClick={() => setShowDeleteConfirm(trade.id)}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('trade.deleteTrade')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('trade.confirmDeleteTitle')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the trade for {trade.stockSymbol}.
+                    {t('trade.confirmDeleteDescription').replace('{symbol}', trade.stockSymbol || trade.symbol)}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setShowDeleteConfirm(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel onClick={() => setShowDeleteConfirm(null)}>{t('trade.cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       if (trade.id) deleteTrade(trade.id);
@@ -176,7 +382,7 @@ export function TradeHistoryTable() {
                     }}
                     className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                   >
-                    Delete
+                    {t('trade.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -185,18 +391,23 @@ export function TradeHistoryTable() {
         );
       },
     }),
-  ], [router, deleteTrade, showDeleteConfirm]);
+  ], [router, deleteTrade, showDeleteConfirm, t]);
 
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting,
+      globalFilter,
+      columnVisibility,
     },
+    onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     initialState: {
       pagination: {
         pageSize: 10,
@@ -204,10 +415,30 @@ export function TradeHistoryTable() {
     },
   });
 
+  // Summary stats
+  const stats = useMemo(() => {
+    const openTrades = data.filter(trade => !trade.exitDate);
+    const closedTrades = data.filter(trade => trade.exitDate);
+    const winningTrades = closedTrades.filter(trade => (trade.profitOrLoss || 0) > 0);
+    const losingTrades = closedTrades.filter(trade => (trade.profitOrLoss || 0) < 0);
+    
+    const totalProfit = closedTrades.reduce((sum, trade) => sum + (trade.profitOrLoss || 0), 0);
+    const winRate = closedTrades.length ? (winningTrades.length / closedTrades.length) * 100 : 0;
+    
+    return {
+      openTrades: openTrades.length,
+      closedTrades: closedTrades.length,
+      winningTrades: winningTrades.length,
+      losingTrades: losingTrades.length,
+      totalProfit,
+      winRate
+    };
+  }, [data]);
+
   if (isLoading) {
     return (
       <Card>
-        <CardHeader><CardTitle>Trade History</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('tradeHistory.title')}</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -219,18 +450,18 @@ export function TradeHistoryTable() {
     );
   }
   
-  if (data.length === 0) {
+  if (data.length === 0 && activeTab === "all") {
     return (
        <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">Trade History</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">{t('tradeHistory.title')}</CardTitle>
         </CardHeader>
         <CardContent className="text-center py-8 sm:py-12">
           <HistoryIcon className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg sm:text-xl font-semibold mb-2">No Trades Yet</h3>
-          <p className="text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">Start by adding your first trade to see your history.</p>
+          <h3 className="text-lg sm:text-xl font-semibold mb-2">{t('tradeHistory.noTradesYet')}</h3>
+          <p className="text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">{t('tradeHistory.startByAdding')}</p>
           <Button size="sm" className="sm:text-base sm:px-4 sm:h-10" onClick={() => router.push('/add-trade')}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Trade
+            <PlusCircle className="mr-2 h-4 w-4" /> {t('tradeHistory.addNewTrade')}
           </Button>
         </CardContent>
       </Card>
@@ -238,78 +469,241 @@ export function TradeHistoryTable() {
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl">Trade History</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap px-2 py-2 text-xs sm:text-sm sm:px-4 sm:py-3">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="whitespace-nowrap px-2 py-2 text-xs sm:text-sm sm:px-4 sm:py-3">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+    <div className="space-y-4">
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl sm:text-2xl">{t('tradeHistory.title')}</CardTitle>
+              <CardDescription>
+                {t('tradeHistory.description')}
+              </CardDescription>
+            </div>
+            <div className="flex gap-2 flex-col sm:flex-row">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('tradeHistory.searchPlaceholder')}
+                  value={globalFilter || ""}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="pl-8 h-9 md:w-[200px] lg:w-[250px]"
+                />
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9" 
+                onClick={() => router.push('/add-trade')}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('tradeHistory.newTrade')}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          {/* Summary stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-accent/20 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground uppercase font-medium">{t('tradeHistory.openTrades')}</div>
+              <div className="text-2xl font-bold">{stats.openTrades}</div>
+            </div>
+            <div className="bg-accent/20 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground uppercase font-medium">{t('tradeHistory.closedTrades')}</div>
+              <div className="text-2xl font-bold">{stats.closedTrades}</div>
+            </div>
+            <div className="bg-accent/20 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground uppercase font-medium">{t('tradeHistory.winRate')}</div>
+              <div className="text-2xl font-bold">{stats.winRate.toFixed(1)}%</div>
+            </div>
+            <div className="bg-accent/20 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground uppercase font-medium">{t('tradeHistory.totalPL')}</div>
+              <div className={`text-2xl font-bold ${stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(stats.totalProfit)}
+              </div>
+            </div>
+          </div>
+        
+          {/* Filters and tabs */}
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-4 gap-3">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "open" | "closed")} className="w-full sm:w-auto">
+              <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+                <TabsTrigger value="all">
+                  {t('tradeHistory.allTrades')}
+                  <Badge variant="secondary" className="ml-2">{trades.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="open">
+                  {t('tradeHistory.open')}
+                  <Badge variant="secondary" className="ml-2">{stats.openTrades}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="closed">
+                  {t('tradeHistory.closed')}
+                  <Badge variant="secondary" className="ml-2">{stats.closedTrades}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <div className="flex gap-2 w-full sm:w-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-1 ml-auto">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">{t('tradeHistory.columns')}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[180px]">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id === "entryTime" && <Clock className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          {column.id === "exitTime" && <Clock className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          {column.id === "stopLoss" && <Shield className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          {column.id === "takeProfit" && <Target className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          {column.id === "mood" && <Thermometer className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          {column.id === "date" && t('trade.date')}
+                          {column.id === "prices" && t('trade.price')}
+                          {column.id !== "date" && column.id !== "prices" && t(`trade.${column.id}`)}
+                        </DropdownMenuCheckboxItem>
+                      )
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {globalFilter && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9"
+                  onClick={() => setGlobalFilter("")}
+                >
+                  <FilterX className="h-4 w-4" />
+                </Button>
               )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            </div>
+          </div>
+          
+          {/* Message for no results with filter active */}
+          {table.getFilteredRowModel().rows.length === 0 && activeTab !== "all" && (
+            <div className="text-center py-8">
+              <div className="text-lg font-medium mb-2">{t(`tradeHistory.no${activeTab}TradesFound`)}</div>
+              <p className="text-sm text-muted-foreground">
+                {activeTab === "open" 
+                  ? t('tradeHistory.noOpenTradesMessage')
+                  : t('tradeHistory.noClosedTradesMessage')}
+              </p>
+            </div>
+          )}
+          
+          {/* Message for no results with search active */}
+          {table.getFilteredRowModel().rows.length === 0 && globalFilter && (
+            <div className="text-center py-8">
+              <div className="text-lg font-medium mb-2">{t('tradeHistory.noResultsFound')}</div>
+              <p className="text-sm text-muted-foreground">
+                {t('tradeHistory.noMatchingTrades')}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setGlobalFilter("")}
+                className="mt-4"
+              >
+                <FilterX className="mr-2 h-4 w-4" /> {t('tradeHistory.clearFilters')}
+              </Button>
+            </div>
+          )}
+          
+          {/* Table */}
+          {table.getFilteredRowModel().rows.length > 0 && (
+            <>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} className="whitespace-nowrap px-2 py-2 text-xs sm:text-sm">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && "selected"}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className="px-2 py-2 text-xs sm:text-sm">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          No results.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  {t('tradeHistory.showing').replace('{filtered}', table.getFilteredRowModel().rows.length.toString()).replace('{total}', data.length.toString())}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    {t('pagination.previous')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    {t('pagination.next')}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

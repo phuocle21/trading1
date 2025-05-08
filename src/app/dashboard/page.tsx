@@ -1,6 +1,7 @@
 "use client";
 
 import { useTrades } from "@/contexts/TradeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
@@ -18,6 +19,7 @@ import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
   const { trades, isLoading, loadDemoData } = useTrades();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("all");
 
@@ -115,18 +117,18 @@ export default function DashboardPage() {
       <Card className="w-full max-w-lg mx-auto text-center py-8 sm:py-12 shadow-xl">
         <CardHeader>
           <BarChart className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-primary mb-4" />
-          <CardTitle className="text-xl sm:text-2xl font-semibold">Welcome to Trade Insights!</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-semibold">{t('dashboard.welcome')}</CardTitle>
           <CardDescription className="text-muted-foreground text-sm sm:text-base">
-            It looks like you haven't added any trades yet.
+            {t('dashboard.noTrades')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="mb-2 text-sm sm:text-base">
-            Get started by adding your first trade to see your performance dashboard.
+            {t('dashboard.getStarted')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="sm" className="sm:size-auto">
-              <Link href="/add-trade">Add Your First Trade</Link>
+              <Link href="/add-trade">{t('dashboard.addFirstTrade')}</Link>
             </Button>
             <Button 
               variant="outline" 
@@ -135,7 +137,7 @@ export default function DashboardPage() {
               onClick={loadDemoData}
             >
               <Database className="h-4 w-4" />
-              Load Demo Data
+              {t('dashboard.loadDemoData')}
             </Button>
           </div>
         </CardContent>
@@ -148,7 +150,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Trading Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
         {trades.length > 0 && (
           <Button 
             variant="outline" 
@@ -157,15 +159,15 @@ export default function DashboardPage() {
             className="flex items-center gap-2"
           >
             <Database className="h-4 w-4" />
-            Refresh Demo Data
+            {t('dashboard.refreshDemoData')}
           </Button>
         )}
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced Analytics</TabsTrigger>
+          <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
+          <TabsTrigger value="advanced">{t('dashboard.advancedAnalytics')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4 md:space-y-6 mt-4">
@@ -176,11 +178,11 @@ export default function DashboardPage() {
             <Card className="bg-accent/20 border-accent shadow-md">
               <CardHeader className="flex flex-col items-start space-y-2 pb-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
                 <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
-                <CardTitle className="text-base sm:text-lg text-accent-foreground">Open Positions</CardTitle>
+                <CardTitle className="text-base sm:text-lg text-accent-foreground">{t('dashboard.openPositions')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-accent-foreground text-sm sm:text-base">
-                  You have {openTradesCount} open trade{openTradesCount > 1 ? 's' : ''}. Statistics below are based on closed trades only.
+                  {t('dashboard.openPositionsMessage').replace('{count}', openTradesCount)}
                 </p>
               </CardContent>
             </Card>
@@ -193,66 +195,66 @@ export default function DashboardPage() {
               variant={timePeriod === "7days" ? "default" : "outline"}
               onClick={() => setTimePeriod("7days")}
             >
-              7 Days
+              {t('dashboard.7days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "30days" ? "default" : "outline"}
               onClick={() => setTimePeriod("30days")}
             >
-              30 Days
+              {t('dashboard.30days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "90days" ? "default" : "outline"}
               onClick={() => setTimePeriod("90days")}
             >
-              90 Days
+              {t('dashboard.90days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "all" ? "default" : "outline"}
               onClick={() => setTimePeriod("all")}
             >
-              All Time
+              {t('dashboard.allTime')}
             </Button>
           </div>
           
           <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard
-              title="Total P/L"
+              title={t('dashboard.totalPL')}
               value={formatCurrency(dashboardStats.totalProfitLoss)}
               icon={DollarSign}
               isLoading={isLoading}
               valueClassName={dashboardStats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}
             />
             <StatCard
-              title="Win Rate"
+              title={t('dashboard.winRate')}
               value={`${dashboardStats.winRate.toFixed(1)}%`}
               icon={Percent}
               isLoading={isLoading}
             />
             <StatCard
-              title="Avg. Trade Duration"
-              value={`${dashboardStats.averageTradeDuration.toFixed(1)} days`}
+              title={t('dashboard.avgTradeDuration')}
+              value={`${dashboardStats.averageTradeDuration.toFixed(1)} ${t('dashboard.days')}`}
               icon={CalendarDays}
               isLoading={isLoading}
             />
             <StatCard
-              title="Total Closed Trades"
+              title={t('dashboard.totalClosedTrades')}
               value={filteredTrades.length}
               icon={BarChart}
               isLoading={isLoading}
             />
             <StatCard
-              title="Winning Trades"
+              title={t('dashboard.winningTrades')}
               value={dashboardStats.winningTrades}
               icon={TrendingUp}
               isLoading={isLoading}
               valueClassName="text-green-600"
             />
             <StatCard
-              title="Losing Trades"
+              title={t('dashboard.losingTrades')}
               value={dashboardStats.losingTrades}
               icon={TrendingDown}
               isLoading={isLoading}
@@ -269,7 +271,7 @@ export default function DashboardPage() {
           
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => setActiveTab("advanced")}>
-              View Advanced Analytics
+              {t('dashboard.viewAdvancedAnalytics')}
             </Button>
           </div>
         </TabsContent>
@@ -282,28 +284,28 @@ export default function DashboardPage() {
               variant={timePeriod === "7days" ? "default" : "outline"}
               onClick={() => setTimePeriod("7days")}
             >
-              7 Days
+              {t('dashboard.7days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "30days" ? "default" : "outline"}
               onClick={() => setTimePeriod("30days")}
             >
-              30 Days
+              {t('dashboard.30days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "90days" ? "default" : "outline"}
               onClick={() => setTimePeriod("90days")}
             >
-              90 Days
+              {t('dashboard.90days')}
             </Button>
             <Button 
               size="sm" 
               variant={timePeriod === "all" ? "default" : "outline"}
               onClick={() => setTimePeriod("all")}
             >
-              All Time
+              {t('dashboard.allTime')}
             </Button>
           </div>
 

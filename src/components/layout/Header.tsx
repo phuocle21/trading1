@@ -4,23 +4,31 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Menu, PlusCircle, Bell, User } from "lucide-react";
+import { Menu, PlusCircle, Bell, User, Globe } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const getPageTitle = (pathname: string): string => {
-  if (pathname === "/dashboard") return "Performance Dashboard";
-  if (pathname === "/history") return "Trade History";
-  if (pathname === "/add-trade") return "Add New Trade";
-  if (pathname.startsWith("/edit-trade/")) return "Edit Trade";
-  if (pathname === "/playbooks") return "Playbooks";
-  return "Trade Insights";
+const getPageTitle = (pathname: string, t: (key: string) => string): string => {
+  if (pathname === "/dashboard") return t('dashboard.title');
+  if (pathname === "/history") return t('tradeHistory.title');
+  if (pathname === "/add-trade") return t('tradeForm.title.add');
+  if (pathname.startsWith("/edit-trade/")) return t('tradeForm.title.edit');
+  if (pathname === "/playbooks") return t('playbooks.title');
+  return t('app.name');
 };
 
 export function Header() {
   const pathname = usePathname();
-  const pageTitle = getPageTitle(pathname);
+  const { t, language, setLanguage } = useLanguage();
+  const pageTitle = getPageTitle(pathname, t);
   const { openMobile, setOpenMobile } = useSidebar();
 
   const toggleMobileMenu = () => {
@@ -46,6 +54,30 @@ export function Header() {
       </h1>
       
       <div className="flex items-center gap-1 sm:gap-3">
+        {/* Language Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Globe className="h-4 w-4" />
+              <span className="sr-only">Change language</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              onClick={() => setLanguage('en')}
+              className={cn(language === 'en' && "bg-accent font-medium")}
+            >
+              English
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => setLanguage('vi')}
+              className={cn(language === 'vi' && "bg-accent font-medium")}
+            >
+              Tiếng Việt
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Notification button - Mobile only shows icon */}
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
           <Bell className="h-4 w-4" />
@@ -58,7 +90,7 @@ export function Header() {
           <Button asChild size="sm" className="hidden sm:flex gap-1">
             <Link href="/add-trade">
               <PlusCircle className="h-4 w-4" />
-              Add Trade
+              {t('button.addTrade')}
             </Link>
           </Button>
         )}
@@ -68,7 +100,7 @@ export function Header() {
           <Button asChild variant="ghost" size="icon" className="sm:hidden h-9 w-9">
             <Link href="/add-trade">
               <PlusCircle className="h-5 w-5" />
-              <span className="sr-only">Add Trade</span>
+              <span className="sr-only">{t('button.addTrade')}</span>
             </Link>
           </Button>
         )}
