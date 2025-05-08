@@ -42,6 +42,20 @@
             "entryPrice": 1111110.97,
             "fees": 0,
             "id": "dbc2d67e-3bc7-4624-afeb-6da2bb3c783a"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "23:12",
+            "symbol": "BTC",
+            "tradeType": "buy",
+            "quantity": 1,
+            "entryPrice": 10000,
+            "fees": 0,
+            "playbook": "94854f1b-2d4e-423d-97fb-8fc2f811a7d6",
+            "risk": "medium",
+            "mood": "excited",
+            "rating": 3,
+            "id": "a1a0fd5a-26c0-495b-a65f-e60c30776107"
           }
         ],
         "settings": {
@@ -50,7 +64,7 @@
         },
         "id": "8c196521-0f40-4781-83e3-d69572347a9d",
         "createdAt": "2025-05-08T14:43:50.522Z",
-        "updatedAt": "2025-05-08T15:15:46.995Z"
+        "updatedAt": "2025-05-08T16:15:30.727Z"
       }
     ],
     "user-1746715567065-rx1r0qs7f": [
