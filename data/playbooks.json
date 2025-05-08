@@ -17,5 +17,24 @@
       "avgProfit": 0,
       "totalTrades": 0
     }
+  ],
+  "user-1746715567065-rx1r0qs7f": [
+    {
+      "id": "f6bff45a-2920-438f-a0b7-6a0eda8abcd8",
+      "name": "2 Đáy Thất Bại",
+      "strategy": "2 Đáy Thất Bại",
+      "timeframe": "",
+      "setupCriteria": "2 Đáy Thất Bại",
+      "entryTriggers": "2 Đáy Thất Bại",
+      "exitRules": "2 Đáy Thất Bại",
+      "riskManagement": "",
+      "notes": "",
+      "userId": "user-1746715567065-rx1r0qs7f",
+      "createdAt": "2025-05-08T16:07:09.280Z",
+      "updatedAt": "2025-05-08T16:07:09.280Z",
+      "winRate": 0,
+      "avgProfit": 0,
+      "totalTrades": 0
+    }
   ]
 }
