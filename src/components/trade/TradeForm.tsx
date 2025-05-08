@@ -254,7 +254,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg border-t-4 border-t-primary">
+    <Card className="w-full max-w-screen-2xl mx-auto shadow-lg border-t-4 border-t-primary">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
@@ -280,7 +280,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
               <p className="text-sm text-muted-foreground">{t('tradeForm.detailsDescription')}</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-[1400px] mx-auto">
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-accent/10 rounded-lg p-4 space-y-4">
                   <h3 className="text-base font-medium flex items-center">
