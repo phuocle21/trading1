@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Trade } from '@/types';
-import { useTrades } from '@/contexts/TradeContext';
+import { useJournals } from '@/contexts/JournalContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -92,7 +92,7 @@ interface Playbook {
 }
 
 export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
-  const { addTrade, updateTrade } = useTrades();
+  const { currentJournalId, addTradeToJournal, updateTradeInJournal } = useJournals();
   const { t } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
@@ -160,7 +160,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     return {
       entryDateTime: entryDateTime,
       exitDateTime: exitDateTime,
-      stockSymbol: data.stockSymbol || '',
+      stockSymbol: data.symbol || '',
       tradeType: data.tradeType,
       quantity: data.quantity,
       entryPrice: data.entryPrice,
@@ -223,7 +223,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       entryTime,
       exitDate,
       exitTime,
-      stockSymbol: data.stockSymbol,
+      symbol: data.stockSymbol,
       tradeType: data.tradeType,
       quantity: data.quantity,
       entryPrice: data.entryPrice,
@@ -241,13 +241,22 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   };
 
   const onSubmit: SubmitHandler<TradeFormValues> = (data) => {
+    if (!currentJournalId) {
+      toast({ 
+        title: t('tradeForm.noActiveJournal'),
+        description: t('tradeForm.selectJournalFirst'),
+        variant: "destructive" 
+      });
+      return;
+    }
+
     const tradePayload = convertFormData(data);
 
     if (isEditMode && initialData) {
-      updateTrade({ ...initialData, ...tradePayload });
+      updateTradeInJournal(currentJournalId, { ...initialData, ...tradePayload });
       toast({ title: t('tradeForm.tradeUpdated'), description: t('tradeForm.tradeUpdatedDesc') });
     } else {
-      addTrade(tradePayload as Omit<Trade, 'id'>);
+      addTradeToJournal(currentJournalId, tradePayload as Omit<Trade, 'id'>);
       toast({ title: t('tradeForm.tradeAdded'), description: t('tradeForm.tradeAddedDesc') });
     }
     router.push('/history');

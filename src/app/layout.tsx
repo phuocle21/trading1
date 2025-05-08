@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
-import { TradeProvider } from '@/contexts/TradeContext';
+import { JournalProvider } from '@/contexts/JournalContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.variable, robotoMono.variable, 'antialiased font-sans')}>
         <LanguageProvider>
-          <TradeProvider>
+          <JournalProvider>
             <SidebarProvider>
               <div className="flex min-h-screen w-full">
                 <AppSidebar />
@@ -45,7 +45,7 @@ export default function RootLayout({
                 </div>
               </div>
             </SidebarProvider>
-          </TradeProvider>
+          </JournalProvider>
         </LanguageProvider>
         <Toaster />
       </body>

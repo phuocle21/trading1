@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  Settings
+  Settings,
+  BookOpen
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const navItems = (t: (key: string) => string) => [
   { href: "/dashboard", label: t('sidebar.dashboard'), icon: LayoutDashboard },
+  { href: "/journals", label: t('sidebar.journals'), icon: BookOpen },
   { href: "/history", label: t('sidebar.tradeHistory'), icon: History },
   { href: "/add-trade", label: t('sidebar.addNewTrade'), icon: PlusCircle },
   { href: "/playbooks", label: t('sidebar.playbooks'), icon: BookOpenText },

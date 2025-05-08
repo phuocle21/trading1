@@ -1,6 +1,6 @@
 "use client";
 
-import { useTrades } from "@/contexts/TradeContext";
+import { useJournals } from "@/contexts/JournalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
@@ -8,7 +8,7 @@ import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { TradeCalendar } from "@/components/dashboard/TradeCalendar";
 import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
 import { calculateProfitLoss, formatCurrency } from "@/lib/trade-utils";
-import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database } from "lucide-react";
+import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database, BookOpen } from "lucide-react";
 import type { Trade } from "@/types";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,11 +18,14 @@ import { Button } from "@/components/ui/button";
 import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
-  const { trades, isLoading, loadDemoData } = useTrades();
+  const { getCurrentJournal, isLoading } = useJournals();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("all");
 
+  const currentJournal = getCurrentJournal();
+  const trades = currentJournal?.trades || [];
+  
   const closedTrades = useMemo(() => trades.filter(trade => trade.exitPrice && trade.exitDate), [trades]);
 
   // Map dashboard time period to performance chart time period
@@ -134,10 +137,12 @@ export default function DashboardPage() {
               variant="outline" 
               size="sm" 
               className="sm:size-auto flex items-center gap-2"
-              onClick={loadDemoData}
+              asChild
             >
-              <Database className="h-4 w-4" />
-              {t('dashboard.loadDemoData')}
+              <Link href="/journals">
+                <BookOpen className="h-4 w-4" />
+                {t('dashboard.manageJournals')}
+              </Link>
             </Button>
           </div>
         </CardContent>
@@ -150,16 +155,20 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {currentJournal?.name || t('dashboard.title')}
+        </h1>
         {trades.length > 0 && (
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={loadDemoData} 
+            asChild
             className="flex items-center gap-2"
           >
-            <Database className="h-4 w-4" />
-            {t('dashboard.refreshDemoData')}
+            <Link href="/journals">
+              <BookOpen className="h-4 w-4" />
+              {t('dashboard.manageJournals')}
+            </Link>
           </Button>
         )}
       </div>
@@ -269,7 +278,11 @@ export default function DashboardPage() {
           </div>
           
           {/* Account Growth Chart full width */}
-          <AccountGrowthChart trades={filteredTrades} isLoading={isLoading} initialBalance={10000} />
+          <AccountGrowthChart 
+            trades={filteredTrades} 
+            isLoading={isLoading} 
+            initialBalance={currentJournal?.settings?.initialCapital || 10000} 
+          />
 
           <PerformanceChart 
             trades={filteredTrades} 

@@ -25,3 +25,31 @@ export interface Trade {
 export interface TradeWithProfit extends Trade {
   profitOrLoss?: number | null; // null if trade is open
 }
+
+// Journal types for managing multiple journals
+export interface Journal {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string; // ISO string date
+  updatedAt: string; // ISO string date
+  icon?: string; // Icon identifier
+  color?: string; // Color for UI
+  isTemplate?: boolean; // If true, this is a template journal
+  isDefault?: boolean; // If true, this is the default journal
+  trades: Trade[]; // Trade entries in this journal
+  settings?: JournalSettings; // Journal-specific settings
+}
+
+export interface JournalSettings {
+  currency?: string; // Default currency for this journal
+  initialCapital?: number; // Starting capital for this journal
+  riskPercentage?: number; // Default risk percentage
+  tradingFees?: number; // Default trading fees
+  tradingHours?: {
+    start: string; // Time string (e.g., "09:30")
+    end: string; // Time string (e.g., "16:00")
+  };
+  tradingDays?: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[]; // Trading days
+  preferredTimeframes?: string[]; // Preferred chart timeframes
+}

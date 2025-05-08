@@ -1,33 +1,34 @@
 "use client";
 
 import { TradeForm } from '@/components/trade/TradeForm';
-import { useTrades } from '@/contexts/TradeContext';
+import { useJournals } from '@/contexts/JournalContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Trade } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton'; // Assuming you have a Skeleton component
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 export default function EditTradePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
-  const { trades, isLoading } = useTrades();
+  const { getCurrentJournal, isLoading } = useJournals();
   const [tradeToEdit, setTradeToEdit] = useState<Trade | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!isLoading && id) {
+      const currentJournal = getCurrentJournal();
+      const trades = currentJournal?.trades || [];
       const foundTrade = trades.find(trade => trade.id === id);
       if (foundTrade) {
         setTradeToEdit(foundTrade);
       } else {
         setNotFound(true);
-        // Optionally redirect or show a more prominent "not found" message
-        // router.push('/history'); // Example redirect
       }
     }
-  }, [id, trades, isLoading, router]);
+  }, [id, getCurrentJournal, isLoading, router]);
 
   if (isLoading || (id && !tradeToEdit && !notFound)) {
     return (
@@ -72,7 +73,6 @@ export default function EditTradePage() {
   }
   
   if (!tradeToEdit) {
-     // This case should ideally be covered by isLoading or notFound, but as a fallback:
     return <div className="container mx-auto py-10 text-center">Preparing form...</div>;
   }
 

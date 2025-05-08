@@ -46,7 +46,7 @@ import {
   Eye,
   Thermometer
 } from "lucide-react";
-import { useTrades } from "@/contexts/TradeContext";
+import { useJournals } from "@/contexts/JournalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Trade, TradeWithProfit } from "@/types";
 import { calculateProfitLoss, formatCurrency, formatDate } from "@/lib/trade-utils";
@@ -82,7 +82,7 @@ import {
 const columnHelper = createColumnHelper<TradeWithProfit>();
 
 export function TradeHistoryTable() {
-  const { trades, deleteTrade, isLoading } = useTrades();
+  const { getCurrentJournal, currentJournalId, deleteTradeFromJournal, isLoading } = useJournals();
   const { t } = useLanguage();
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -101,6 +101,9 @@ export function TradeHistoryTable() {
   });
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
+
+  const currentJournal = getCurrentJournal();
+  const trades = currentJournal?.trades || [];
 
   const data = useMemo(() => {
     if (isLoading) return [];
@@ -121,8 +124,13 @@ export function TradeHistoryTable() {
     return filteredTrades.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
   }, [trades, isLoading, activeTab]);
 
+  const handleDeleteTrade = (tradeId: string) => {
+    if (currentJournalId) {
+      deleteTradeFromJournal(currentJournalId, tradeId);
+    }
+  };
+
   const columns = useMemo<ColumnDef<TradeWithProfit, any>[]>(() => [
-    // Main columns
     columnHelper.accessor((row) => row, {
       id: "date",
       header: ({ column }) => (
@@ -377,7 +385,7 @@ export function TradeHistoryTable() {
                   <AlertDialogCancel onClick={() => setShowDeleteConfirm(null)}>{t('trade.cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
-                      if (trade.id) deleteTrade(trade.id);
+                      if (trade.id) handleDeleteTrade(trade.id);
                       setShowDeleteConfirm(null);
                     }}
                     className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
@@ -391,7 +399,7 @@ export function TradeHistoryTable() {
         );
       },
     }),
-  ], [router, deleteTrade, showDeleteConfirm, t]);
+  ], [router, handleDeleteTrade, showDeleteConfirm, t]);
 
   const table = useReactTable({
     data,

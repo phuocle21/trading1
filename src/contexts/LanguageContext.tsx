@@ -331,6 +331,10 @@ export const translations: Translations = {
     en: "View Advanced Analytics",
     vi: "Xem Phân Tích Nâng Cao"
   },
+  "dashboard.manageJournals": {
+    en: "Manage Journals",
+    vi: "Quản lý Nhật ký"
+  },
   "trade.date": {
     en: "Date",
     vi: "Ngày"
@@ -471,6 +475,10 @@ export const translations: Translations = {
   "sidebar.expandSidebar": {
     en: "Expand Sidebar",
     vi: "Mở rộng thanh bên"
+  },
+  "sidebar.journals": {
+    en: "Journals",
+    vi: "Nhật ký"
   },
   // Trade Form
   "tradeForm.description": {
@@ -1006,6 +1014,303 @@ export const translations: Translations = {
   "playbooks.playbookDeletedDesc": {
     en: "The playbook has been deleted.",
     vi: "Chiến lược đã được xóa."
+  },
+  // Journal translations
+  "journals.title": {
+    en: "Trading Journals",
+    vi: "Nhật ký Giao dịch"
+  },
+  "journals.description": {
+    en: "Manage your trading journals and track performance separately for different strategies and accounts",
+    vi: "Quản lý nhật ký giao dịch và theo dõi hiệu suất riêng cho các chiến lược và tài khoản khác nhau"
+  },
+  "journals.createNew": {
+    en: "Create New",
+    vi: "Tạo mới"
+  },
+  "journals.searchJournals": {
+    en: "Search journals...",
+    vi: "Tìm kiếm nhật ký..."
+  },
+  "journals.sort": {
+    en: "Sort",
+    vi: "Sắp xếp"
+  },
+  "journals.sortNewest": {
+    en: "Newest First",
+    vi: "Mới nhất trước"
+  },
+  "journals.sortOldest": {
+    en: "Oldest First",
+    vi: "Cũ nhất trước"
+  },
+  "journals.sortNameAsc": {
+    en: "Name A-Z",
+    vi: "Tên A-Z"
+  },
+  "journals.sortNameDesc": {
+    en: "Name Z-A",
+    vi: "Tên Z-A"
+  },
+  "journals.sortMostTrades": {
+    en: "Most Trades",
+    vi: "Nhiều giao dịch nhất"
+  },
+  "journals.filterButton": {
+    en: "Filter",
+    vi: "Lọc"
+  },
+  "journals.allJournals": {
+    en: "All Journals",
+    vi: "Tất cả nhật ký"
+  },
+  "journals.activeJournals": {
+    en: "Active Journals",
+    vi: "Nhật ký đang hoạt động"
+  },
+  "journals.templates": {
+    en: "Templates",
+    vi: "Mẫu"
+  },
+  "journals.noJournalsFound": {
+    en: "No journals found",
+    vi: "Không tìm thấy nhật ký nào"
+  },
+  "journals.noJournalsFoundDesc": {
+    en: "You don't have any journals yet. Create your first journal to get started.",
+    vi: "Bạn chưa có nhật ký nào. Tạo nhật ký đầu tiên để bắt đầu."
+  },
+  "journals.createFirst": {
+    en: "Create First Journal",
+    vi: "Tạo nhật ký đầu tiên"
+  },
+  "journals.trades": {
+    en: "Trades",
+    vi: "Giao dịch"
+  },
+  "journals.winRate": {
+    en: "Win Rate",
+    vi: "Tỷ lệ thắng"
+  },
+  "journals.openTrades": {
+    en: "Open Trades",
+    vi: "Giao dịch mở"
+  },
+  "journals.lastActivity": {
+    en: "Last Activity",
+    vi: "Hoạt động gần đây"
+  },
+  "journals.never": {
+    en: "Never",
+    vi: "Chưa bao giờ"
+  },
+  "journals.viewDashboard": {
+    en: "View Dashboard",
+    vi: "Xem bảng điều khiển"
+  },
+  "journals.switchTo": {
+    en: "Switch to Journal",
+    vi: "Chuyển đến nhật ký"
+  },
+  "journals.useTemplate": {
+    en: "Use Template",
+    vi: "Sử dụng mẫu"
+  },
+  "journals.template": {
+    en: "Template",
+    vi: "Mẫu"
+  },
+  "journals.default": {
+    en: "Default",
+    vi: "Mặc định"
+  },
+  "journals.created": {
+    en: "Created",
+    vi: "Đã tạo"
+  },
+  "journals.actions": {
+    en: "Actions",
+    vi: "Hành động"
+  },
+  "journals.currentlyActive": {
+    en: "Currently Active",
+    vi: "Đang hoạt động"
+  },
+  "journals.edit": {
+    en: "Edit Journal",
+    vi: "Sửa nhật ký"
+  },
+  "journals.settings": {
+    en: "Journal Settings",
+    vi: "Cài đặt nhật ký"
+  },
+  "journals.duplicate": {
+    en: "Duplicate Journal",
+    vi: "Sao chép nhật ký"
+  },
+  "journals.delete": {
+    en: "Delete Journal",
+    vi: "Xóa nhật ký"
+  },
+  "journals.noActiveJournals": {
+    en: "No active journals",
+    vi: "Không có nhật ký đang hoạt động"
+  },
+  "journals.noActiveJournalsDesc": {
+    en: "You don't have any active journals yet. Create a new journal to get started.",
+    vi: "Bạn chưa có nhật ký đang hoạt động nào. Tạo nhật ký mới để bắt đầu."
+  },
+  "journals.createJournal": {
+    en: "Create Journal",
+    vi: "Tạo nhật ký"
+  },
+  "journals.noTemplatesFound": {
+    en: "No templates found",
+    vi: "Không tìm thấy mẫu nào"
+  },
+  "journals.noTemplatesFoundDesc": {
+    en: "No template journals available at this time.",
+    vi: "Hiện không có mẫu nhật ký nào."
+  },
+  "journals.currency": {
+    en: "Currency",
+    vi: "Tiền tệ"
+  },
+  "journals.initialCapital": {
+    en: "Initial Capital",
+    vi: "Vốn ban đầu"
+  },
+  "journals.riskPercentage": {
+    en: "Risk Percentage",
+    vi: "Tỷ lệ rủi ro"
+  },
+  "journals.tradingHours": {
+    en: "Trading Hours",
+    vi: "Giờ giao dịch"
+  },
+  "journals.confirmDelete": {
+    en: "Delete Journal",
+    vi: "Xóa nhật ký"
+  },
+  "journals.confirmDeleteDesc": {
+    en: "Are you sure you want to delete this journal? This action cannot be undone.",
+    vi: "Bạn có chắc chắn muốn xóa nhật ký này không? Hành động này không thể hoàn tác."
+  },
+  "journals.warningTitle": {
+    en: "Warning",
+    vi: "Cảnh báo"
+  },
+  "journals.warningDesc": {
+    en: "Deleting this journal will permanently remove all associated trades and data.",
+    vi: "Xóa nhật ký này sẽ xóa vĩnh viễn tất cả giao dịch và dữ liệu liên quan."
+  },
+  "journals.createNewJournal": {
+    en: "Create New Journal",
+    vi: "Tạo nhật ký mới"
+  },
+  "journals.createNewJournalDesc": {
+    en: "Give your journal a name and description to help you identify it.",
+    vi: "Đặt tên và mô tả cho nhật ký để giúp bạn nhận dạng nó."
+  },
+  "journals.name": {
+    en: "Journal Name",
+    vi: "Tên nhật ký"
+  },
+  "journals.namePlaceholder": {
+    en: "e.g., Stock Trading 2025",
+    vi: "ví dụ: Giao dịch Cổ phiếu 2025"
+  },
+  "journals.description": {
+    en: "Description (Optional)",
+    vi: "Mô tả (Tùy chọn)"
+  },
+  "journals.descriptionPlaceholder": {
+    en: "e.g., My stock trading journal for swing trades",
+    vi: "ví dụ: Nhật ký giao dịch cổ phiếu cho các giao dịch swing"
+  },
+  "journals.icon": {
+    en: "Icon",
+    vi: "Biểu tượng"
+  },
+  "journals.selectIcon": {
+    en: "Select an icon",
+    vi: "Chọn biểu tượng"
+  },
+  "journals.icons.chart": {
+    en: "Chart",
+    vi: "Biểu đồ"
+  },
+  "journals.icons.trendingUp": {
+    en: "Trending Up",
+    vi: "Xu hướng tăng"
+  },
+  "journals.icons.activity": {
+    en: "Activity",
+    vi: "Hoạt động"
+  },
+  "journals.icons.globe": {
+    en: "Globe",
+    vi: "Toàn cầu"
+  },
+  "journals.icons.bitcoin": {
+    en: "Bitcoin",
+    vi: "Bitcoin"
+  },
+  "journals.color": {
+    en: "Color",
+    vi: "Màu sắc"
+  },
+  "journals.create": {
+    en: "Create Journal",
+    vi: "Tạo nhật ký"
+  },
+  "journals.journalCreated": {
+    en: "Journal Created",
+    vi: "Đã tạo nhật ký"
+  },
+  "journals.journalCreatedDesc": {
+    en: "Your new trading journal has been created successfully.",
+    vi: "Nhật ký giao dịch mới của bạn đã được tạo thành công."
+  },
+  "journals.journalDeleted": {
+    en: "Journal Deleted",
+    vi: "Đã xóa nhật ký"
+  },
+  "journals.journalDeletedDesc": {
+    en: "Your journal has been successfully deleted.",
+    vi: "Nhật ký của bạn đã được xóa thành công."
+  },
+  "journals.templateCreated": {
+    en: "Journal Created from Template",
+    vi: "Đã tạo nhật ký từ mẫu"
+  },
+  "journals.templateCreatedDesc": {
+    en: "Your new journal has been created from the template.",
+    vi: "Nhật ký mới của bạn đã được tạo từ mẫu."
+  },
+  "journals.errors.nameRequired": {
+    en: "Journal name required",
+    vi: "Tên nhật ký là bắt buộc"
+  },
+  "journals.errors.nameRequiredDesc": {
+    en: "Please provide a name for your trading journal.",
+    vi: "Vui lòng nhập tên cho nhật ký giao dịch của bạn."
+  },
+  "journals.errors.cannotDeleteLast": {
+    en: "Cannot delete last journal",
+    vi: "Không thể xóa nhật ký cuối cùng"
+  },
+  "journals.errors.cannotDeleteLastDesc": {
+    en: "You must have at least one journal. Create a new journal before deleting this one.",
+    vi: "Bạn phải có ít nhất một nhật ký. Tạo nhật ký mới trước khi xóa nhật ký này."
+  },
+  "common.cancel": {
+    en: "Cancel",
+    vi: "Hủy"
+  },
+  "common.loading": {
+    en: "Loading...",
+    vi: "Đang tải..."
   },
 };
 
