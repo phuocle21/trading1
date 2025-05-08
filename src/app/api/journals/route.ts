@@ -19,13 +19,6 @@ function ensureMigration() {
   return migrationPromise;
 }
 
-// Kiểm tra người dùng đăng nhập
-function getCurrentUserId(): string | null {
-  const cookieStore = cookies();
-  const userIdCookie = cookieStore.get('userId');
-  return userIdCookie ? userIdCookie.value : null;
-}
-
 // GET /api/journals - Lấy tất cả journals
 export async function GET() {
   try {
@@ -34,15 +27,9 @@ export async function GET() {
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
     
-    const userId = getCurrentUserId();
-    if (!userId) {
-      console.log('GET /api/journals: No user logged in');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
     const journals = await getJournals();
     const currentJournalId = await getCurrentJournalId();
-    console.log(`GET /api/journals: Found ${journals.length} journals for user ${userId}, currentJournalId: ${currentJournalId}`);
+    console.log(`GET /api/journals: Found ${journals.length} journals, currentJournalId: ${currentJournalId}`);
     return NextResponse.json({ journals, currentJournalId });
   } catch (error) {
     console.error('Error retrieving journals:', error);
@@ -57,12 +44,6 @@ export async function POST(request: NextRequest) {
     
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
-    
-    const userId = getCurrentUserId();
-    if (!userId) {
-      console.log('POST /api/journals: No user logged in');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     
     const body = await request.json();
     console.log('POST /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });
@@ -87,7 +68,7 @@ export async function POST(request: NextRequest) {
     const updatedJournals = [...journals, completeJournal];
     await saveJournals(updatedJournals);
     
-    console.log('POST /api/journals: Journal created successfully', { id: completeJournal.id, userId });
+    console.log('POST /api/journals: Journal created successfully', { id: completeJournal.id });
     return NextResponse.json({ journal: completeJournal });
   } catch (error) {
     console.error('Error creating journal:', error);
@@ -108,12 +89,6 @@ export async function PUT(request: NextRequest) {
     
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
-    
-    const userId = getCurrentUserId();
-    if (!userId) {
-      console.log('PUT /api/journals: No user logged in');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     
     const body = await request.json();
     console.log('PUT /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });
@@ -137,7 +112,7 @@ export async function PUT(request: NextRequest) {
     );
     
     await saveJournals(updatedJournals);
-    console.log('PUT /api/journals: Journal updated successfully', { id, userId });
+    console.log('PUT /api/journals: Journal updated successfully', { id });
     return NextResponse.json({ journal: updatedJournals.find(j => j.id === id) });
   } catch (error) {
     console.error('Error updating journal:', error);
@@ -159,12 +134,6 @@ export async function DELETE(request: NextRequest) {
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
     
-    const userId = getCurrentUserId();
-    if (!userId) {
-      console.log('DELETE /api/journals: No user logged in');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
     
@@ -172,7 +141,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Journal ID is required' }, { status: 400 });
     }
     
-    console.log('DELETE /api/journals: Deleting journal', { id, userId });
+    console.log('DELETE /api/journals: Deleting journal', { id });
     const journals = await getJournals();
     
     if (!journals.some(j => j.id === id)) {
@@ -182,7 +151,7 @@ export async function DELETE(request: NextRequest) {
     const updatedJournals = journals.filter(journal => journal.id !== id);
     
     await saveJournals(updatedJournals);
-    console.log('DELETE /api/journals: Journal deleted successfully', { id, userId });
+    console.log('DELETE /api/journals: Journal deleted successfully', { id });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting journal:', error);
@@ -204,12 +173,6 @@ export async function PATCH(request: NextRequest) {
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
     
-    const userId = getCurrentUserId();
-    if (!userId) {
-      console.log('PATCH /api/journals: No user logged in');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
     const body = await request.json();
     console.log('PATCH /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });
     
@@ -228,7 +191,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     await setCurrentJournalId(journalId);
-    console.log('PATCH /api/journals: Current journal set successfully', { journalId, userId });
+    console.log('PATCH /api/journals: Current journal set successfully', { journalId });
     return NextResponse.json({ success: true, currentJournalId: journalId });
   } catch (error) {
     console.error('Error setting current journal:', error);

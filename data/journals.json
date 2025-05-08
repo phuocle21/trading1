@@ -69,6 +69,16 @@
             "entryPrice": 12220.99,
             "fees": 0,
             "id": "c84da5d4-701b-462c-b4d9-d627b45a8e55"
+          },
+          {
+            "entryDate": "2025-05-08",
+            "entryTime": "22:07",
+            "symbol": "ETH",
+            "tradeType": "sell",
+            "quantity": 1,
+            "entryPrice": 11122123,
+            "fees": 0,
+            "id": "4d7db95d-7787-42d9-9f06-560bfa7a2846"
           }
         ],
         "settings": {
@@ -77,7 +87,7 @@
         },
         "id": "2430268d-abe0-4188-97a9-859a94d127db",
         "createdAt": "2025-05-08T14:59:25.097Z",
-        "updatedAt": "2025-05-08T15:00:05.327Z"
+        "updatedAt": "2025-05-08T15:08:05.568Z"
       }
     ]
   },

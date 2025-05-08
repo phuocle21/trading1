@@ -43,8 +43,8 @@ async function loadData<T>(filePath: string, defaultData: T): Promise<T> {
   return defaultData;
 }
 
-// Lấy ID người dùng hiện tại
-function getCurrentUserId(): string | null {
+// Lấy ID người dùng hiện tại - đã sửa để sử dụng async/await
+async function getCurrentUserId(): Promise<string | null> {
   const cookieStore = cookies();
   const userIdCookie = cookieStore.get('userId');
   return userIdCookie ? userIdCookie.value : null;
@@ -57,7 +57,7 @@ export async function getJournalData(): Promise<JournalData> {
 
 // Lấy journals của người dùng hiện tại
 export async function getJournals(): Promise<Journal[]> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) return [];
   
   const data = await getJournalData();
@@ -72,7 +72,7 @@ export async function getUserJournals(userId: string): Promise<Journal[]> {
 
 // Lưu journals cho người dùng hiện tại
 export async function saveJournals(journals: Journal[]): Promise<void> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error('No user is logged in');
   
   const data = await getJournalData();
@@ -88,7 +88,7 @@ export async function getJournalById(id: string): Promise<Journal | undefined> {
 
 // Lấy ID journal hiện tại của người dùng đăng nhập
 export async function getCurrentJournalId(): Promise<string | undefined> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) return undefined;
   
   const data = await getJournalData();
@@ -97,7 +97,7 @@ export async function getCurrentJournalId(): Promise<string | undefined> {
 
 // Đặt ID journal hiện tại cho người dùng đăng nhập
 export async function setCurrentJournalId(journalId: string): Promise<void> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error('No user is logged in');
   
   const data = await getJournalData();
@@ -124,7 +124,7 @@ interface UserPreferences {
 }
 
 export async function getUserPreferences(): Promise<UserPreferences[string]> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) return {};
   
   const prefs = await loadData<UserPreferences>(USER_PREFERENCES_FILE, {});
@@ -132,7 +132,7 @@ export async function getUserPreferences(): Promise<UserPreferences[string]> {
 }
 
 export async function saveUserPreferences(preferences: UserPreferences[string]): Promise<void> {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error('No user is logged in');
   
   const prefs = await loadData<UserPreferences>(USER_PREFERENCES_FILE, {});
