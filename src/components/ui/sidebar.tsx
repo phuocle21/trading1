@@ -692,7 +692,7 @@ const SidebarMenuSub = React.forwardRef<
     data-sidebar="menu-sub"
     className={cn(
       "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
-      "group-data-[collapsible=icon]:hidden",
+      "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:border-0",
       className
     )}
     {...props}
@@ -727,7 +727,7 @@ const SidebarMenuSubButton = React.forwardRef<
         "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
         size === "sm" && "text-xs",
         size === "md" && "text-sm",
-        "group-data-[collapsible=icon]:hidden",
+        "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1",
         className
       )}
       {...props}

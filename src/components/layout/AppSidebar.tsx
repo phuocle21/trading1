@@ -10,7 +10,9 @@ import {
   BookOpenText,
   ChevronLeft,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import {
   Sidebar,
@@ -68,28 +70,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="px-4 py-5 flex justify-between items-center">
+      <SidebarHeader className="px-4 py-5">
         <Link href="/dashboard" className="flex items-center gap-2 text-sidebar-foreground hover:text-sidebar-primary transition-colors">
           <BarChartBig className="h-7 w-7 text-sidebar-primary" />
           <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
             {t('app.name')}
           </span>
         </Link>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8 rounded-full bg-sidebar-accent/10 border-sidebar-accent/20 hover:bg-sidebar-accent/20 hover:border-sidebar-accent/30 text-sidebar-foreground hidden md:flex"
-          onClick={() => setOpen(!open)}
-        >
-          {state === "expanded" ? (
-            <ChevronLeft className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-          <span className="sr-only">
-            {state === "expanded" ? t('sidebar.collapseSidebar') : t('sidebar.expandSidebar')}
-          </span>
-        </Button>
       </SidebarHeader>
       
       <SidebarContent className="px-2">
@@ -108,7 +95,8 @@ export function AppSidebar() {
                     "justify-start mb-1 font-medium",
                     (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
@@ -138,7 +126,8 @@ export function AppSidebar() {
                     "justify-start mb-1",
                     pathname === item.href
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                      : "bg-sidebar-accent/10 hover:bg-sidebar-accent/20"
+                      : "bg-sidebar-accent/10 hover:bg-sidebar-accent/20",
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
@@ -151,7 +140,30 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="flex flex-col gap-3 p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "hidden md:flex w-full justify-between items-center px-3 py-2 rounded-md border border-sidebar-border/50",
+            "hover:bg-sidebar-accent/15 hover:border-sidebar-accent/40 transition-all",
+            "text-sidebar-foreground/80 hover:text-sidebar-foreground",
+            "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          )}
+          onClick={() => setOpen(!open)}
+        >
+          {state === "expanded" ? (
+            <>
+              <PanelLeftClose className="h-4 w-4 mr-2" />
+              <span className="text-sm">{t('sidebar.collapseSidebar')}</span>
+              <ChevronLeft className="h-4 w-4 ml-auto" />
+            </>
+          ) : (
+            <div className="mx-auto flex items-center justify-center">
+              <PanelLeftOpen className="h-4 w-4" />
+            </div>
+          )}
+        </Button>
+        
         <p className="text-xs text-sidebar-foreground/70 text-center">
           &copy; {new Date().getFullYear()} {t('app.name')}
         </p>
