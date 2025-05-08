@@ -34,6 +34,7 @@ interface PlaybookContextType {
   updatePlaybook: (playbook: Playbook) => Promise<Playbook | null>;
   deletePlaybook: (id: string) => Promise<boolean>;
   getPlaybookById: (id: string) => Playbook | undefined;
+  isAuthReady: boolean;
 }
 
 // Create the context
@@ -46,16 +47,36 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { currentUser: user, loading: authLoading } = useAuth();
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+
+  // Đợi cho quá trình xác thực hoàn tất
+  useEffect(() => {
+    if (!authLoading) {
+      setIsAuthReady(true);
+      if (user) {
+        console.log("Auth ready, user ID:", user.id);
+      } else {
+        console.log("Auth ready, no user logged in");
+      }
+    }
+  }, [authLoading, user]);
 
   // Fetch all playbooks for the current user
   const fetchPlaybooks = async () => {
+    if (authLoading) {
+      console.log("Auth loading, delaying fetchPlaybooks");
+      return; // Đợi cho đến khi trạng thái xác thực được xác định
+    }
+
     if (!user?.id) {
+      console.log("No user found, clearing playbooks");
       setPlaybooks([]);
       setLoading(false);
       return;
     }
 
+    console.log("Fetching playbooks for user ID:", user.id);
     setLoading(true);
     setError(null);
 
@@ -68,6 +89,7 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
       
       const data = await response.json();
       setPlaybooks(data.playbooks || []);
+      console.log("Playbooks fetched successfully:", data.playbooks?.length || 0);
     } catch (err) {
       console.error('Failed to fetch playbooks:', err);
       setError('Failed to fetch playbooks');
@@ -78,7 +100,18 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
 
   // Add a new playbook
   const addPlaybook = async (playbookData: Omit<Playbook, 'id' | 'winRate' | 'avgProfit' | 'totalTrades'>) => {
+    if (authLoading) {
+      console.log("Auth still loading, can't add playbook yet");
+      toast({
+        title: t('error'),
+        description: t('errors.waitingForAuth'),
+        variant: 'destructive',
+      });
+      return null;
+    }
+
     if (!user?.id) {
+      console.log("No user ID found when trying to add playbook");
       toast({
         title: t('error'),
         description: t('errors.notLoggedIn'),
@@ -87,6 +120,7 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    console.log("Adding playbook for user ID:", user.id);
     try {
       const response = await fetch('/api/playbooks', {
         method: 'POST',
@@ -100,7 +134,9 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
+        const errorData = await response.json();
+        console.error("API error response:", errorData);
+        throw new Error(errorData.error || `Error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -113,6 +149,7 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
         description: t('playbooks.playbookCreatedDesc').replace('{name}', newPlaybook.name),
       });
       
+      console.log("Playbook added successfully:", newPlaybook.id);
       return newPlaybook;
     } catch (err) {
       console.error('Failed to add playbook:', err);
@@ -127,6 +164,15 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
 
   // Update an existing playbook
   const updatePlaybook = async (playbook: Playbook) => {
+    if (authLoading) {
+      toast({
+        title: t('error'),
+        description: t('errors.waitingForAuth'),
+        variant: 'destructive',
+      });
+      return null;
+    }
+
     if (!user?.id) {
       toast({
         title: t('error'),
@@ -178,6 +224,15 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
 
   // Delete a playbook
   const deletePlaybook = async (id: string) => {
+    if (authLoading) {
+      toast({
+        title: t('error'),
+        description: t('errors.waitingForAuth'),
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     if (!user?.id) {
       toast({
         title: t('error'),
@@ -222,9 +277,12 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
 
   // Fetch playbooks on mount and when user changes
   useEffect(() => {
-    fetchPlaybooks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Only re-run when the user ID changes
+    if (isAuthReady) {
+      console.log("Auth is ready, fetching playbooks");
+      fetchPlaybooks();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthReady, user?.id]); // Re-run when auth is ready or user changes
 
   // Create the context value
   const contextValue: PlaybookContextType = {
@@ -236,6 +294,7 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
     updatePlaybook,
     deletePlaybook,
     getPlaybookById,
+    isAuthReady
   };
 
   return (

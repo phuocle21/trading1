@@ -1,0 +1,21 @@
+{
+  "admin-uid": [
+    {
+      "id": "94854f1b-2d4e-423d-97fb-8fc2f811a7d6",
+      "name": "ACBBIBI",
+      "strategy": "Trend Following Breakout",
+      "timeframe": "",
+      "setupCriteria": "Trend Following Breakout",
+      "entryTriggers": "Trend Following Breakout",
+      "exitRules": "Trend Following Breakout",
+      "riskManagement": "",
+      "notes": "",
+      "userId": "admin-uid",
+      "createdAt": "2025-05-08T16:05:06.129Z",
+      "updatedAt": "2025-05-08T16:05:31.336Z",
+      "winRate": 0,
+      "avgProfit": 0,
+      "totalTrades": 0
+    }
+  ]
+}
