@@ -598,38 +598,6 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
 
                     <FormField
                       control={form.control}
-                      name="setup"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('tradeForm.setupPattern')}</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            value={field.value || undefined}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={t('tradeForm.selectPattern')} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="breakout">{t('tradeForm.patterns.breakout')}</SelectItem>
-                              <SelectItem value="pullback">{t('tradeForm.patterns.pullback')}</SelectItem>
-                              <SelectItem value="trend_following">{t('tradeForm.patterns.trendFollowing')}</SelectItem>
-                              <SelectItem value="reversal">{t('tradeForm.patterns.reversal')}</SelectItem>
-                              <SelectItem value="gap_fill">{t('tradeForm.patterns.gapFill')}</SelectItem>
-                              <SelectItem value="support_resistance">{t('tradeForm.patterns.supportResistance')}</SelectItem>
-                              <SelectItem value="earnings_play">{t('tradeForm.patterns.earningsPlay')}</SelectItem>
-                              <SelectItem value="news_event">{t('tradeForm.patterns.newsEvent')}</SelectItem>
-                              <SelectItem value="other">{t('tradeForm.patterns.other')}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="risk"
                       render={({ field }) => (
                         <FormItem>
