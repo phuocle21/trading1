@@ -26,6 +26,7 @@ import {
 import type { Trade } from '@/types';
 import { useJournals } from '@/contexts/JournalContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePlaybooks } from '@/contexts/PlaybookContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -93,45 +94,10 @@ interface Playbook {
 
 export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   const { currentJournalId, addTradeToJournal, updateTradeInJournal } = useJournals();
+  const { playbooks } = usePlaybooks();
   const { t } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
-  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
-
-  useEffect(() => {
-    const mockPlaybooks = [
-      {
-        id: "1",
-        name: "Trend Following Breakout",
-        strategy: "Momentum strategy that captures breakouts from consolidation periods",
-        timeframe: "Daily",
-        setupCriteria: "Price in a consolidation pattern for at least 10 days with decreasing volume",
-        entryTriggers: "Price breaks above the upper trendline or resistance with increased volume",
-        exitRules: "Either a trailing stop at 2x ATR or when price closes below a 20-day moving average",
-        riskManagement: "Risk 1% per trade, with position sizing calculated based on the distance to stop loss",
-        notes: "Works best in trending markets, avoid during choppy or sideways markets",
-        winRate: 62,
-        avgProfit: 2.8,
-        totalTrades: 48,
-      },
-      {
-        id: "2",
-        name: "Pullback Strategy",
-        strategy: "Buy pullbacks in an established uptrend",
-        timeframe: "4-hour",
-        setupCriteria: "Stock in an uptrend with moving averages aligned (8EMA > 21EMA > 50SMA)",
-        entryTriggers: "Price pulls back to the 21 EMA and shows a reversal candlestick pattern",
-        exitRules: "Take profit at previous swing high or 3:1 reward:risk ratio",
-        riskManagement: "Stop loss below the swing low of the pullback or below the 50 SMA",
-        notes: "Confirm with RSI showing bullish divergence for better results",
-        winRate: 58,
-        avgProfit: 2.1,
-        totalTrades: 65,
-      },
-    ];
-    
-    setPlaybooks(mockPlaybooks);
-  }, []);
 
   const convertInitialData = useCallback((data: Trade): Partial<TradeFormValues> => {
     let entryDateTime: Date | null = null;
@@ -261,6 +227,8 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     }
     router.push('/history');
   };
+
+  const selectedPlaybookDetails = playbooks.find(p => p.id === selectedPlaybook);
 
   return (
     <Card className="w-full max-w-screen-2xl mx-auto shadow-lg border-t-4 border-t-primary">
@@ -612,12 +580,12 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                           </Select>
                           <FormDescription>
                             {t('tradeForm.playbookDescription')}
-                            {selectedPlaybook && (
+                            {selectedPlaybookDetails && (
                               <Button
                                 type="button"
                                 variant="link"
                                 className="p-0 h-auto text-xs text-primary"
-                                onClick={() => router.push(`/playbooks?id=${selectedPlaybook}`)}
+                                onClick={() => router.push(`/playbooks?view=${selectedPlaybookDetails.id}`)}
                               >
                                 {t('tradeForm.viewSelectedPlaybook')}
                               </Button>
