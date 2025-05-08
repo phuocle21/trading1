@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Giao Dịch Vàng",
+    "description": "",
+    "icon": "chart",
+    "color": "#e5e048",
+    "trades": [
+      {
+        "entryDate": "2025-05-08",
+        "entryTime": "21:44",
+        "symbol": "BTC",
+        "tradeType": "buy",
+        "quantity": 1,
+        "entryPrice": 111111,
+        "fees": 0,
+        "id": "2bfac0c8-1b9d-4329-8629-3718e19e60f9"
+      }
+    ],
+    "settings": {
+      "initialCapital": 10000,
+      "currency": "USD"
+    },
+    "id": "8c196521-0f40-4781-83e3-d69572347a9d",
+    "createdAt": "2025-05-08T14:43:50.522Z",
+    "updatedAt": "2025-05-08T14:44:48.427Z"
+  }
+]

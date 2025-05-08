@@ -1,0 +1,18 @@
+{
+  "admin-uid": {
+    "email": "mrtinanpha@gmail.com",
+    "password": "VGluQDEyMw==",
+    "isAdmin": true,
+    "isApproved": true,
+    "createdAt": 1746715404097,
+    "lastLogin": 1746715538533
+  },
+  "user-1746715567065-rx1r0qs7f": {
+    "email": "acb@123.com",
+    "password": "MTIzNDU2",
+    "isAdmin": false,
+    "isApproved": true,
+    "createdAt": 1746715567065,
+    "lastLogin": 1746715603884
+  }
+}

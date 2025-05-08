@@ -7,7 +7,7 @@ export interface User {
   id: string;
   email: string;
   isAdmin: boolean;
-  isApproved: boolean; // Thêm trạng thái phê duyệt
+  isApproved: boolean;
   createdAt: number;
   lastLogin: number;
 }
@@ -23,117 +23,100 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   getUsersList: () => Promise<User[]>;
   updateUserAdmin: (userId: string, isAdmin: boolean) => Promise<void>;
-  approveUser: (userId: string, isApproved: boolean) => Promise<void>; // Thêm phương thức phê duyệt
+  approveUser: (userId: string, isApproved: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Local storage keys
-const USER_STORAGE_KEY = 'trading_app_users';
-const CURRENT_USER_KEY = 'trading_app_current_user';
-
-// Simple encryption/decryption for password storage
-const encryptPassword = (password: string): string => {
-  // In a real app, you'd use a proper encryption library
-  // This is a simple base64 encoding which is NOT secure for production
-  return btoa(password);
-};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize users array from localStorage
-  const getUsers = (): Record<string, { email: string; password: string; isAdmin: boolean; isApproved: boolean; createdAt: number; lastLogin: number }> => {
-    if (typeof window === 'undefined') return {};
-    
-    const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
-    if (!storedUsers) {
-      // Initialize with admin user if no users exist
-      const adminUser = {
-        "admin-uid": {
-          email: "mrtinanpha@gmail.com",
-          password: encryptPassword("Tin@123"),
-          isAdmin: true,
-          isApproved: true, // Admin mặc định được phê duyệt
-          createdAt: Date.now(),
-          lastLogin: Date.now()
-        }
-      };
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
-      return adminUser;
-    }
-    
-    return JSON.parse(storedUsers);
-  };
-
-  // Save users to localStorage
-  const saveUsers = (users: Record<string, any>) => {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(users));
-  };
-
-  // Load current user from localStorage on startup
+  // Load current user from server on startup
   useEffect(() => {
-    const loadUser = () => {
-      if (typeof window === 'undefined') {
+    const loadUser = async () => {
+      try {
+        // Sửa đường dẫn
+        const response = await fetch('/api/user?path=current');
+        
+        // Kiểm tra content type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Failed to load current user: Response is not JSON');
+          setLoading(false);
+          return;
+        }
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            setCurrentUser(data.user);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load current user:", error);
+      } finally {
         setLoading(false);
-        return;
       }
-      
-      const storedUser = localStorage.getItem(CURRENT_USER_KEY);
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
-      }
-      setLoading(false);
     };
 
     loadUser();
   }, []);
 
-  // Generate a unique ID (simplified version)
-  const generateUserId = () => {
-    return `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
-
   // User registration
   const signUp = async (email: string, password: string): Promise<User> => {
     setLoading(true);
     try {
-      // Check if email already exists
-      const users = getUsers();
-      const userExists = Object.values(users).some(user => user.email === email);
+      console.log(`Attempting to sign up user: ${email}`);
       
-      if (userExists) {
-        throw new Error("Email already in use");
+      // Sửa đường dẫn API
+      const response = await fetch('/api/user?path=signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      // Kiểm tra content type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error(`API returned non-JSON response: ${contentType}`);
+        const text = await response.text();
+        console.error('Response text:', text);
+        throw new Error("Server error: Received HTML instead of JSON. Please check server logs.");
       }
 
-      // Create new user
-      const userId = generateUserId();
-      const newUser: User = {
-        id: userId,
-        email: email,
-        isAdmin: false, // Only the predefined admin is admin
-        isApproved: false, // Người dùng mới chưa được phê duyệt
-        createdAt: Date.now(),
-        lastLogin: Date.now()
-      };
+      if (!response.ok) {
+        let errorMessage = "Failed to sign up";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        throw new Error(errorMessage);
+      }
 
-      // Save the user with password
-      users[userId] = {
-        email: email,
-        password: encryptPassword(password),
-        isAdmin: newUser.isAdmin,
-        isApproved: newUser.isApproved,
-        createdAt: newUser.createdAt,
-        lastLogin: newUser.lastLogin
-      };
-      saveUsers(users);
-
-      // Set as current user
-      setCurrentUser(newUser);
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-
-      return newUser;
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error("Failed to parse JSON response:", error);
+        throw new Error("Invalid response from server. Please try again later.");
+      }
+      
+      if (!data.user) {
+        console.error("No user data in response:", data);
+        throw new Error("Invalid response format from server");
+      }
+      
+      console.log(`User signed up successfully: ${data.user.email}`);
+      setCurrentUser(data.user);
+      return data.user;
+    } catch (error) {
+      console.error("Sign up error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -143,44 +126,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string): Promise<User> => {
     setLoading(true);
     try {
-      const users = getUsers();
-      const userEntry = Object.entries(users).find(([_, user]) => user.email === email);
+      console.log(`Attempting to sign in user: ${email}`);
+      
+      // Thay đổi đường dẫn từ /api/user/signin thành /api/user với path=signin
+      const response = await fetch('/api/user?path=signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-      if (!userEntry || userEntry[1].password !== encryptPassword(password)) {
-        throw new Error("Invalid email or password");
+      // Kiểm tra content type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error(`API returned non-JSON response: ${contentType}`);
+        // Lấy và log nội dung text để debug
+        const text = await response.text();
+        console.error('Response text:', text);
+        throw new Error("Server error: Received HTML instead of JSON. Please check server logs.");
       }
 
-      const [userId, userData] = userEntry;
+      if (!response.ok) {
+        let errorMessage = "Invalid email or password";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        throw new Error(errorMessage);
+      }
 
-      // Cho phép admin đăng nhập bất kể trạng thái phê duyệt
-      if (!userData.isApproved && !userData.isAdmin) {
-        throw new Error("User is not approved");
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error("Failed to parse JSON response:", error);
+        throw new Error("Invalid response from server. Please try again later.");
       }
       
-      // Nếu là admin chưa được phê duyệt, tự động phê duyệt
-      if (userData.isAdmin && !userData.isApproved) {
-        userData.isApproved = true;
+      if (!data.user) {
+        console.error("No user data in response:", data);
+        throw new Error("Invalid response format from server");
       }
       
-      // Update last login
-      userData.lastLogin = Date.now();
-      users[userId] = userData;
-      saveUsers(users);
-
-      // Create user object without password
-      const user: User = {
-        id: userId,
-        email: userData.email,
-        isAdmin: userData.isAdmin,
-        isApproved: userData.isApproved,
-        createdAt: userData.createdAt,
-        lastLogin: userData.lastLogin
-      };
-
-      setCurrentUser(user);
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-
-      return user;
+      console.log(`User signed in successfully: ${data.user.email}`);
+      setCurrentUser(data.user);
+      return data.user;
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -188,8 +184,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // User logout
   const signOut = async (): Promise<void> => {
-    setCurrentUser(null);
-    localStorage.removeItem(CURRENT_USER_KEY);
+    try {
+      // Sửa đường dẫn API
+      await fetch('/api/user?path=signout', {
+        method: 'POST'
+      });
+      setCurrentUser(null);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   // Change password
@@ -198,30 +201,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("No user is signed in");
     }
     
-    const users = getUsers();
-    const userId = currentUser.id;
-    const userData = users[userId];
-    
-    if (!userData || userData.password !== encryptPassword(currentPassword)) {
-      throw new Error("Current password is incorrect");
+    // Sửa đường dẫn API
+    const response = await fetch('/api/user?path=change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        currentPassword, 
+        newPassword 
+      })
+    });
+
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
     }
-    
-    userData.password = encryptPassword(newPassword);
-    users[userId] = userData;
-    saveUsers(users);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to change password");
+    }
   };
 
-  // Reset password (simplified - in a real app, you'd send an email)
+  // Reset password
   const resetPassword = async (email: string): Promise<void> => {
-    const users = getUsers();
-    const userFound = Object.values(users).some(user => user.email === email);
-    
-    if (!userFound) {
-      throw new Error("No account found with this email");
+    // Sửa đường dẫn API
+    const response = await fetch('/api/user?path=reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    });
+
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
+    }
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to reset password");
     }
     
-    // In a real app, send an email with reset instructions
-    // For now, just throw a message that would typically be displayed to the user
+    // In a real app, an email would be sent with reset instructions
     throw new Error("If this email exists in our system, password reset instructions have been sent.");
   };
 
@@ -231,15 +263,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Permission denied: Only admins can access user list");
     }
 
-    const users = getUsers();
-    return Object.entries(users).map(([id, userData]) => ({
-      id,
-      email: userData.email,
-      isAdmin: userData.isAdmin,
-      isApproved: userData.isApproved,
-      createdAt: userData.createdAt,
-      lastLogin: userData.lastLogin
-    }));
+    // Sửa đường dẫn API
+    const response = await fetch('/api/user?path=list');
+    
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
+    }
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to get users list");
+    }
+
+    const data = await response.json();
+    return data.users;
   };
 
   // Update user admin status (admin only)
@@ -248,24 +290,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Permission denied: Only admins can update user status");
     }
 
-    const users = getUsers();
-    if (!users[userId]) {
-      throw new Error("User not found");
+    // Sửa đường dẫn API
+    const response = await fetch('/api/user?path=update-admin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId, isAdmin })
+    });
+
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
     }
 
-    // Don't allow changing the original admin's status
-    if (users[userId].email === "mrtinanpha@gmail.com") {
-      throw new Error("Cannot change status of the primary admin");
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update user admin status");
     }
-
-    users[userId].isAdmin = isAdmin;
-    
-    // Nếu người dùng được cấp quyền admin, tự động phê duyệt họ
-    if (isAdmin) {
-      users[userId].isApproved = true;
-    }
-    
-    saveUsers(users);
   };
 
   // Approve user (admin only)
@@ -274,13 +320,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Permission denied: Only admins can approve users");
     }
 
-    const users = getUsers();
-    if (!users[userId]) {
-      throw new Error("User not found");
+    // Sửa đường dẫn API
+    const response = await fetch('/api/user?path=approve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId, isApproved })
+    });
+
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
     }
 
-    users[userId].isApproved = isApproved;
-    saveUsers(users);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to approve user");
+    }
   };
 
   const value = {
@@ -293,7 +354,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     getUsersList,
     updateUserAdmin,
-    approveUser // Thêm phương thức phê duyệt vào context
+    approveUser
   };
 
   return (

@@ -5,6 +5,48 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import type { Journal, Trade } from '@/types';
 import { generateDemoTrades } from '@/lib/demo-data';
 
+// Hàm trợ giúp để xử lý fetch API và phân tích JSON an toàn
+async function safeFetch(url: string, options?: RequestInit) {
+  try {
+    console.log(`Fetching ${options?.method || 'GET'} ${url}`);
+    const response = await fetch(url, options);
+    
+    // Kiểm tra content-type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`Expected JSON but got ${contentType || 'unknown content type'}`);
+      throw new Error(`API returned non-JSON response: ${contentType}`);
+    }
+    
+    // Kiểm tra status code
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorInfo;
+      try {
+        errorInfo = JSON.parse(errorText);
+      } catch (e) {
+        console.error(`Non-JSON error from API: ${errorText}`);
+        errorInfo = { error: `Status ${response.status}: ${response.statusText}` };
+      }
+      throw new Error(errorInfo.error || `API error: ${response.status}`);
+    }
+    
+    // Parse JSON
+    try {
+      const data = await response.json();
+      return { data, response };
+    } catch (error) {
+      console.error('Failed to parse JSON response:', error);
+      const rawText = await response.text();
+      console.error('Raw response:', rawText);
+      throw new Error('Invalid JSON response from server');
+    }
+  } catch (error) {
+    console.error(`API request failed: ${url}`, error);
+    throw error;
+  }
+}
+
 interface JournalContextType {
   journals: Journal[];
   currentJournalId: string | null;
@@ -18,12 +60,10 @@ interface JournalContextType {
   deleteTradeFromJournal: (journalId: string, tradeId: string) => void;
   createTemplateJournal: (templateName: string) => Journal;
   isLoading: boolean;
+  error: string | null;
 }
 
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
-
-const LOCAL_STORAGE_KEY = 'tradeInsightsJournals';
-const CURRENT_JOURNAL_KEY = 'tradeInsightsCurrentJournal';
 
 // Sample journal templates
 const journalTemplates = {
@@ -120,118 +160,197 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   const [journals, setJournals] = useState<Journal[]>([]);
   const [currentJournalId, setCurrentJournalId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Initialize journals from localStorage
+  // Initialize journals from server
   useEffect(() => {
     setIsLoading(true);
-    try {
-      // Load journals
-      const storedJournals = localStorage.getItem(LOCAL_STORAGE_KEY);
-      let journalData: Journal[] = [];
-      
-      if (storedJournals) {
-        journalData = JSON.parse(storedJournals);
-      } else {
-        // Create a default journal if none exists
-        const defaultJournal: Journal = {
-          id: crypto.randomUUID(),
-          name: "My Trading Journal",
-          description: "Your primary trading journal",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          icon: "chart",
-          color: "#4f46e5",
-          isDefault: true,
-          trades: generateDemoTrades(10), // Add some demo trades to get started
-          settings: {
-            currency: "USD",
-            initialCapital: 10000,
-            riskPercentage: 1,
-          }
-        };
-        journalData = [defaultJournal];
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(journalData));
-      }
-      
-      setJournals(journalData);
-      
-      // Load current journal ID
-      const storedCurrentJournalId = localStorage.getItem(CURRENT_JOURNAL_KEY);
-      if (storedCurrentJournalId && journalData.some(j => j.id === storedCurrentJournalId)) {
-        setCurrentJournalId(storedCurrentJournalId);
-      } else if (journalData.length > 0) {
-        // Set the first journal as current if no valid current journal ID
-        const defaultJournal = journalData.find(j => j.isDefault) || journalData[0];
-        setCurrentJournalId(defaultJournal.id);
-        localStorage.setItem(CURRENT_JOURNAL_KEY, defaultJournal.id);
-      }
-      
-    } catch (error) {
-      console.error("Failed to load journals from localStorage", error);
-    }
-    setIsLoading(false);
-  }, []);
-
-  // Save journals to localStorage when they change
-  useEffect(() => {
-    if (!isLoading) { 
+    setError(null);
+    
+    const fetchJournals = async () => {
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(journals));
+        const { data } = await safeFetch('/api/journals');
+        
+        if (data.journals && Array.isArray(data.journals)) {
+          console.log(`Loaded ${data.journals.length} journals from server`);
+          setJournals(data.journals);
+          
+          // Set current journal ID
+          if (data.currentJournalId && data.journals.some(j => j.id === data.currentJournalId)) {
+            console.log(`Setting current journal to ${data.currentJournalId}`);
+            setCurrentJournalId(data.currentJournalId);
+          } else if (data.journals.length > 0) {
+            // Set the first journal as current if no valid current journal ID
+            const defaultJournal = data.journals.find(j => j.isDefault) || data.journals[0];
+            console.log(`No current journal set, defaulting to ${defaultJournal.id}`);
+            setCurrentJournalId(defaultJournal.id);
+            
+            // Update the current journal ID on the server
+            await safeFetch('/api/journals', {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ journalId: defaultJournal.id })
+            });
+          }
+        } else if (!data.journals || data.journals.length === 0) {
+          console.log('No journals found, creating default journal');
+          // Create a default journal if none exists
+          const defaultJournal: Journal = {
+            id: crypto.randomUUID(),
+            name: "My Trading Journal",
+            description: "Your primary trading journal",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            icon: "chart",
+            color: "#4f46e5",
+            isDefault: true,
+            trades: generateDemoTrades(10), // Add some demo trades to get started
+            settings: {
+              currency: "USD",
+              initialCapital: 10000,
+              riskPercentage: 1,
+            }
+          };
+          
+          const { data: createData } = await safeFetch('/api/journals', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ journal: defaultJournal })
+          });
+          
+          console.log('Default journal created', createData.journal.id);
+          setJournals([createData.journal]);
+          setCurrentJournalId(createData.journal.id);
+          
+          // Set the current journal ID on the server
+          await safeFetch('/api/journals', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ journalId: createData.journal.id })
+          });
+        }
       } catch (error) {
-        console.error("Failed to save journals to localStorage", error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error("Failed to load journals from server", errorMessage);
+        setError(`Failed to load journals: ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [journals, isLoading]);
-
-  // Save current journal ID to localStorage when it changes
-  useEffect(() => {
-    if (currentJournalId && !isLoading) {
-      localStorage.setItem(CURRENT_JOURNAL_KEY, currentJournalId);
-    }
-  }, [currentJournalId, isLoading]);
-
-  const addJournal = useCallback((journalData: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const timestamp = new Date().toISOString();
-    const newJournal: Journal = {
-      ...journalData,
-      id: crypto.randomUUID(),
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      trades: journalData.trades || []
     };
     
-    setJournals((prevJournals) => [...prevJournals, newJournal]);
-    return newJournal;
+    fetchJournals();
   }, []);
 
-  const updateJournal = useCallback((updatedJournal: Journal) => {
-    setJournals((prevJournals) => 
-      prevJournals.map(journal => 
-        journal.id === updatedJournal.id 
-          ? { ...updatedJournal, updatedAt: new Date().toISOString() } 
-          : journal
-      )
-    );
+  // No need to watch for changes in journals as we now update the server
+  // when changes are made via the methods below
+
+  const addJournal = useCallback(async (journalData: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const { data } = await safeFetch('/api/journals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ journal: journalData })
+      });
+      
+      const newJournal = data.journal;
+      console.log('Journal added successfully', newJournal.id);
+      
+      setJournals(prevJournals => [...prevJournals, newJournal]);
+      return newJournal;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error adding journal:', errorMessage);
+      throw new Error(`Failed to add journal: ${errorMessage}`);
+    }
   }, []);
 
-  const deleteJournal = useCallback((journalId: string) => {
-    setJournals((prevJournals) => {
-      const filteredJournals = prevJournals.filter(journal => journal.id !== journalId);
+  const updateJournal = useCallback(async (updatedJournal: Journal) => {
+    try {
+      const { data } = await safeFetch('/api/journals', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: updatedJournal.id, journal: updatedJournal })
+      });
       
-      // If we're deleting the current journal, switch to another one
-      if (journalId === currentJournalId && filteredJournals.length > 0) {
-        const newCurrentJournal = filteredJournals[0];
-        setCurrentJournalId(newCurrentJournal.id);
-        localStorage.setItem(CURRENT_JOURNAL_KEY, newCurrentJournal.id);
-      }
+      console.log('Journal updated successfully', updatedJournal.id);
       
-      return filteredJournals;
-    });
+      setJournals(prevJournals => 
+        prevJournals.map(journal => 
+          journal.id === updatedJournal.id ? data.journal : journal
+        )
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error updating journal:', errorMessage);
+      throw new Error(`Failed to update journal: ${errorMessage}`);
+    }
+  }, []);
+
+  const deleteJournal = useCallback(async (journalId: string) => {
+    try {
+      await safeFetch(`/api/journals?id=${journalId}`, {
+        method: 'DELETE'
+      });
+      
+      console.log('Journal deleted successfully', journalId);
+      
+      setJournals(prevJournals => {
+        const filteredJournals = prevJournals.filter(journal => journal.id !== journalId);
+        
+        // If we're deleting the current journal, switch to another one
+        if (journalId === currentJournalId && filteredJournals.length > 0) {
+          const newCurrentJournal = filteredJournals[0];
+          setCurrentJournalId(newCurrentJournal.id);
+          
+          // Update the current journal ID on the server
+          safeFetch('/api/journals', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ journalId: newCurrentJournal.id })
+          }).catch(error => {
+            console.error('Error updating current journal after delete:', error);
+          });
+        }
+        
+        return filteredJournals;
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error deleting journal:', errorMessage);
+      throw new Error(`Failed to delete journal: ${errorMessage}`);
+    }
   }, [currentJournalId]);
 
-  const switchJournal = useCallback((journalId: string) => {
+  const switchJournal = useCallback(async (journalId: string) => {
     if (journals.some(journal => journal.id === journalId)) {
-      setCurrentJournalId(journalId);
+      try {
+        await safeFetch('/api/journals', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ journalId })
+        });
+        
+        console.log('Switched to journal', journalId);
+        setCurrentJournalId(journalId);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error switching journal:', errorMessage);
+        throw new Error(`Failed to switch journal: ${errorMessage}`);
+      }
     }
   }, [journals]);
 
@@ -239,61 +358,118 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     return journals.find(journal => journal.id === currentJournalId);
   }, [journals, currentJournalId]);
 
-  const addTradeToJournal = useCallback((journalId: string, tradeData: Omit<Trade, 'id'>) => {
-    const newTrade: Trade = {
-      ...tradeData,
-      id: crypto.randomUUID(),
-    };
-    
-    setJournals(prevJournals => 
-      prevJournals.map(journal => {
-        if (journal.id === journalId) {
-          return {
-            ...journal,
-            trades: [...journal.trades, newTrade],
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return journal;
-      })
-    );
-    
-    return newTrade;
-  }, []);
+  const addTradeToJournal = useCallback(async (journalId: string, tradeData: Omit<Trade, 'id'>) => {
+    try {
+      const newTrade: Trade = {
+        ...tradeData,
+        id: crypto.randomUUID(),
+      };
+      
+      const journal = journals.find(j => j.id === journalId);
+      
+      if (!journal) {
+        throw new Error('Journal not found');
+      }
+      
+      const updatedJournal = {
+        ...journal,
+        trades: [...journal.trades, newTrade],
+        updatedAt: new Date().toISOString()
+      };
+      
+      const { data } = await safeFetch('/api/journals', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+      });
+      
+      console.log('Trade added to journal successfully', newTrade.id);
+      
+      setJournals(prevJournals => 
+        prevJournals.map(j => j.id === journalId ? data.journal : j)
+      );
+      
+      return newTrade;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error adding trade to journal:', errorMessage);
+      throw new Error(`Failed to add trade: ${errorMessage}`);
+    }
+  }, [journals]);
 
-  const updateTradeInJournal = useCallback((journalId: string, updatedTrade: Trade) => {
-    setJournals(prevJournals => 
-      prevJournals.map(journal => {
-        if (journal.id === journalId) {
-          return {
-            ...journal,
-            trades: journal.trades.map(trade => 
-              trade.id === updatedTrade.id ? updatedTrade : trade
-            ),
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return journal;
-      })
-    );
-  }, []);
+  const updateTradeInJournal = useCallback(async (journalId: string, updatedTrade: Trade) => {
+    try {
+      const journal = journals.find(j => j.id === journalId);
+      
+      if (!journal) {
+        throw new Error('Journal not found');
+      }
+      
+      const updatedJournal = {
+        ...journal,
+        trades: journal.trades.map(trade => 
+          trade.id === updatedTrade.id ? updatedTrade : trade
+        ),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const { data } = await safeFetch('/api/journals', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+      });
+      
+      console.log('Trade updated in journal successfully', updatedTrade.id);
+      
+      setJournals(prevJournals => 
+        prevJournals.map(j => j.id === journalId ? data.journal : j)
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error updating trade in journal:', errorMessage);
+      throw new Error(`Failed to update trade: ${errorMessage}`);
+    }
+  }, [journals]);
 
-  const deleteTradeFromJournal = useCallback((journalId: string, tradeId: string) => {
-    setJournals(prevJournals => 
-      prevJournals.map(journal => {
-        if (journal.id === journalId) {
-          return {
-            ...journal,
-            trades: journal.trades.filter(trade => trade.id !== tradeId),
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return journal;
-      })
-    );
-  }, []);
+  const deleteTradeFromJournal = useCallback(async (journalId: string, tradeId: string) => {
+    try {
+      const journal = journals.find(j => j.id === journalId);
+      
+      if (!journal) {
+        throw new Error('Journal not found');
+      }
+      
+      const updatedJournal = {
+        ...journal,
+        trades: journal.trades.filter(trade => trade.id !== tradeId),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const { data } = await safeFetch('/api/journals', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+      });
+      
+      console.log('Trade deleted from journal successfully', tradeId);
+      
+      setJournals(prevJournals => 
+        prevJournals.map(j => j.id === journalId ? data.journal : j)
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error deleting trade from journal:', errorMessage);
+      throw new Error(`Failed to delete trade: ${errorMessage}`);
+    }
+  }, [journals]);
 
-  const createTemplateJournal = useCallback((templateName: string) => {
+  const createTemplateJournal = useCallback(async (templateName: string) => {
     // @ts-ignore
     const template = journalTemplates[templateName] || journalTemplates.stockTrading;
     
@@ -308,8 +484,25 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       trades: []
     };
     
-    setJournals((prevJournals) => [...prevJournals, newJournal]);
-    return newJournal;
+    try {
+      const { data } = await safeFetch('/api/journals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ journal: newJournal })
+      });
+      
+      const createdJournal = data.journal;
+      console.log('Template journal created successfully', createdJournal.id);
+      
+      setJournals(prevJournals => [...prevJournals, createdJournal]);
+      return createdJournal;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error creating template journal:', errorMessage);
+      throw new Error(`Failed to create journal from template: ${errorMessage}`);
+    }
   }, []);
 
   return (
@@ -325,7 +518,8 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       updateTradeInJournal,
       deleteTradeFromJournal,
       createTemplateJournal,
-      isLoading 
+      isLoading,
+      error
     }}>
       {children}
     </JournalContext.Provider>
