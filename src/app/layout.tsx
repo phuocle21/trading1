@@ -22,6 +22,7 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: 'Trade Insights',
   description: 'Track your trading history and analyze performance.',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
 
 export default function RootLayout({
@@ -30,17 +31,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.variable, robotoMono.variable, 'antialiased font-sans')}>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
+      <body className={cn(inter.variable, robotoMono.variable, 'antialiased font-sans overflow-x-hidden')}>
         <LanguageProvider>
           <JournalProvider>
             <SidebarProvider>
               <div className="flex min-h-screen w-full">
                 <AppSidebar />
-                <div className="flex flex-1 flex-col">
+                <div className="flex flex-1 flex-col w-full max-w-full">
                   <Header />
-                  <main className="flex-1 p-4 md:p-6 lg:p-8 bg-secondary/50">
-                    {children}
+                  <main className="flex-1 p-2 sm:p-4 md:p-6 lg:p-8 bg-secondary/50 w-full overflow-x-hidden">
+                    <div className="max-w-full">
+                      {children}
+                    </div>
                   </main>
                 </div>
               </div>
