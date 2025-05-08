@@ -96,11 +96,11 @@ export function AppSidebar() {
                     (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:px-0"
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-5 w-5 group-data-[collapsible=icon]:mx-auto" />
                   <span className="group-data-[collapsible=icon]:hidden ml-2">{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -127,11 +127,11 @@ export function AppSidebar() {
                     pathname === item.href
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                       : "bg-sidebar-accent/10 hover:bg-sidebar-accent/20",
-                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:px-0"
+                    "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto"
                   )}
                   onClick={() => handleMenuItemClick(item.href)}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-5 w-5 group-data-[collapsible=icon]:mx-auto" />
                   <span className="group-data-[collapsible=icon]:hidden ml-2 font-medium">{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
