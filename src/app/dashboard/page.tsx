@@ -14,12 +14,42 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
   const { trades, isLoading, loadDemoData } = useTrades();
   const [activeTab, setActiveTab] = useState("overview");
+  const [timePeriod, setTimePeriod] = useState("all");
 
   const closedTrades = useMemo(() => trades.filter(trade => trade.exitPrice && trade.exitDate), [trades]);
+
+  // Filter trades based on selected time period
+  const filteredTrades = useMemo(() => {
+    if (timePeriod === "all") return closedTrades;
+    
+    const now = new Date();
+    let startDate;
+    
+    switch (timePeriod) {
+      case "7days":
+        startDate = subDays(now, 7);
+        break;
+      case "30days":
+        startDate = subDays(now, 30);
+        break;
+      case "90days":
+        startDate = subDays(now, 90);
+        break;
+      default:
+        return closedTrades;
+    }
+    
+    return closedTrades.filter(trade => {
+      if (!trade.exitDate) return false;
+      const exitDate = new Date(trade.exitDate);
+      return exitDate >= startDate && exitDate <= now;
+    });
+  }, [closedTrades, timePeriod]);
 
   const dashboardStats = useMemo(() => {
     if (isLoading) return {
@@ -37,7 +67,7 @@ export default function DashboardPage() {
     let totalDuration = 0;
     let tradesWithDuration = 0;
 
-    closedTrades.forEach((trade: Trade) => {
+    filteredTrades.forEach((trade: Trade) => {
       const pnl = calculateProfitLoss(trade);
       if (pnl !== null) {
         totalProfitLoss += pnl;
@@ -55,7 +85,7 @@ export default function DashboardPage() {
       }
     });
 
-    const totalClosedTrades = closedTrades.length;
+    const totalClosedTrades = filteredTrades.length;
     const winRate = totalClosedTrades > 0 ? (winningTrades / totalClosedTrades) * 100 : 0;
     const averageTradeDuration = tradesWithDuration > 0 ? totalDuration / tradesWithDuration : 0;
 
@@ -67,7 +97,7 @@ export default function DashboardPage() {
       winningTrades,
       losingTrades,
     };
-  }, [trades, closedTrades, isLoading]);
+  }, [trades, filteredTrades, isLoading]);
   
   if (!isLoading && trades.length === 0) {
     return (
@@ -128,6 +158,9 @@ export default function DashboardPage() {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4 md:space-y-6 mt-4">
+          {/* Monthly Trading Calendar moved to the top */}
+          <TradeCalendar trades={trades} isLoading={isLoading} />
+          
           {openTradesCount > 0 && (
             <Card className="bg-accent/20 border-accent shadow-md">
               <CardHeader className="flex flex-col items-start space-y-2 pb-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
@@ -141,6 +174,38 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Time period selector for the statistics */}
+          <div className="flex justify-end gap-2">
+            <Button 
+              size="sm" 
+              variant={timePeriod === "7days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("7days")}
+            >
+              7 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "30days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("30days")}
+            >
+              30 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "90days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("90days")}
+            >
+              90 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "all" ? "default" : "outline"}
+              onClick={() => setTimePeriod("all")}
+            >
+              All Time
+            </Button>
+          </div>
           
           <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard
@@ -164,7 +229,7 @@ export default function DashboardPage() {
             />
             <StatCard
               title="Total Closed Trades"
-              value={closedTrades.length}
+              value={filteredTrades.length}
               icon={BarChart}
               isLoading={isLoading}
             />
@@ -184,9 +249,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <PerformanceChart trades={closedTrades} isLoading={isLoading} />
-          
-          <TradeCalendar trades={trades} isLoading={isLoading} />
+          <PerformanceChart trades={filteredTrades} isLoading={isLoading} />
           
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => setActiveTab("advanced")}>
@@ -196,9 +259,41 @@ export default function DashboardPage() {
         </TabsContent>
         
         <TabsContent value="advanced" className="space-y-4 md:space-y-6 mt-4">
-          <AccountGrowthChart trades={closedTrades} isLoading={isLoading} initialBalance={10000} />
+          {/* Time period selector for advanced analytics */}
+          <div className="flex justify-end gap-2">
+            <Button 
+              size="sm" 
+              variant={timePeriod === "7days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("7days")}
+            >
+              7 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "30days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("30days")}
+            >
+              30 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "90days" ? "default" : "outline"}
+              onClick={() => setTimePeriod("90days")}
+            >
+              90 Days
+            </Button>
+            <Button 
+              size="sm" 
+              variant={timePeriod === "all" ? "default" : "outline"}
+              onClick={() => setTimePeriod("all")}
+            >
+              All Time
+            </Button>
+          </div>
+
+          <AccountGrowthChart trades={filteredTrades} isLoading={isLoading} initialBalance={10000} />
           
-          <AdvancedAnalytics trades={closedTrades} isLoading={isLoading} />
+          <AdvancedAnalytics trades={filteredTrades} isLoading={isLoading} />
         </TabsContent>
       </Tabs>
     </div>

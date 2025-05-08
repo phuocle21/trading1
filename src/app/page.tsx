@@ -24,17 +24,6 @@ export default function HomePage() {
             <Link href="/features">Learn More</Link>
           </Button>
         </div>
-        
-        <div className="bg-card rounded-lg shadow-xl overflow-hidden max-w-5xl mx-auto">
-          <div className="px-4 py-8 md:p-12 relative">
-            <div className="aspect-video w-full relative bg-muted/50 rounded-lg overflow-hidden">
-              {/* Dashboard preview image would go here - using a placeholder for now */}
-              <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg">
-                <BarChart3 className="w-16 h-16 text-muted-foreground/50" />
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Features Section */}
