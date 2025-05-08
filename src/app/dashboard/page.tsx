@@ -23,6 +23,17 @@ export default function DashboardPage() {
 
   const closedTrades = useMemo(() => trades.filter(trade => trade.exitPrice && trade.exitDate), [trades]);
 
+  // Map dashboard time period to performance chart time period
+  const mapToPerfChartTimePeriod = (dashboardTimePeriod: string): string => {
+    switch (dashboardTimePeriod) {
+      case "7days": return "7d";
+      case "30days": return "30d";
+      case "90days": return "90d";
+      case "all": return "all";
+      default: return "all";
+    }
+  };
+
   // Filter trades based on selected time period
   const filteredTrades = useMemo(() => {
     if (timePeriod === "all") return closedTrades;
@@ -249,7 +260,12 @@ export default function DashboardPage() {
             />
           </div>
 
-          <PerformanceChart trades={filteredTrades} isLoading={isLoading} />
+          <PerformanceChart 
+            trades={filteredTrades} 
+            isLoading={isLoading} 
+            initialTimePeriod={mapToPerfChartTimePeriod(timePeriod)}
+            hideTimePeriodSelector
+          />
           
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => setActiveTab("advanced")}>
