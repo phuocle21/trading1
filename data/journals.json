@@ -51,11 +51,12 @@
             "quantity": 1,
             "entryPrice": 10000,
             "fees": 0,
-            "playbook": "94854f1b-2d4e-423d-97fb-8fc2f811a7d6",
+            "playbook": "f9d6f317-a3be-4082-ab3c-92c8ff2a6137",
             "risk": "medium",
             "mood": "excited",
             "rating": 3,
-            "id": "a1a0fd5a-26c0-495b-a65f-e60c30776107"
+            "id": "a1a0fd5a-26c0-495b-a65f-e60c30776107",
+            "screenshots": []
           },
           {
             "entryDate": "2025-05-09",
@@ -90,7 +91,7 @@
         },
         "id": "8c196521-0f40-4781-83e3-d69572347a9d",
         "createdAt": "2025-05-08T14:43:50.522Z",
-        "updatedAt": "2025-05-09T04:05:53.612Z"
+        "updatedAt": "2025-05-09T04:35:48.537Z"
       }
     ],
     "user-1746715567065-rx1r0qs7f": [

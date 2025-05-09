@@ -1,5 +1,23 @@
 {
-  "admin-uid": [],
+  "admin-uid": [
+    {
+      "id": "f9d6f317-a3be-4082-ab3c-92c8ff2a6137",
+      "name": "Trend Following Breakout",
+      "strategy": "Trend Following Breakout",
+      "timeframe": "",
+      "setupCriteria": "Trend Following Breakout",
+      "entryTriggers": "Trend Following Breakout",
+      "exitRules": "Trend Following Breakout",
+      "riskManagement": "",
+      "notes": "",
+      "userId": "admin-uid",
+      "createdAt": "2025-05-09T04:35:32.393Z",
+      "updatedAt": "2025-05-09T04:35:32.393Z",
+      "winRate": 0,
+      "avgProfit": 0,
+      "totalTrades": 0
+    }
+  ],
   "user-1746715567065-rx1r0qs7f": [
     {
       "id": "f6bff45a-2920-438f-a0b7-6a0eda8abcd8",

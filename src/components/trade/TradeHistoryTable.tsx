@@ -261,19 +261,20 @@ export function TradeHistoryTable() {
       },
     }),
     columnHelper.accessor("playbook", {
-      header: t('trade.setup'),
+      header: "Chiến lược",
       cell: (info) => {
         const playbookId = info.getValue();
         if (!playbookId) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
         
         // Tìm tên chiến lược từ ID
         const selectedPlaybook = playbooks.find(p => p.id === playbookId);
-        const playbookName = selectedPlaybook ? selectedPlaybook.name : playbookId;
         
         return (
-          <Badge variant="outline" className="capitalize">
-            {playbookName}
-          </Badge>
+          <div className="inline-block">
+            <Badge variant="outline" className="capitalize">
+              {selectedPlaybook ? selectedPlaybook.name : 'Chiến lược không xác định'}
+            </Badge>
+          </div>
         );
       },
     }),
@@ -939,14 +940,14 @@ export function TradeHistoryTable() {
               {/* Desktop view */}
               <div className="hidden md:block">
                 <div className="rounded-md border shadow-sm overflow-hidden">
-                  <Table className="w-full">
+                  <Table className="w-full [&_tr:not(:last-child)]:border-b [&_th]:border-r [&_th:last-child]:border-r-0 [&_td]:border-r [&_td:last-child]:border-r-0">
                     <TableHeader className="bg-muted/30">
                       {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
                           {headerGroup.headers.map((header) => (
                             <TableHead 
                               key={header.id} 
-                              className="whitespace-nowrap h-10 px-4 text-xs sm:text-sm font-medium text-muted-foreground"
+                              className="whitespace-nowrap h-10 px-4 text-xs sm:text-sm font-medium text-muted-foreground text-center"
                             >
                               {header.isPlaceholder
                                 ? null
@@ -968,7 +969,10 @@ export function TradeHistoryTable() {
                             data-state={row.getIsSelected() && "selected"}
                           >
                             {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id} className="px-4 py-3 text-xs sm:text-sm align-middle">
+                              <TableCell 
+                                key={cell.id} 
+                                className="px-4 py-3 text-xs sm:text-sm align-middle text-center"
+                              >
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext()
