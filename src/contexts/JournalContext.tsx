@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Journal, Trade } from '@/types';
-import { generateDemoTrades } from '@/lib/demo-data';
 
 // Hàm trợ giúp để xử lý fetch API và phân tích JSON an toàn
 async function safeFetch(url: string, options?: RequestInit) {
@@ -206,7 +205,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             icon: "chart",
             color: "#4f46e5",
             isDefault: true,
-            trades: generateDemoTrades(10), // Add some demo trades to get started
+            trades: [], // Remove demo trades
             settings: {
               currency: "USD",
               initialCapital: 10000,

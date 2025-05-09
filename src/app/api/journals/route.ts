@@ -3,30 +3,16 @@ import {
   getJournals, 
   saveJournals, 
   getCurrentJournalId, 
-  setCurrentJournalId,
-  migrateJournalData
+  setCurrentJournalId
 } from '@/lib/server/data-store';
 import { Journal } from '@/types';
 import { cookies } from 'next/headers';
 import supabase from '@/lib/supabase';
 
-// Chạy di chuyển dữ liệu khi khởi động server
-let migrationPromise: Promise<void> | null = null;
-
-function ensureMigration() {
-  if (!migrationPromise) {
-    migrationPromise = migrateJournalData();
-  }
-  return migrationPromise;
-}
-
 // GET /api/journals - Lấy tất cả journals
 export async function GET() {
   try {
     console.log('GET /api/journals: Processing request');
-    
-    // Đảm bảo di chuyển dữ liệu được thực hiện
-    await ensureMigration();
     
     // Lấy userID cố định là admin-uid
     const userId = 'admin-uid';
@@ -54,9 +40,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     console.log('POST /api/journals: Processing request');
-    
-    // Đảm bảo di chuyển dữ liệu được thực hiện
-    await ensureMigration();
     
     const body = await request.json();
     console.log('POST /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });
@@ -144,9 +127,6 @@ export async function PUT(request: NextRequest) {
   try {
     console.log('PUT /api/journals: Processing request');
     
-    // Đảm bảo di chuyển dữ liệu được thực hiện
-    await ensureMigration();
-    
     const body = await request.json();
     console.log('PUT /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });
     
@@ -221,9 +201,6 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     console.log('DELETE /api/journals: Processing request');
-    
-    // Đảm bảo di chuyển dữ liệu được thực hiện
-    await ensureMigration();
     
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
@@ -307,9 +284,6 @@ export async function DELETE(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     console.log('PATCH /api/journals: Processing request');
-    
-    // Đảm bảo di chuyển dữ liệu được thực hiện
-    await ensureMigration();
     
     const body = await request.json();
     console.log('PATCH /api/journals: Request body parsed', { bodyKeys: Object.keys(body) });

@@ -13,23 +13,6 @@ interface PlaybooksData {
   [userId: string]: any[]; // Array of playbooks for each user
 }
 
-// Đường dẫn đến file dữ liệu
-const JOURNALS_FILE_PATH = process.env.NODE_ENV === 'development' 
-  ? './data/journals.json' 
-  : '/tmp/journals.json';
-
-const PLAYBOOKS_FILE_PATH = process.env.NODE_ENV === 'development'
-  ? './data/playbooks.json'
-  : '/tmp/playbooks.json';
-
-const USERS_FILE_PATH = process.env.NODE_ENV === 'development'
-  ? './data/users.json'
-  : '/tmp/users.json';
-
-const PREFERENCES_FILE_PATH = process.env.NODE_ENV === 'development'
-  ? './data/user-preferences.json'
-  : '/tmp/user-preferences.json';
-
 // Hàm lấy thông tin người dùng hiện tại dựa trên cookie
 export async function getCurrentUserId(): Promise<string | null> {
   try {
@@ -43,22 +26,16 @@ export async function getCurrentUserId(): Promise<string | null> {
   }
 }
 
-// Hàm để đọc dữ liệu journals từ file hoặc database
+// Hàm để đọc dữ liệu journals từ database
 export async function getJournals(): Promise<JournalData> {
   try {
-    // Ưu tiên lấy dữ liệu từ Supabase
+    // Lấy dữ liệu từ Supabase
     const { data: journalsData, error: journalsError } = await supabase
       .from('journals')
       .select('*');
     
     if (journalsError) {
       console.error('Error fetching journals from Supabase:', journalsError);
-      // Fallback: Đọc từ file local
-      const fs = require('fs');
-      if (fs.existsSync(JOURNALS_FILE_PATH)) {
-        const data = fs.readFileSync(JOURNALS_FILE_PATH, 'utf8');
-        return JSON.parse(data);
-      }
       return { journals: {}, currentJournals: {} };
     }
     
@@ -95,7 +72,7 @@ export async function getJournals(): Promise<JournalData> {
   }
 }
 
-// Lưu journals vào file hoặc database
+// Lưu journals vào database
 export async function saveJournals(data: JournalData): Promise<boolean> {
   try {
     // Lưu vào Supabase
@@ -118,12 +95,6 @@ export async function saveJournals(data: JournalData): Promise<boolean> {
           throw error;
         }
       }
-    }
-    
-    // Backup vào file local trong môi trường development
-    if (process.env.NODE_ENV === 'development') {
-      const fs = require('fs');
-      fs.writeFileSync(JOURNALS_FILE_PATH, JSON.stringify(data, null, 2));
     }
     
     return true;
@@ -191,22 +162,16 @@ export async function setCurrentJournalId(journalId: string): Promise<boolean> {
   }
 }
 
-// Hàm để đọc dữ liệu playbooks từ file hoặc database
+// Hàm để đọc dữ liệu playbooks từ database
 export async function getPlaybooks(): Promise<PlaybooksData> {
   try {
-    // Ưu tiên lấy dữ liệu từ Supabase
+    // Lấy dữ liệu từ Supabase
     const { data: playbooksData, error: playbooksError } = await supabase
       .from('playbooks')
       .select('*');
     
     if (playbooksError) {
       console.error('Error fetching playbooks from Supabase:', playbooksError);
-      // Fallback: Đọc từ file local
-      const fs = require('fs');
-      if (fs.existsSync(PLAYBOOKS_FILE_PATH)) {
-        const data = fs.readFileSync(PLAYBOOKS_FILE_PATH, 'utf8');
-        return JSON.parse(data);
-      }
       return {};
     }
     
@@ -236,7 +201,7 @@ export async function getPlaybooks(): Promise<PlaybooksData> {
   }
 }
 
-// Lưu playbooks vào file hoặc database
+// Lưu playbooks vào database
 export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
   try {
     // Lưu vào Supabase
@@ -261,78 +226,10 @@ export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
       }
     }
     
-    // Backup vào file local trong môi trường development
-    if (process.env.NODE_ENV === 'development') {
-      const fs = require('fs');
-      fs.writeFileSync(PLAYBOOKS_FILE_PATH, JSON.stringify(data, null, 2));
-    }
-    
     return true;
   } catch (error) {
     console.error('Error saving playbooks:', error);
     return false;
-  }
-}
-
-// Hàm di chuyển dữ liệu từ định dạng cũ sang mới (nếu cần)
-export async function migrateJournalData(): Promise<void> {
-  try {
-    console.log('Starting journal data migration...');
-    
-    // Kiểm tra xem đã có bảng journals trong Supabase chưa
-    const { data, error } = await supabase
-      .from('journals')
-      .select('id')
-      .limit(1);
-    
-    if (error) {
-      console.error('Error checking journals table in Supabase:', error);
-      return;
-    }
-    
-    // Nếu đã có dữ liệu, không cần di chuyển
-    if (data && data.length > 0) {
-      console.log('Journals already exist in Supabase, no migration needed');
-      return;
-    }
-    
-    // Kiểm tra dữ liệu cũ trong file JSON
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        const fs = require('fs');
-        if (fs.existsSync(JOURNALS_FILE_PATH)) {
-          console.log('Found local journals data, migrating to Supabase...');
-          
-          const fileData = fs.readFileSync(JOURNALS_FILE_PATH, 'utf8');
-          const oldData = JSON.parse(fileData);
-          
-          // Di chuyển dữ liệu lên Supabase
-          for (const userId in oldData.journals) {
-            for (const journal of oldData.journals[userId]) {
-              await supabase
-                .from('journals')
-                .upsert({
-                  id: journal.id,
-                  name: journal.name,
-                  description: journal.description,
-                  user_id: userId,
-                  created_at: journal.createdAt,
-                  updated_at: journal.updatedAt,
-                  trades: journal.trades || []
-                });
-            }
-          }
-          
-          console.log('Journal data migration completed successfully');
-        } else {
-          console.log('No local journals data found, skipping migration');
-        }
-      } catch (e) {
-        console.error('Error during journal data migration:', e);
-      }
-    }
-  } catch (error) {
-    console.error('Unexpected error during journal data migration:', error);
   }
 }
 
@@ -347,17 +244,6 @@ export async function getUserPreferences(userId: string): Promise<any> {
     
     if (error) {
       console.error('Error fetching user preferences from Supabase:', error);
-      
-      // Fallback: Đọc từ file local
-      if (process.env.NODE_ENV === 'development') {
-        const fs = require('fs');
-        if (fs.existsSync(PREFERENCES_FILE_PATH)) {
-          const fileData = fs.readFileSync(PREFERENCES_FILE_PATH, 'utf8');
-          const allPreferences = JSON.parse(fileData);
-          return allPreferences[userId] || {};
-        }
-      }
-      
       return {};
     }
     
@@ -381,20 +267,7 @@ export async function saveUserPreferences(userId: string, preferences: any): Pro
     
     if (error) {
       console.error('Error saving user preferences to Supabase:', error);
-      
-      // Fallback: Lưu vào file local
-      if (process.env.NODE_ENV === 'development') {
-        const fs = require('fs');
-        let allPreferences = {};
-        
-        if (fs.existsSync(PREFERENCES_FILE_PATH)) {
-          const data = fs.readFileSync(PREFERENCES_FILE_PATH, 'utf8');
-          allPreferences = JSON.parse(data);
-        }
-        
-        allPreferences[userId] = preferences;
-        fs.writeFileSync(PREFERENCES_FILE_PATH, JSON.stringify(allPreferences, null, 2));
-      }
+      return false;
     }
     
     return true;
