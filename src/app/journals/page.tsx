@@ -1,7 +1,7 @@
 // filepath: /Users/tinanpha/Desktop/trading/src/app/journals/page.tsx
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useJournals } from '@/contexts/JournalContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import type { Journal } from '@/types';
+import type { Journal, Trade } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   DropdownMenu,
@@ -85,6 +85,7 @@ export default function JournalsPage() {
   });
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [trades, setTrades] = useState<Trade[]>([]);
 
   const [newJournalData, setNewJournalData] = useState({
     name: '',
@@ -93,6 +94,29 @@ export default function JournalsPage() {
     color: '#4f46e5',
     initialCapital: 10000, // Add initial capital with default value
   });
+  
+  // Tải dữ liệu giao dịch từ API khi component được tải
+  useEffect(() => {
+    const fetchTrades = async () => {
+      try {
+        const response = await fetch('/api/trades');
+        if (!response.ok) {
+          throw new Error('Failed to fetch trades');
+        }
+        const data = await response.json();
+        if (data.trades && Array.isArray(data.trades)) {
+          setTrades(data.trades);
+        } else {
+          setTrades([]);
+        }
+      } catch (error) {
+        console.error('Error loading trades:', error);
+        setTrades([]);
+      }
+    };
+    
+    fetchTrades();
+  }, []);
 
   // Handle opening the edit dialog
   const handleOpenEditDialog = (journal: Journal) => {
@@ -275,11 +299,14 @@ export default function JournalsPage() {
   };
 
   const getJournalStatsInfo = (journal: Journal) => {
-    const totalTrades = journal.trades.length;
-    const closedTrades = journal.trades.filter(trade => trade.exitDate).length;
-    const openTrades = totalTrades - closedTrades;
+    // Lọc giao dịch thuộc về journal hiện tại
+    const journalTrades = trades.filter(trade => trade.journalId === journal.id);
     
-    const winningTrades = journal.trades.filter(trade => {
+    const totalTrades = journalTrades.length;
+    const closedTrades = journalTrades.filter(trade => trade.exitDate).length;
+    const openTrades = journalTrades.filter(trade => !trade.exitDate).length;
+    
+    const winningTrades = journalTrades.filter(trade => {
       if (!trade.exitDate || !trade.exitPrice) return false;
       return trade.tradeType === 'buy' 
         ? trade.exitPrice > trade.entryPrice 

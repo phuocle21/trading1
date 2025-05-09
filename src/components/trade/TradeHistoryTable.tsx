@@ -56,7 +56,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePlaybooks } from "@/contexts/PlaybookContext";
 import type { Trade, TradeWithProfit } from "@/types";
 import { calculateProfitLoss, formatCurrency, formatDate } from "@/lib/trade-utils";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
@@ -90,7 +90,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const columnHelper = createColumnHelper<TradeWithProfit>();
 
 export function TradeHistoryTable() {
-  const { getCurrentJournal, currentJournalId, deleteTradeFromJournal, isLoading } = useJournals();
+  const { getCurrentJournal, currentJournalId, deleteTradeFromJournal, isLoading: journalLoading } = useJournals();
   const { t } = useLanguage();
   const { playbooks } = usePlaybooks();
   const router = useRouter();
@@ -115,14 +115,42 @@ export function TradeHistoryTable() {
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
   const [activeTradeMobile, setActiveTradeMobile] = useState<string | null>(null);
+  
+  // Thêm state để lưu trữ giao dịch từ API
+  const [tradeData, setTradeData] = useState<Trade[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Thay đổi: Tải dữ liệu giao dịch trực tiếp từ API /api/trades
+  useEffect(() => {
+    const fetchTrades = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/trades');
+        if (!response.ok) {
+          throw new Error('Failed to fetch trades');
+        }
+        const data = await response.json();
+        if (data.trades && Array.isArray(data.trades)) {
+          console.log(`Loaded ${data.trades.length} trades from API`);
+          setTradeData(data.trades);
+        }
+      } catch (error) {
+        console.error('Error loading trades from API:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTrades();
+  }, []);
 
   const currentJournal = getCurrentJournal();
-  const trades = currentJournal?.trades || [];
-
+  
+  // Thay đổi: Sử dụng tradeData từ API thay vì từ journal
   const data = useMemo(() => {
     if (isLoading) return [];
     
-    let filteredTrades = trades.map(trade => ({
+    let filteredTrades = tradeData.map(trade => ({
       ...trade,
       profitOrLoss: calculateProfitLoss(trade),
       stockSymbol: trade.symbol // Map symbol to stockSymbol for compatibility
@@ -136,11 +164,18 @@ export function TradeHistoryTable() {
     }
     
     return filteredTrades.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
-  }, [trades, isLoading, activeTab]);
+  }, [tradeData, isLoading, activeTab]);
 
-  const handleDeleteTrade = (tradeId: string) => {
+  // Thay đổi: Xử lý xóa giao dịch và cập nhật state sau khi xóa
+  const handleDeleteTrade = async (tradeId: string) => {
     if (currentJournalId) {
-      deleteTradeFromJournal(currentJournalId, tradeId);
+      try {
+        await deleteTradeFromJournal(currentJournalId, tradeId);
+        // Cập nhật state local sau khi xóa thành công
+        setTradeData(prevTrades => prevTrades.filter(trade => trade.id !== tradeId));
+      } catch (error) {
+        console.error('Error deleting trade:', error);
+      }
     }
   };
 
@@ -791,7 +826,7 @@ export function TradeHistoryTable() {
               <TabsList className="grid grid-cols-3 w-full sm:w-auto">
                 <TabsTrigger value="all" className="text-xs sm:text-sm px-2 sm:px-3">
                   {t('tradeHistory.allTrades')}
-                  <Badge variant="secondary" className="ml-1 sm:ml-2">{trades.length}</Badge>
+                  <Badge variant="secondary" className="ml-1 sm:ml-2">{tradeData.length}</Badge>
                 </TabsTrigger>
                 <TabsTrigger value="open" className="text-xs sm:text-sm px-2 sm:px-3">
                   {t('tradeHistory.open')}

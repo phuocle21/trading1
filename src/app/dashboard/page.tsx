@@ -10,7 +10,7 @@ import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
 import { calculateProfitLoss, formatCurrency } from "@/lib/trade-utils";
 import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database, BookOpen } from "lucide-react";
 import type { Trade } from "@/types";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
@@ -18,13 +18,43 @@ import { Button } from "@/components/ui/button";
 import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
-  const { getCurrentJournal, isLoading } = useJournals();
+  const { getCurrentJournal, isLoading: journalLoading } = useJournals();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("all");
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Lấy dữ liệu giao dịch từ API thay vì từ journal
+  useEffect(() => {
+    const fetchTrades = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/trades');
+        if (!response.ok) {
+          throw new Error('Failed to fetch trades');
+        }
+        const data = await response.json();
+        if (data.trades && Array.isArray(data.trades)) {
+          console.log(`Dashboard loaded ${data.trades.length} trades from API`);
+          setTrades(data.trades);
+        } else {
+          setTrades([]);
+        }
+      } catch (error) {
+        console.error('Error loading trades from API:', error);
+        setTrades([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (!journalLoading) {
+      fetchTrades();
+    }
+  }, [journalLoading]);
 
   const currentJournal = getCurrentJournal();
-  const trades = currentJournal?.trades || [];
   
   const closedTrades = useMemo(() => trades.filter(trade => trade.exitPrice && trade.exitDate), [trades]);
 

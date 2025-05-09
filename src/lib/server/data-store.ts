@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { Journal, Trade } from '@/types';
 import supabase from '@/lib/supabase';
+import { getCurrentUserId as getAuthUserId } from '@/lib/server/middleware/auth';
 
 // Interface cho cấu trúc dữ liệu journals
 interface JournalData {
@@ -13,17 +14,9 @@ interface PlaybooksData {
   [userId: string]: any[]; // Array of playbooks for each user
 }
 
-// Hàm lấy thông tin người dùng hiện tại dựa trên cookie
+// Hàm lấy thông tin người dùng hiện tại - chuyển sang sử dụng middleware auth
 export async function getCurrentUserId(): Promise<string | null> {
-  try {
-    // Để tránh lỗi liên quan đến cookies() trong Server Components,
-    // chúng ta sẽ luôn trả về một giá trị mặc định cho userId
-    // Vì ứng dụng của bạn hiện tại chỉ có một tài khoản admin
-    return 'admin-uid';
-  } catch (error) {
-    console.error('Error getting current user ID:', error);
-    return null;
-  }
+  return getAuthUserId();
 }
 
 // Hàm để đọc dữ liệu journals từ database
@@ -54,7 +47,7 @@ export async function getJournals(): Promise<JournalData> {
         description: dbJournal.description,
         createdAt: dbJournal.created_at,
         updatedAt: dbJournal.updated_at,
-        trades: dbJournal.trades || []
+        trades: [] // Không lưu trades trong journal nữa mà lấy từ bảng trades
       };
       
       result.journals[userId].push(journal);
@@ -86,8 +79,8 @@ export async function saveJournals(data: JournalData): Promise<boolean> {
             description: journal.description,
             user_id: userId,
             created_at: journal.createdAt,
-            updated_at: journal.updatedAt,
-            trades: journal.trades
+            updated_at: journal.updatedAt
+            // trades field đã bị loại bỏ vì trades sẽ được lưu riêng
           });
         
         if (error) {
@@ -107,8 +100,12 @@ export async function saveJournals(data: JournalData): Promise<boolean> {
 // Hàm lấy ID của journal hiện tại
 export async function getCurrentJournalId(): Promise<string | null> {
   try {
-    // Lấy userId, hiện tại chúng ta đã cố định là 'admin-uid'
-    const userId = 'admin-uid';
+    // Lấy userId từ hàm getCurrentUserId đã được cập nhật
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.error('Cannot get current user ID');
+      return null; // Trả về null thay vì default-journal-id
+    }
     
     // Lấy dữ liệu journal từ Supabase
     const journalData = await getJournals();
@@ -127,14 +124,16 @@ export async function getCurrentJournalId(): Promise<string | null> {
         console.log('getCurrentJournalId - using first journal as default:', firstJournalId);
         return firstJournalId;
       }
-      console.log('getCurrentJournalId - no journals found, returning default ID');
-      return 'default-journal-id';
+      
+      // Không sử dụng journal của admin nữa
+      console.log('getCurrentJournalId - no journals found for user, returning null');
+      return null; // Trả về null thay vì admin journal
     }
     
     return journalData.currentJournals[userId];
   } catch (error) {
     console.error('Error getting current journal ID:', error);
-    return 'default-journal-id';
+    return null; // Trả về null thay vì default-journal-id
   }
 }
 
@@ -229,6 +228,274 @@ export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error saving playbooks:', error);
+    return false;
+  }
+}
+
+// Hàm lấy tất cả giao dịch từ database
+export async function getTrades(): Promise<Trade[]> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return [];
+    
+    // Lấy journal hiện tại để lọc trades
+    const currentJournalId = await getCurrentJournalId();
+    
+    console.log('GET /api/trades: Processing request');
+    console.log('getCurrentJournalId - userId:', userId);
+    console.log('getCurrentJournalId - current journal ID:', currentJournalId);
+    
+    // Truy vấn trades từ bảng trades
+    const { data, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('journal_id', currentJournalId);
+    
+    if (error) {
+      console.error('Error fetching trades from Supabase:', error);
+      return [];
+    }
+    
+    console.log(`GET /api/trades: Found ${data.length} trades`);
+    
+    // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết trong ứng dụng
+    return data.map(trade => ({
+      id: trade.id,
+      journalId: trade.journal_id,
+      symbol: trade.symbol,
+      tradeType: trade.type, // Ánh xạ từ type sang tradeType
+      entryDate: trade.entry_date,
+      entryTime: trade.entry_time,
+      entryPrice: trade.entry_price,
+      exitDate: trade.exit_date,
+      exitTime: trade.exit_time,
+      exitPrice: trade.exit_price,
+      quantity: trade.quantity,
+      stopLoss: trade.stop_loss,
+      takeProfit: trade.take_profit,
+      fees: trade.fees,
+      playbook: trade.playbook,
+      risk: trade.risk,
+      mood: trade.mood,
+      rating: trade.rating,
+      notes: trade.notes,
+      screenshots: trade.screenshots || []
+    }));
+  } catch (error) {
+    console.error('Error getting trades:', error);
+    return [];
+  }
+}
+
+// Hàm lấy tất cả giao dịch cho một journal cụ thể
+export async function getTradesByJournalId(journalId: string): Promise<Trade[]> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId || !journalId) return [];
+    
+    // Truy vấn trades từ bảng trades
+    const { data, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('journal_id', journalId);
+    
+    if (error) {
+      console.error('Error fetching trades by journal ID from Supabase:', error);
+      return [];
+    }
+    
+    // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
+    return data.map(trade => ({
+      id: trade.id,
+      journalId: trade.journal_id,
+      symbol: trade.symbol,
+      tradeType: trade.type, // Ánh xạ từ type sang tradeType
+      entryDate: trade.entry_date,
+      entryTime: trade.entry_time,
+      entryPrice: trade.entry_price,
+      exitDate: trade.exit_date,
+      exitTime: trade.exit_time,
+      exitPrice: trade.exit_price,
+      quantity: trade.quantity,
+      stopLoss: trade.stop_loss,
+      takeProfit: trade.take_profit,
+      fees: trade.fees,
+      playbook: trade.playbook,
+      risk: trade.risk,
+      mood: trade.mood,
+      rating: trade.rating,
+      notes: trade.notes,
+      screenshots: trade.screenshots || []
+    }));
+  } catch (error) {
+    console.error('Error getting trades by journal ID:', error);
+    return [];
+  }
+}
+
+// Lưu một giao dịch vào database
+export async function saveTrade(trade: Trade): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.error('Error saving trade: No user ID found');
+      return false;
+    }
+    
+    // Lấy journal hiện tại
+    const journalId = await getCurrentJournalId();
+    if (!journalId) {
+      console.error('Error saving trade: No current journal found for user');
+      return false;
+    }
+    
+    console.log('Saving trade to Supabase:', {
+      id: trade.id,
+      journalId,
+      userId,
+      symbol: trade.symbol,
+      tradeType: trade.tradeType,
+    });
+    
+    // Đảm bảo tradeType luôn có giá trị
+    if (!trade.tradeType) {
+      console.error('Error saving trade: tradeType is required');
+      return false;
+    }
+    
+    // Lưu trade vào Supabase
+    const { data, error } = await supabase
+      .from('trades')
+      .upsert({
+        id: trade.id,
+        journal_id: journalId,
+        user_id: userId,
+        symbol: trade.symbol,
+        type: trade.tradeType, // Sửa từ trade.type thành trade.tradeType
+        entry_date: trade.entryDate,
+        entry_time: trade.entryTime,
+        entry_price: trade.entryPrice,
+        exit_date: trade.exitDate,
+        exit_time: trade.exitTime,
+        exit_price: trade.exitPrice,
+        quantity: trade.quantity,
+        stop_loss: trade.stopLoss,
+        take_profit: trade.takeProfit,
+        fees: trade.fees,
+        playbook: trade.playbook,
+        risk: trade.risk,
+        mood: trade.mood,
+        rating: trade.rating,
+        notes: trade.notes,
+        screenshots: trade.screenshots || []
+      })
+      .select();
+    
+    if (error) {
+      console.error('Error saving trade to Supabase:', error);
+      return false;
+    }
+    
+    console.log('Trade saved successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('Error saving trade:', error);
+    return false;
+  }
+}
+
+// Lưu danh sách giao dịch vào database
+export async function saveTrades(trades: Trade[]): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
+    
+    // Lấy journal hiện tại
+    const journalId = await getCurrentJournalId();
+    if (!journalId) {
+      console.error('No current journal found for user');
+      return false;
+    }
+    
+    // Xóa tất cả giao dịch hiện tại của journal
+    const { error: deleteError } = await supabase
+      .from('trades')
+      .delete()
+      .eq('user_id', userId)
+      .eq('journal_id', journalId);
+    
+    if (deleteError) {
+      console.error('Error deleting existing trades:', deleteError);
+      return false;
+    }
+    
+    // Nếu không có giao dịch nào để lưu, trả về true luôn
+    if (trades.length === 0) return true;
+    
+    // Thêm giao dịch mới
+    const { error: insertError } = await supabase
+      .from('trades')
+      .insert(
+        trades.map(trade => ({
+          id: trade.id,
+          journal_id: journalId,
+          user_id: userId,
+          symbol: trade.symbol,
+          type: trade.tradeType, // Sửa từ trade.type thành trade.tradeType
+          entry_date: trade.entryDate,
+          entry_time: trade.entryTime,
+          entry_price: trade.entryPrice,
+          exit_date: trade.exitDate,
+          exit_time: trade.exitTime,
+          exit_price: trade.exitPrice,
+          quantity: trade.quantity,
+          stop_loss: trade.stopLoss,
+          take_profit: trade.takeProfit,
+          fees: trade.fees,
+          playbook: trade.playbook,
+          risk: trade.risk,
+          mood: trade.mood,
+          rating: trade.rating,
+          notes: trade.notes,
+          screenshots: trade.screenshots || []
+        }))
+      );
+    
+    if (insertError) {
+      console.error('Error inserting trades:', insertError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving trades:', error);
+    return false;
+  }
+}
+
+// Xóa một giao dịch từ database
+export async function deleteTrade(tradeId: string): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
+    
+    // Xóa trade từ Supabase
+    const { error } = await supabase
+      .from('trades')
+      .delete()
+      .eq('id', tradeId)
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('Error deleting trade from Supabase:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting trade:', error);
     return false;
   }
 }

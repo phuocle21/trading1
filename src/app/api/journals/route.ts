@@ -3,10 +3,11 @@ import {
   getJournals, 
   saveJournals, 
   getCurrentJournalId, 
-  setCurrentJournalId
+  setCurrentJournalId,
+  getCurrentUserId,
+  getTradesByJournalId
 } from '@/lib/server/data-store';
 import { Journal } from '@/types';
-import { cookies } from 'next/headers';
 import supabase from '@/lib/supabase';
 
 // GET /api/journals - Lấy tất cả journals
@@ -14,8 +15,8 @@ export async function GET() {
   try {
     console.log('GET /api/journals: Processing request');
     
-    // Lấy userID cố định là admin-uid
-    const userId = 'admin-uid';
+    // Lấy userId từ hàm getCurrentUserId
+    const userId = await getCurrentUserId();
     
     // Lấy dữ liệu journals từ data-store
     const journalData = await getJournals();
@@ -53,8 +54,11 @@ export async function POST(request: NextRequest) {
     const timestamp = new Date().toISOString();
     const journalData = await getJournals();
     
-    // Lấy userId
-    const userId = 'admin-uid';
+    // Lấy userId từ hàm getCurrentUserId
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
     
     // Tạo journal mới với đầy đủ thông tin
     const completeJournal: Journal = {
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
       id: crypto.randomUUID(),
       createdAt: timestamp,
       updatedAt: timestamp,
-      trades: newJournal.trades || []
+      trades: [] // Không lưu trades vào journals nữa
     };
     
     // Thêm journal trực tiếp vào Supabase
@@ -74,8 +78,8 @@ export async function POST(request: NextRequest) {
         description: completeJournal.description,
         user_id: userId,
         created_at: completeJournal.createdAt,
-        updated_at: completeJournal.updatedAt,
-        trades: completeJournal.trades || []
+        updated_at: completeJournal.updatedAt
+        // Không lưu trades vào journals nữa
       });
       
     if (insertError) {
@@ -100,7 +104,8 @@ export async function POST(request: NextRequest) {
       .upsert({
         user_id: userId,
         current_journal_id: completeJournal.id,
-        updated_at: timestamp
+        updated_at: timestamp,
+        preferences: {}
       });
       
     if (updateError) {
@@ -140,7 +145,12 @@ export async function PUT(request: NextRequest) {
     const { id, journal } = body;
     console.log(`PUT /api/journals: Updating journal with ID ${id}`);
     
-    const userId = 'admin-uid'; // Sử dụng ID cố định
+    // Lấy userId từ hàm getCurrentUserId
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
     const journalData = await getJournals();
     
     // Kiểm tra xem có journals cho user này không
@@ -169,13 +179,16 @@ export async function PUT(request: NextRequest) {
     // Bảo toàn các trường quan trọng từ journal gốc
     const originalJournal = userJournals[journalIndex];
     
+    // Lấy danh sách trades từ bảng trades
+    const trades = await getTradesByJournalId(id);
+    
     // Cập nhật journal
     const updatedJournal = {
       ...journal,
       id, // Giữ nguyên ID
       createdAt: originalJournal.createdAt, // Giữ nguyên ngày tạo
       updatedAt: new Date().toISOString(), // Cập nhật ngày sửa
-      trades: journal.trades || originalJournal.trades || [] // Giữ danh sách giao dịch nếu không được cung cấp
+      trades // Lấy trades từ bảng trades
     };
     
     journalData.journals[userId][journalIndex] = updatedJournal;
@@ -211,7 +224,12 @@ export async function DELETE(request: NextRequest) {
     
     console.log('DELETE /api/journals: Deleting journal', { id });
     
-    const userId = 'admin-uid'; // Sử dụng ID cố định
+    // Lấy userId từ hàm getCurrentUserId
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
     const journalData = await getJournals();
     
     // Kiểm tra xem có journals cho user này không
@@ -225,7 +243,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: `Journal with ID ${id} not found` }, { status: 404 });
     }
     
-    // Xóa journal trực tiếp từ Supabase
+    // THAY ĐỔI THỨ TỰ: Xóa các giao dịch liên quan đến journal trước
+    console.log(`DELETE /api/journals: Deleting trades for journal ${id} first`);
+    const { error: deleteTradesError } = await supabase
+      .from('trades')
+      .delete()
+      .eq('journal_id', id);
+      
+    if (deleteTradesError) {
+      console.error('Error deleting trades for journal from Supabase:', deleteTradesError);
+      throw deleteTradesError; // Throw error nếu không xóa được trades
+    }
+    
+    // Sau đó mới xóa journal
+    console.log(`DELETE /api/journals: Now deleting journal ${id}`);
     const { error: deleteError } = await supabase
       .from('journals')
       .delete()
@@ -251,7 +282,8 @@ export async function DELETE(request: NextRequest) {
           .upsert({
             user_id: userId,
             current_journal_id: journalData.currentJournals[userId],
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            preferences: {}
           });
           
         if (updateError) {
@@ -297,15 +329,19 @@ export async function PATCH(request: NextRequest) {
     
     const { journalId } = body;
     
-    // Sử dụng userId cố định là 'admin-uid' thay vì cố gắng lấy từ ID nhật ký
-    const userIdToUse = 'admin-uid';
-    console.log(`PATCH /api/journals: Using userId: ${userIdToUse}`);
+    // Lấy userId từ hàm getCurrentUserId
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
+    console.log(`PATCH /api/journals: Using userId: ${userId}`);
     
     // Lấy dữ liệu journals
     const journalData = await getJournals();
     
     // Kiểm tra xem journal có tồn tại không
-    const userJournals = journalData.journals[userIdToUse] || [];
+    const userJournals = journalData.journals[userId] || [];
     
     console.log(`PATCH /api/journals: Looking for journal ${journalId} in ${userJournals.length} journals`);
     console.log('PATCH /api/journals: Available journal IDs:', userJournals.map(j => j.id));

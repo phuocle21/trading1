@@ -46,6 +46,17 @@ async function safeFetch(url: string, options?: RequestInit) {
   }
 }
 
+// Thêm hàm fetchTradesForJournal để lấy dữ liệu giao dịch từ API
+const fetchTradesForJournal = async (journalId: string) => {
+  try {
+    const { data } = await safeFetch('/api/trades');
+    return data.trades || [];
+  } catch (error) {
+    console.error('Error fetching trades:', error);
+    return [];
+  }
+};
+
 interface JournalContextType {
   journals: Journal[];
   currentJournalId: string | null;
@@ -359,111 +370,112 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
   const addTradeToJournal = useCallback(async (journalId: string, tradeData: Omit<Trade, 'id'>) => {
     try {
-      const newTrade: Trade = {
-        ...tradeData,
-        id: crypto.randomUUID(),
-      };
-      
-      const journal = journals.find(j => j.id === journalId);
-      
-      if (!journal) {
-        throw new Error('Journal not found');
-      }
-      
-      const updatedJournal = {
-        ...journal,
-        trades: [...journal.trades, newTrade],
-        updatedAt: new Date().toISOString()
-      };
-      
-      const { data } = await safeFetch('/api/journals', {
-        method: 'PUT',
+      // Thay đổi: Sử dụng API /api/trades để thêm giao dịch thay vì lưu vào journal
+      const { data } = await safeFetch('/api/trades', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+        body: JSON.stringify({ trade: tradeData })
       });
       
-      console.log('Trade added to journal successfully', newTrade.id);
+      console.log('Trade added successfully via /api/trades', data.trade.id);
       
-      setJournals(prevJournals => 
-        prevJournals.map(j => j.id === journalId ? data.journal : j)
-      );
+      // Cập nhật updateAt của journal để biết là có thay đổi
+      const journal = journals.find(j => j.id === journalId);
+      if (journal) {
+        const updatedJournal = {
+          ...journal,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await safeFetch('/api/journals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: journalId, journal: updatedJournal })
+        });
+      }
       
-      return newTrade;
+      return data.trade;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error adding trade to journal:', errorMessage);
+      console.error('Error adding trade:', errorMessage);
       throw new Error(`Failed to add trade: ${errorMessage}`);
     }
   }, [journals]);
 
   const updateTradeInJournal = useCallback(async (journalId: string, updatedTrade: Trade) => {
     try {
-      const journal = journals.find(j => j.id === journalId);
-      
-      if (!journal) {
-        throw new Error('Journal not found');
-      }
-      
-      const updatedJournal = {
-        ...journal,
-        trades: journal.trades.map(trade => 
-          trade.id === updatedTrade.id ? updatedTrade : trade
-        ),
-        updatedAt: new Date().toISOString()
-      };
-      
-      const { data } = await safeFetch('/api/journals', {
+      // Thay đổi: Sử dụng API /api/trades để cập nhật giao dịch 
+      const { data } = await safeFetch('/api/trades', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+        body: JSON.stringify({ id: updatedTrade.id, trade: updatedTrade })
       });
       
-      console.log('Trade updated in journal successfully', updatedTrade.id);
+      console.log('Trade updated successfully via /api/trades', updatedTrade.id);
       
-      setJournals(prevJournals => 
-        prevJournals.map(j => j.id === journalId ? data.journal : j)
-      );
+      // Cập nhật updateAt của journal để biết là có thay đổi
+      const journal = journals.find(j => j.id === journalId);
+      if (journal) {
+        const updatedJournal = {
+          ...journal,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await safeFetch('/api/journals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: journalId, journal: updatedJournal })
+        });
+      }
+      
+      return data.trade;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating trade in journal:', errorMessage);
+      console.error('Error updating trade:', errorMessage);
       throw new Error(`Failed to update trade: ${errorMessage}`);
     }
   }, [journals]);
 
   const deleteTradeFromJournal = useCallback(async (journalId: string, tradeId: string) => {
     try {
-      const journal = journals.find(j => j.id === journalId);
-      
-      if (!journal) {
-        throw new Error('Journal not found');
-      }
-      
-      const updatedJournal = {
-        ...journal,
-        trades: journal.trades.filter(trade => trade.id !== tradeId),
-        updatedAt: new Date().toISOString()
-      };
-      
-      const { data } = await safeFetch('/api/journals', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: journalId, journal: updatedJournal })
+      // Thay đổi: Sử dụng API /api/trades để xóa giao dịch
+      await safeFetch(`/api/trades?id=${tradeId}`, {
+        method: 'DELETE'
       });
       
-      console.log('Trade deleted from journal successfully', tradeId);
+      console.log('Trade deleted successfully via /api/trades', tradeId);
       
-      setJournals(prevJournals => 
-        prevJournals.map(j => j.id === journalId ? data.journal : j)
-      );
+      // Cập nhật updateAt của journal để biết là có thay đổi
+      const journal = journals.find(j => j.id === journalId);
+      if (journal) {
+        const updatedJournal = {
+          ...journal,
+          updatedAt: new Date().toISOString()
+        };
+        
+        const { data } = await safeFetch('/api/journals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: journalId, journal: updatedJournal })
+        });
+        
+        setJournals(prevJournals => 
+          prevJournals.map(j => j.id === journalId ? data.journal : j)
+        );
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting trade from journal:', errorMessage);
+      console.error('Error deleting trade:', errorMessage);
       throw new Error(`Failed to delete trade: ${errorMessage}`);
     }
   }, [journals]);
