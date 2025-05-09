@@ -217,7 +217,7 @@ export function TradeHistoryTable() {
     columnHelper.accessor("quantity", {
       header: t('trade.quantity'),
       cell: (info) => (
-        <div className="text-right font-medium">{info.getValue()}</div>
+        <div className="text-center font-medium">{info.getValue()}</div>
       ),
     }),
     columnHelper.accessor("entryPrice", {
