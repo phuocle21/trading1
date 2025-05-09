@@ -110,7 +110,7 @@ export function TradeHistoryTable() {
     risk: false,
     mood: false,
     rating: false,
-    screenshots: false,
+    screenshots: true,  // Hiển thị cột ảnh mặc định
   });
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
@@ -816,44 +816,46 @@ export function TradeHistoryTable() {
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[180px]">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      // Xác định nhãn tiếng Việt cho từng cột
-                      let label = "";
-                      if (column.id === "date") label = "Ngày";
-                      else if (column.id === "entryTime") label = "Giờ Vào";
-                      else if (column.id === "exitTime") label = "Giờ Ra";
-                      else if (column.id === "stockSymbol") label = "Mã CP";
-                      else if (column.id === "tradeType") label = "Hướng";
-                      else if (column.id === "quantity") label = "Số Lượng";
-                      else if (column.id === "prices") label = "Giá";
-                      else if (column.id === "stopLoss") label = "Dừng Lỗ";
-                      else if (column.id === "takeProfit") label = "Chốt Lời";
-                      else if (column.id === "fees") label = "Phí";
-                      else if (column.id === "playbook") label = "Chiến lược";
-                      else if (column.id === "risk") label = "Rủi Ro";
-                      else if (column.id === "mood") label = "Cảm Xúc";
-                      else if (column.id === "rating") label = "Đánh Giá";
-                      else if (column.id === "screenshots") label = "Ảnh";
-                      else if (column.id === "profitOrLoss") label = "Lãi/Lỗ";
-                      else label = t(`trade.${column.id}`);
+                <DropdownMenuContent align="end" className="min-w-[180px] max-h-[300px] overflow-auto">
+                  <ScrollArea className="h-full">
+                    {table
+                      .getAllColumns()
+                      .filter((column) => column.getCanHide())
+                      .map((column) => {
+                        // Xác định nhãn tiếng Việt cho từng cột
+                        let label = "";
+                        if (column.id === "date") label = "Ngày";
+                        else if (column.id === "entryTime") label = "Giờ Vào";
+                        else if (column.id === "exitTime") label = "Giờ Ra";
+                        else if (column.id === "stockSymbol") label = "Mã CP";
+                        else if (column.id === "tradeType") label = "Hướng";
+                        else if (column.id === "quantity") label = "Số Lượng";
+                        else if (column.id === "prices") label = "Giá";
+                        else if (column.id === "stopLoss") label = "Dừng Lỗ";
+                        else if (column.id === "takeProfit") label = "Chốt Lời";
+                        else if (column.id === "fees") label = "Phí";
+                        else if (column.id === "playbook") label = "Chiến lược";
+                        else if (column.id === "risk") label = "Rủi Ro";
+                        else if (column.id === "mood") label = "Cảm Xúc";
+                        else if (column.id === "rating") label = "Đánh Giá";
+                        else if (column.id === "screenshots") label = "Ảnh";
+                        else if (column.id === "profitOrLoss") label = "Lãi/Lỗ";
+                        else label = t(`trade.${column.id}`);
 
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {label}
-                        </DropdownMenuCheckboxItem>
-                      )
-                    })}
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            onCheckedChange={(value) =>
+                              column.toggleVisibility(!!value)
+                            }
+                          >
+                            {label}
+                          </DropdownMenuCheckboxItem>
+                        )
+                      })}
+                  </ScrollArea>
                 </DropdownMenuContent>
               </DropdownMenu>
               
@@ -936,13 +938,16 @@ export function TradeHistoryTable() {
               
               {/* Desktop view */}
               <div className="hidden md:block">
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+                <div className="rounded-md border shadow-sm overflow-hidden">
+                  <Table className="w-full">
+                    <TableHeader className="bg-muted/30">
                       {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
+                        <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
                           {headerGroup.headers.map((header) => (
-                            <TableHead key={header.id} className="whitespace-nowrap px-2 py-2 text-xs sm:text-sm">
+                            <TableHead 
+                              key={header.id} 
+                              className="whitespace-nowrap h-10 px-4 text-xs sm:text-sm font-medium text-muted-foreground"
+                            >
                               {header.isPlaceholder
                                 ? null
                                 : flexRender(
@@ -959,10 +964,11 @@ export function TradeHistoryTable() {
                         table.getRowModel().rows.map((row) => (
                           <TableRow
                             key={row.id}
+                            className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                             data-state={row.getIsSelected() && "selected"}
                           >
                             {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id} className="px-2 py-2 text-xs sm:text-sm">
+                              <TableCell key={cell.id} className="px-4 py-3 text-xs sm:text-sm align-middle">
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext()
@@ -977,7 +983,7 @@ export function TradeHistoryTable() {
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            No results.
+                            Không có kết quả.
                           </TableCell>
                         </TableRow>
                       )}
