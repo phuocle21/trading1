@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     // Lấy thông tin người dùng hiện tại
     if (path === 'current') {
       console.log('GET /api/user: Getting current user');
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const userIdCookie = cookieStore.get('userId');
       
       if (!userIdCookie) {
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
     // Lấy danh sách người dùng (chỉ admin)
     if (path === 'list') {
       console.log('GET /api/user: Getting users list');
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const userIdCookie = cookieStore.get('userId');
       
       if (!userIdCookie) {
@@ -356,7 +356,7 @@ export async function POST(request: NextRequest) {
     // Đổi mật khẩu
     if (path === 'change-password') {
       console.log('POST /api/user: Processing change password request');
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const userIdCookie = cookieStore.get('userId');
       
       if (!userIdCookie) {
@@ -438,7 +438,7 @@ export async function POST(request: NextRequest) {
     // Cập nhật trạng thái quản trị viên
     if (path === 'update-admin') {
       console.log('POST /api/user: Processing update admin request');
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const userIdCookie = cookieStore.get('userId');
       
       if (!userIdCookie) {
@@ -500,7 +500,7 @@ export async function POST(request: NextRequest) {
     // Phê duyệt người dùng
     if (path === 'approve') {
       console.log('POST /api/user: Processing approve user request');
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const userIdCookie = cookieStore.get('userId');
       
       if (!userIdCookie) {
