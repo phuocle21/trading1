@@ -837,6 +837,7 @@ export function TradeHistoryTable() {
                         else if (column.id === "rating") label = "Đánh Giá";
                         else if (column.id === "screenshots") label = "Ảnh";
                         else if (column.id === "profitOrLoss") label = "Lãi/Lỗ";
+                        else if (column.id === "actions") label = "Thao Tác";
                         else label = t(`trade.${column.id}`);
 
                         return (
