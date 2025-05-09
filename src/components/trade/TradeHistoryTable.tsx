@@ -106,7 +106,7 @@ export function TradeHistoryTable() {
     stopLoss: false,
     takeProfit: false,
     fees: false,
-    playbook: false,
+    playbook: true,
     risk: false,
     mood: false,
     rating: false,
