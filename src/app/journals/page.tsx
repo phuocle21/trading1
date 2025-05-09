@@ -74,6 +74,15 @@ export default function JournalsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
   const [journalToDelete, setJournalToDelete] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [journalToEdit, setJournalToEdit] = useState<Journal | null>(null);
+  const [editJournalData, setEditJournalData] = useState({
+    name: '',
+    description: '',
+    icon: 'chart',
+    color: '#4f46e5',
+    initialCapital: 10000,
+  });
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -84,6 +93,56 @@ export default function JournalsPage() {
     color: '#4f46e5',
     initialCapital: 10000, // Add initial capital with default value
   });
+
+  // Handle opening the edit dialog
+  const handleOpenEditDialog = (journal: Journal) => {
+    setJournalToEdit(journal);
+    setEditJournalData({
+      name: journal.name,
+      description: journal.description || '',
+      icon: journal.icon || 'chart',
+      color: journal.color || '#4f46e5',
+      initialCapital: journal.settings?.initialCapital || 10000,
+    });
+    setEditDialogOpen(true);
+  };
+
+  // Handle updating the journal
+  const handleUpdateJournal = () => {
+    if (!journalToEdit) return;
+    
+    if (!editJournalData.name.trim()) {
+      toast({ 
+        title: t('journals.errors.nameRequired'),
+        description: t('journals.errors.nameRequiredDesc'),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updatedJournal = {
+      ...journalToEdit,
+      name: editJournalData.name,
+      description: editJournalData.description,
+      icon: editJournalData.icon,
+      color: editJournalData.color,
+      settings: {
+        ...journalToEdit.settings || {},
+        initialCapital: editJournalData.initialCapital,
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    updateJournal(updatedJournal);
+    
+    toast({ 
+      title: t('journals.journalUpdated'),
+      description: t('journals.journalUpdatedDesc')
+    });
+    
+    setEditDialogOpen(false);
+    setJournalToEdit(null);
+  };
 
   // Filter journals based on the selected tab and search query
   const filteredJournals = useMemo(() => {
@@ -179,15 +238,24 @@ export default function JournalsPage() {
 
   const confirmDelete = () => {
     if (journalToDelete) {
-      deleteJournal(journalToDelete);
-      
-      toast({ 
-        title: t('journals.journalDeleted'),
-        description: t('journals.journalDeletedDesc'),
-      });
-      
-      setConfirmDeleteDialogOpen(false);
-      setJournalToDelete(null);
+      try {
+        deleteJournal(journalToDelete);
+        
+        toast({ 
+          title: t('journals.journalDeleted'),
+          description: t('journals.journalDeletedDesc'),
+        });
+        
+        setConfirmDeleteDialogOpen(false);
+        setJournalToDelete(null);
+      } catch (error) {
+        console.error('Error deleting journal:', error);
+        toast({
+          title: t('journals.errors.deleteFailed') || 'Lỗi xóa nhật ký',
+          description: error instanceof Error ? error.message : 'Có lỗi xảy ra khi xóa nhật ký',
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -465,29 +533,14 @@ export default function JournalsPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="cursor-pointer"
-                              onClick={() => handleSwitchJournal(journal.id)}
-                              disabled={isCurrentJournal}
+                              onClick={() => handleOpenEditDialog(journal)}
                             >
-                              <Zap className="mr-2 h-4 w-4" />
-                              {isCurrentJournal ? t('journals.currentlyActive') : t('journals.switchTo')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
                               <Edit className="mr-2 h-4 w-4" />
                               {t('journals.edit')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Settings className="mr-2 h-4 w-4" />
-                              {t('journals.settings')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Copy className="mr-2 h-4 w-4" />
-                              {t('journals.duplicate')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="cursor-pointer text-destructive focus:text-destructive"
                               onClick={() => handleDeleteJournal(journal.id)}
-                              disabled={journals.length <= 1}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               {t('journals.delete')}
@@ -614,29 +667,14 @@ export default function JournalsPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="cursor-pointer"
-                              onClick={() => handleSwitchJournal(journal.id)}
-                              disabled={isCurrentJournal}
+                              onClick={() => handleOpenEditDialog(journal)}
                             >
-                              <Zap className="mr-2 h-4 w-4" />
-                              {isCurrentJournal ? t('journals.currentlyActive') : t('journals.switchTo')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
                               <Edit className="mr-2 h-4 w-4" />
                               {t('journals.edit')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Settings className="mr-2 h-4 w-4" />
-                              {t('journals.settings')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Copy className="mr-2 h-4 w-4" />
-                              {t('journals.duplicate')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="cursor-pointer text-destructive focus:text-destructive"
                               onClick={() => handleDeleteJournal(journal.id)}
-                              disabled={journals.length <= 1}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               {t('journals.delete')}
@@ -805,6 +843,122 @@ export default function JournalsPage() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               {t('journals.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Journal Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{t('journals.editJournal')}</DialogTitle>
+            <DialogDescription>{t('journals.editJournalDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editName" className="text-right">
+                {t('journals.name')}*
+              </Label>
+              <Input
+                id="editName"
+                value={editJournalData.name}
+                onChange={(e) => setEditJournalData({ ...editJournalData, name: e.target.value })}
+                className="col-span-3"
+                placeholder={t('journals.namePlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editDescription" className="text-right">
+                {t('journals.description')}
+              </Label>
+              <Textarea
+                id="editDescription"
+                value={editJournalData.description}
+                onChange={(e) => setEditJournalData({ ...editJournalData, description: e.target.value })}
+                className="col-span-3"
+                placeholder={t('journals.descriptionPlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editIcon" className="text-right">
+                {t('journals.icon')}
+              </Label>
+              <Select
+                value={editJournalData.icon}
+                onValueChange={(value) => setEditJournalData({ ...editJournalData, icon: value })}
+              >
+                <SelectTrigger id="editIcon" className="col-span-3">
+                  <SelectValue placeholder={t('journals.selectIcon')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="chart">
+                    <div className="flex items-center">
+                      <BarChart className="mr-2 h-4 w-4" /> {t('journals.icons.chart')}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="trending-up">
+                    <div className="flex items-center">
+                      <TrendingUp className="mr-2 h-4 w-4" /> {t('journals.icons.trendingUp')}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="activity">
+                    <div className="flex items-center">
+                      <Activity className="mr-2 h-4 w-4" /> {t('journals.icons.activity')}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="globe">
+                    <div className="flex items-center">
+                      <Globe className="mr-2 h-4 w-4" /> {t('journals.icons.globe')}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="bitcoin">
+                    <div className="flex items-center">
+                      <Bitcoin className="mr-2 h-4 w-4" /> {t('journals.icons.bitcoin')}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editColor" className="text-right">
+                {t('journals.color')}
+              </Label>
+              <div className="col-span-3 flex items-center">
+                <input
+                  type="color"
+                  id="editColor"
+                  value={editJournalData.color}
+                  onChange={(e) => setEditJournalData({ ...editJournalData, color: e.target.value })}
+                  className="w-10 h-10 rounded cursor-pointer"
+                />
+                <Input
+                  value={editJournalData.color}
+                  onChange={(e) => setEditJournalData({ ...editJournalData, color: e.target.value })}
+                  className="ml-2 flex-1"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editInitialCapital" className="text-right">
+                {t('journals.initialCapital')}
+              </Label>
+              <Input
+                id="editInitialCapital"
+                type="number"
+                value={editJournalData.initialCapital}
+                onChange={(e) => setEditJournalData({ ...editJournalData, initialCapital: Number(e.target.value) })}
+                className="col-span-3"
+                placeholder={t('journals.initialCapitalPlaceholder')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleUpdateJournal}>
+              {t('journals.update')}
             </Button>
           </DialogFooter>
         </DialogContent>
