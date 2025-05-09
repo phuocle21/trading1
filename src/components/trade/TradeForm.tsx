@@ -486,7 +486,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                 field.onChange(val === '' ? undefined : parseFloat(val));
                               }}
                               className="w-full"
-                              inputMode="numeric"
+                              inputMode="decimal"
                             />
                           </FormControl>
                           <FormMessage />
