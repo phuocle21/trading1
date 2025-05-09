@@ -2,17 +2,17 @@
   "admin-uid": [
     {
       "id": "f9d6f317-a3be-4082-ab3c-92c8ff2a6137",
-      "name": "Trend Following Breakout",
-      "strategy": "Trend Following Breakout",
+      "name": "Mô Hình 2 Đáy Tại Key Level",
+      "strategy": "Mô Hình 2 Đáy Tại Key Level",
       "timeframe": "",
-      "setupCriteria": "Trend Following Breakout",
-      "entryTriggers": "Trend Following Breakout",
-      "exitRules": "Trend Following Breakout",
+      "setupCriteria": "Mô Hình 2 Đáy Tại Key Level",
+      "entryTriggers": "Mô Hình 2 Đáy Tại Key Level",
+      "exitRules": "Mô Hình 2 Đáy Tại Key Level",
       "riskManagement": "",
       "notes": "",
       "userId": "admin-uid",
       "createdAt": "2025-05-09T04:35:32.393Z",
-      "updatedAt": "2025-05-09T04:35:32.393Z",
+      "updatedAt": "2025-05-09T04:52:32.377Z",
       "winRate": 0,
       "avgProfit": 0,
       "totalTrades": 0
