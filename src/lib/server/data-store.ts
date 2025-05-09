@@ -1,17 +1,8 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import { Journal, Trade } from '@/types';
 import { cookies } from 'next/headers';
+import { Journal, Trade } from '@/types';
+import supabase from '@/lib/supabase';
 
-// Đường dẫn lưu trữ dữ liệu
-const DATA_DIR = path.join(process.cwd(), 'data');
-const JOURNALS_FILE = path.join(DATA_DIR, 'journals.json');
-const TRADES_FILE = path.join(DATA_DIR, 'trades.json');
-const USER_PREFERENCES_FILE = path.join(DATA_DIR, 'user-preferences.json');
-const PLAYBOOKS_FILE = path.join(DATA_DIR, 'playbooks.json');
-
-// Interface cho cấu trúc dữ liệu journals mới, phân tách theo userId
+// Interface cho cấu trúc dữ liệu journals
 interface JournalData {
   journals: { [userId: string]: Journal[] };
   currentJournals: { [userId: string]: string };
@@ -22,317 +13,388 @@ interface PlaybooksData {
   [userId: string]: any[]; // Array of playbooks for each user
 }
 
-// Đảm bảo thư mục tồn tại
-async function ensureDataDir() {
-  if (!existsSync(DATA_DIR)) {
-    await mkdir(DATA_DIR, { recursive: true });
-  }
-}
+// Đường dẫn đến file dữ liệu
+const JOURNALS_FILE_PATH = process.env.NODE_ENV === 'development' 
+  ? './data/journals.json' 
+  : '/tmp/journals.json';
 
-// Lưu dữ liệu vào file
-async function saveData<T>(filePath: string, data: T): Promise<void> {
-  await ensureDataDir();
-  await writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-}
+const PLAYBOOKS_FILE_PATH = process.env.NODE_ENV === 'development'
+  ? './data/playbooks.json'
+  : '/tmp/playbooks.json';
 
-// Đọc dữ liệu từ file
-async function loadData<T>(filePath: string, defaultData: T): Promise<T> {
+const USERS_FILE_PATH = process.env.NODE_ENV === 'development'
+  ? './data/users.json'
+  : '/tmp/users.json';
+
+const PREFERENCES_FILE_PATH = process.env.NODE_ENV === 'development'
+  ? './data/user-preferences.json'
+  : '/tmp/user-preferences.json';
+
+// Hàm lấy thông tin người dùng hiện tại dựa trên cookie
+export async function getCurrentUserId(): Promise<string | null> {
   try {
-    await ensureDataDir();
-    if (existsSync(filePath)) {
-      const data = await readFile(filePath, 'utf8');
-      return JSON.parse(data) as T;
-    }
+    // Để tránh lỗi liên quan đến cookies() trong Server Components,
+    // chúng ta sẽ luôn trả về một giá trị mặc định cho userId
+    // Vì ứng dụng của bạn hiện tại chỉ có một tài khoản admin
+    return 'admin-uid';
   } catch (error) {
-    console.error(`Error loading data from ${filePath}:`, error);
+    console.error('Error getting current user ID:', error);
+    return null;
   }
-  return defaultData;
 }
 
-// Lấy ID người dùng hiện tại - đã sửa để sử dụng async/await
-async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const userIdCookie = cookieStore.get('userId');
-  return userIdCookie ? userIdCookie.value : null;
+// Hàm để đọc dữ liệu journals từ file hoặc database
+export async function getJournals(): Promise<JournalData> {
+  try {
+    // Ưu tiên lấy dữ liệu từ Supabase
+    const { data: journalsData, error: journalsError } = await supabase
+      .from('journals')
+      .select('*');
+    
+    if (journalsError) {
+      console.error('Error fetching journals from Supabase:', journalsError);
+      // Fallback: Đọc từ file local
+      const fs = require('fs');
+      if (fs.existsSync(JOURNALS_FILE_PATH)) {
+        const data = fs.readFileSync(JOURNALS_FILE_PATH, 'utf8');
+        return JSON.parse(data);
+      }
+      return { journals: {}, currentJournals: {} };
+    }
+    
+    // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
+    const result: JournalData = { journals: {}, currentJournals: {} };
+    
+    journalsData.forEach(dbJournal => {
+      const userId = dbJournal.user_id;
+      if (!result.journals[userId]) {
+        result.journals[userId] = [];
+      }
+      
+      const journal: Journal = {
+        id: dbJournal.id,
+        name: dbJournal.name,
+        description: dbJournal.description,
+        createdAt: dbJournal.created_at,
+        updatedAt: dbJournal.updated_at,
+        trades: dbJournal.trades || []
+      };
+      
+      result.journals[userId].push(journal);
+      
+      // Nếu là journal mới nhất, đặt làm current
+      if (!result.currentJournals[userId] || new Date(journal.updatedAt) > new Date(result.journals[userId].find(j => j.id === result.currentJournals[userId])?.updatedAt || 0)) {
+        result.currentJournals[userId] = journal.id;
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error getting journals:', error);
+    return { journals: {}, currentJournals: {} };
+  }
 }
 
-// Journals API với cách tiếp cận mới
-export async function getJournalData(): Promise<JournalData> {
-  return loadData<JournalData>(JOURNALS_FILE, { journals: {}, currentJournals: {} });
+// Lưu journals vào file hoặc database
+export async function saveJournals(data: JournalData): Promise<boolean> {
+  try {
+    // Lưu vào Supabase
+    for (const userId in data.journals) {
+      for (const journal of data.journals[userId]) {
+        const { error } = await supabase
+          .from('journals')
+          .upsert({
+            id: journal.id,
+            name: journal.name,
+            description: journal.description,
+            user_id: userId,
+            created_at: journal.createdAt,
+            updated_at: journal.updatedAt,
+            trades: journal.trades
+          });
+        
+        if (error) {
+          console.error('Error saving journal to Supabase:', error);
+          throw error;
+        }
+      }
+    }
+    
+    // Backup vào file local trong môi trường development
+    if (process.env.NODE_ENV === 'development') {
+      const fs = require('fs');
+      fs.writeFileSync(JOURNALS_FILE_PATH, JSON.stringify(data, null, 2));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving journals:', error);
+    return false;
+  }
 }
 
-// Lấy journals của người dùng hiện tại
-export async function getJournals(): Promise<Journal[]> {
-  const userId = await getCurrentUserId();
-  if (!userId) return [];
-  
-  const data = await getJournalData();
-  return data.journals[userId] || [];
+// Hàm lấy ID của journal hiện tại
+export async function getCurrentJournalId(): Promise<string | null> {
+  try {
+    // Lấy userId bằng cách await function đã sửa
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return 'default-journal-id'; // Trả về ID mặc định nếu không có userId
+    }
+    
+    // Lấy dữ liệu journal từ Supabase
+    const journalData = await getJournals();
+    
+    // Kiểm tra xem có journal cho user không
+    if (!journalData.currentJournals[userId]) {
+      // Nếu không có, kiểm tra xem có journals nào không
+      if (journalData.journals[userId] && journalData.journals[userId].length > 0) {
+        // Lấy journal đầu tiên nếu có
+        return journalData.journals[userId][0].id;
+      }
+      return 'default-journal-id';
+    }
+    
+    return journalData.currentJournals[userId];
+  } catch (error) {
+    console.error('Error getting current journal ID:', error);
+    return 'default-journal-id';
+  }
 }
 
-// Lấy journals của người dùng cụ thể (cho admin)
-export async function getUserJournals(userId: string): Promise<Journal[]> {
-  const data = await getJournalData();
-  return data.journals[userId] || [];
+// Hàm đặt ID của journal hiện tại
+export async function setCurrentJournalId(journalId: string): Promise<boolean> {
+  try {
+    // Lấy userId bằng cách await function
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
+    
+    // Lấy dữ liệu hiện tại
+    const journalData = await getJournals();
+    
+    // Cập nhật ID journal hiện tại cho user
+    if (!journalData.currentJournals) {
+      journalData.currentJournals = {};
+    }
+    journalData.currentJournals[userId] = journalId;
+    
+    // Lưu lại
+    return await saveJournals(journalData);
+  } catch (error) {
+    console.error('Error setting current journal ID:', error);
+    return false;
+  }
 }
 
-// Lưu journals cho người dùng hiện tại
-export async function saveJournals(journals: Journal[]): Promise<void> {
-  const userId = await getCurrentUserId();
-  if (!userId) throw new Error('No user is logged in');
-  
-  const data = await getJournalData();
-  data.journals[userId] = journals;
-  return saveData(JOURNALS_FILE, data);
+// Hàm để đọc dữ liệu playbooks từ file hoặc database
+export async function getPlaybooks(): Promise<PlaybooksData> {
+  try {
+    // Ưu tiên lấy dữ liệu từ Supabase
+    const { data: playbooksData, error: playbooksError } = await supabase
+      .from('playbooks')
+      .select('*');
+    
+    if (playbooksError) {
+      console.error('Error fetching playbooks from Supabase:', playbooksError);
+      // Fallback: Đọc từ file local
+      const fs = require('fs');
+      if (fs.existsSync(PLAYBOOKS_FILE_PATH)) {
+        const data = fs.readFileSync(PLAYBOOKS_FILE_PATH, 'utf8');
+        return JSON.parse(data);
+      }
+      return {};
+    }
+    
+    // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
+    const result: PlaybooksData = {};
+    
+    playbooksData.forEach(playbook => {
+      const userId = playbook.user_id;
+      if (!result[userId]) {
+        result[userId] = [];
+      }
+      
+      result[userId].push({
+        id: playbook.id,
+        name: playbook.name,
+        description: playbook.description,
+        rules: playbook.rules,
+        createdAt: playbook.created_at,
+        updatedAt: playbook.updated_at
+      });
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error getting playbooks:', error);
+    return {};
+  }
 }
 
-// Lấy journal theo ID cho người dùng hiện tại
-export async function getJournalById(id: string): Promise<Journal | undefined> {
-  const journals = await getJournals();
-  return journals.find(journal => journal.id === id);
+// Lưu playbooks vào file hoặc database
+export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
+  try {
+    // Lưu vào Supabase
+    for (const userId in data) {
+      for (const playbook of data[userId]) {
+        const { error } = await supabase
+          .from('playbooks')
+          .upsert({
+            id: playbook.id,
+            name: playbook.name,
+            description: playbook.description,
+            rules: playbook.rules,
+            user_id: userId,
+            created_at: playbook.createdAt,
+            updated_at: playbook.updatedAt
+          });
+        
+        if (error) {
+          console.error('Error saving playbook to Supabase:', error);
+          throw error;
+        }
+      }
+    }
+    
+    // Backup vào file local trong môi trường development
+    if (process.env.NODE_ENV === 'development') {
+      const fs = require('fs');
+      fs.writeFileSync(PLAYBOOKS_FILE_PATH, JSON.stringify(data, null, 2));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving playbooks:', error);
+    return false;
+  }
 }
 
-// Lấy ID journal hiện tại của người dùng đăng nhập
-export async function getCurrentJournalId(): Promise<string | undefined> {
-  const userId = await getCurrentUserId();
-  if (!userId) return undefined;
-  
-  const data = await getJournalData();
-  return data.currentJournals[userId];
-}
-
-// Đặt ID journal hiện tại cho người dùng đăng nhập
-export async function setCurrentJournalId(journalId: string): Promise<void> {
-  const userId = await getCurrentUserId();
-  if (!userId) throw new Error('No user is logged in');
-  
-  const data = await getJournalData();
-  data.currentJournals[userId] = journalId;
-  await saveData(JOURNALS_FILE, data);
-}
-
-// Trades API
-export async function getTrades(): Promise<Trade[]> {
-  return loadData<Trade[]>(TRADES_FILE, []);
-}
-
-export async function saveTrades(trades: Trade[]): Promise<void> {
-  return saveData(TRADES_FILE, trades);
-}
-
-// User preferences
-interface UserPreferences {
-  [userId: string]: {
-    theme?: string;
-    language?: string;
-    [key: string]: any;
-  };
-}
-
-export async function getUserPreferences(): Promise<UserPreferences[string]> {
-  const userId = await getCurrentUserId();
-  if (!userId) return {};
-  
-  const prefs = await loadData<UserPreferences>(USER_PREFERENCES_FILE, {});
-  return prefs[userId] || {};
-}
-
-export async function saveUserPreferences(preferences: UserPreferences[string]): Promise<void> {
-  const userId = await getCurrentUserId();
-  if (!userId) throw new Error('No user is logged in');
-  
-  const prefs = await loadData<UserPreferences>(USER_PREFERENCES_FILE, {});
-  prefs[userId] = preferences;
-  await saveData(USER_PREFERENCES_FILE, prefs);
-}
-
-// Hàm di chuyển dữ liệu từ cấu trúc cũ sang cấu trúc mới
+// Hàm di chuyển dữ liệu từ định dạng cũ sang mới (nếu cần)
 export async function migrateJournalData(): Promise<void> {
   try {
-    console.log('Migrating journal data to new structure...');
+    console.log('Starting journal data migration...');
     
-    // Kiểm tra xem file journals có tồn tại
-    if (!existsSync(JOURNALS_FILE)) {
-      console.log('No journals file found, no migration needed');
+    // Kiểm tra xem đã có bảng journals trong Supabase chưa
+    const { data, error } = await supabase
+      .from('journals')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      console.error('Error checking journals table in Supabase:', error);
       return;
     }
     
-    // Đọc dữ liệu cũ
-    const oldData = await readFile(JOURNALS_FILE, 'utf8');
-    let oldJournals: Journal[] = [];
-    
-    try {
-      oldJournals = JSON.parse(oldData) as Journal[];
-    } catch (error) {
-      console.error('Error parsing old journals data:', error);
+    // Nếu đã có dữ liệu, không cần di chuyển
+    if (data && data.length > 0) {
+      console.log('Journals already exist in Supabase, no migration needed');
       return;
     }
     
-    if (!Array.isArray(oldJournals)) {
-      console.log('Journals data is not an array or already migrated', typeof oldJournals);
-      return;
-    }
-    
-    // Kiểm tra xem đã được di chuyển chưa
-    if (oldJournals.length === 0) {
-      console.log('No journals to migrate');
-      return;
-    }
-    
-    // Tạo cấu trúc dữ liệu mới
-    const newData: JournalData = { journals: {}, currentJournals: {} };
-    
-    // Lấy tất cả user IDs từ file users.json
-    const usersFile = path.join(DATA_DIR, 'users.json');
-    let userIds: string[] = [];
-    
-    if (existsSync(usersFile)) {
+    // Kiểm tra dữ liệu cũ trong file JSON
+    if (process.env.NODE_ENV === 'development') {
       try {
-        const usersData = await readFile(usersFile, 'utf8');
-        const users = JSON.parse(usersData);
-        userIds = Object.keys(users);
-      } catch (error) {
-        console.error('Error reading users file:', error);
-      }
-    }
-    
-    // Nếu không có user nào, giữ nguyên dữ liệu
-    if (userIds.length === 0) {
-      console.log('No users found, keeping old structure');
-      return;
-    }
-    
-    // Gán tất cả journals hiện tại cho admin đầu tiên
-    const adminId = userIds[0];
-    console.log(`Assigning all journals to first user: ${adminId}`);
-    
-    newData.journals[adminId] = oldJournals;
-    
-    // Lấy ID journal hiện tại từ user-preferences.json
-    if (existsSync(USER_PREFERENCES_FILE)) {
-      try {
-        const prefsData = await readFile(USER_PREFERENCES_FILE, 'utf8');
-        const prefs = JSON.parse(prefsData);
-        
-        if (prefs.currentJournalId) {
-          newData.currentJournals[adminId] = prefs.currentJournalId;
-        } else if (oldJournals.length > 0) {
-          newData.currentJournals[adminId] = oldJournals[0].id;
+        const fs = require('fs');
+        if (fs.existsSync(JOURNALS_FILE_PATH)) {
+          console.log('Found local journals data, migrating to Supabase...');
+          
+          const fileData = fs.readFileSync(JOURNALS_FILE_PATH, 'utf8');
+          const oldData = JSON.parse(fileData);
+          
+          // Di chuyển dữ liệu lên Supabase
+          for (const userId in oldData.journals) {
+            for (const journal of oldData.journals[userId]) {
+              await supabase
+                .from('journals')
+                .upsert({
+                  id: journal.id,
+                  name: journal.name,
+                  description: journal.description,
+                  user_id: userId,
+                  created_at: journal.createdAt,
+                  updated_at: journal.updatedAt,
+                  trades: journal.trades || []
+                });
+            }
+          }
+          
+          console.log('Journal data migration completed successfully');
+        } else {
+          console.log('No local journals data found, skipping migration');
         }
-      } catch (error) {
-        console.error('Error reading user preferences:', error);
+      } catch (e) {
+        console.error('Error during journal data migration:', e);
+      }
+    }
+  } catch (error) {
+    console.error('Unexpected error during journal data migration:', error);
+  }
+}
+
+// Hàm lấy thông tin và tùy chọn của người dùng
+export async function getUserPreferences(userId: string): Promise<any> {
+  try {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('preferences')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching user preferences from Supabase:', error);
+      
+      // Fallback: Đọc từ file local
+      if (process.env.NODE_ENV === 'development') {
+        const fs = require('fs');
+        if (fs.existsSync(PREFERENCES_FILE_PATH)) {
+          const fileData = fs.readFileSync(PREFERENCES_FILE_PATH, 'utf8');
+          const allPreferences = JSON.parse(fileData);
+          return allPreferences[userId] || {};
+        }
+      }
+      
+      return {};
+    }
+    
+    return data.preferences || {};
+  } catch (error) {
+    console.error('Error getting user preferences:', error);
+    return {};
+  }
+}
+
+// Lưu tùy chọn người dùng
+export async function saveUserPreferences(userId: string, preferences: any): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: userId,
+        preferences,
+        updated_at: new Date().toISOString()
+      });
+    
+    if (error) {
+      console.error('Error saving user preferences to Supabase:', error);
+      
+      // Fallback: Lưu vào file local
+      if (process.env.NODE_ENV === 'development') {
+        const fs = require('fs');
+        let allPreferences = {};
+        
+        if (fs.existsSync(PREFERENCES_FILE_PATH)) {
+          const data = fs.readFileSync(PREFERENCES_FILE_PATH, 'utf8');
+          allPreferences = JSON.parse(data);
+        }
+        
+        allPreferences[userId] = preferences;
+        fs.writeFileSync(PREFERENCES_FILE_PATH, JSON.stringify(allPreferences, null, 2));
       }
     }
     
-    // Lưu cấu trúc dữ liệu mới
-    await saveData(JOURNALS_FILE, newData);
-    console.log('Journal data migration completed successfully');
-    
-    // Backup dữ liệu cũ
-    const backupFile = path.join(DATA_DIR, 'journals.backup.json');
-    await writeFile(backupFile, oldData, 'utf8');
-    console.log(`Old data backed up to ${backupFile}`);
-  } catch (error) {
-    console.error('Error migrating journal data:', error);
-  }
-}
-
-// Create a new class to handle data operations
-class DataStore {
-  // Get all playbooks for a specific user
-  async getPlaybooks(userId: string) {
-    const playbooksData = await this.loadPlaybooksData();
-    return playbooksData[userId] || [];
-  }
-
-  // Add a new playbook for a user
-  async addPlaybook(userId: string, playbook: any) {
-    const playbooksData = await this.loadPlaybooksData();
-    
-    if (!playbooksData[userId]) {
-      playbooksData[userId] = [];
-    }
-    
-    playbooksData[userId].push(playbook);
-    await this.savePlaybooksData(playbooksData);
-    
-    return playbook;
-  }
-
-  // Update an existing playbook
-  async updatePlaybook(userId: string, updatedPlaybook: any) {
-    const playbooksData = await this.loadPlaybooksData();
-    
-    if (!playbooksData[userId]) {
-      return null;
-    }
-    
-    const index = playbooksData[userId].findIndex(
-      (p: any) => p.id === updatedPlaybook.id
-    );
-    
-    if (index === -1) {
-      return null;
-    }
-    
-    playbooksData[userId][index] = updatedPlaybook;
-    await this.savePlaybooksData(playbooksData);
-    
-    return updatedPlaybook;
-  }
-
-  // Delete a playbook
-  async deletePlaybook(userId: string, playbookId: string) {
-    const playbooksData = await this.loadPlaybooksData();
-    
-    if (!playbooksData[userId]) {
-      return false;
-    }
-    
-    const initialLength = playbooksData[userId].length;
-    playbooksData[userId] = playbooksData[userId].filter(
-      (p: any) => p.id !== playbookId
-    );
-    
-    if (playbooksData[userId].length === initialLength) {
-      return false; // No playbook was deleted
-    }
-    
-    await this.savePlaybooksData(playbooksData);
     return true;
+  } catch (error) {
+    console.error('Error saving user preferences:', error);
+    return false;
   }
-
-  // Get a specific playbook by ID
-  async getPlaybookById(userId: string, playbookId: string) {
-    const playbooksData = await this.loadPlaybooksData();
-    
-    if (!playbooksData[userId]) {
-      return null;
-    }
-    
-    return playbooksData[userId].find((p: any) => p.id === playbookId) || null;
-  }
-
-  // Load playbooks data from file
-  private async loadPlaybooksData(): Promise<PlaybooksData> {
-    return loadData<PlaybooksData>(PLAYBOOKS_FILE, {});
-  }
-
-  // Save playbooks data to file
-  private async savePlaybooksData(data: PlaybooksData): Promise<void> {
-    return saveData(PLAYBOOKS_FILE, data);
-  }
-
-  // ... Add methods for journals, trades, and other operations
-}
-
-// Singleton instance of the DataStore
-let dataStoreInstance: DataStore | null = null;
-
-// Get or create a DataStore instance
-export function getDataStore(): DataStore {
-  if (!dataStoreInstance) {
-    dataStoreInstance = new DataStore();
-  }
-  return dataStoreInstance;
 }

@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+// Chỉ import khi cần thiết, không import setupSupabaseDatabase ở đây
+// import setupSupabaseDatabase from './lib/setupSupabase';
+
+// Biến để theo dõi xem đã chạy setup chưa
+let hasInitializedSupabase = false;
 
 // Middleware này sẽ chạy trên các API routes để ghi logs
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Edge Runtime không thể chạy setupSupabaseDatabase, thao tác này nên được thực hiện
+  // trong script riêng hoặc API route cụ thể
   
   // Chỉ áp dụng cho các route API
   if (pathname.startsWith('/api/')) {

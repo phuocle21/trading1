@@ -16,7 +16,19 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
+  },
+  // Cấu hình cụ thể cho Supabase
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:9002', '192.168.86.31:9002']
+    },
   },
 };
 

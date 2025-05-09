@@ -36,22 +36,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // Sửa đường dẫn
+        // Thử tải thông tin người dùng từ API
         const response = await fetch('/api/user?path=current');
+        
+        // Kiểm tra xem server có trả về lỗi không
+        if (!response.ok) {
+          console.error(`Failed to load current user: Server responded with status ${response.status}`);
+          setLoading(false);
+          return;
+        }
         
         // Kiểm tra content type
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
           console.error('Failed to load current user: Response is not JSON');
+          console.error('Content-Type:', contentType);
+          // Hiển thị nội dung phản hồi để gỡ lỗi
+          try {
+            const textResponse = await response.text();
+            console.error('Response content:', textResponse);
+          } catch (error) {
+            console.error('Could not read response text:', error);
+          }
           setLoading(false);
           return;
         }
         
-        if (response.ok) {
+        // Phân tích JSON
+        try {
           const data = await response.json();
           if (data.user) {
             setCurrentUser(data.user);
           }
+        } catch (jsonError) {
+          console.error('Failed to parse JSON response:', jsonError);
         }
       } catch (error) {
         console.error("Failed to load current user:", error);
