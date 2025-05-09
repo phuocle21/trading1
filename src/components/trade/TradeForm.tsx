@@ -340,8 +340,8 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   const onSubmit: SubmitHandler<TradeFormValues> = (data) => {
     if (!currentJournalId) {
       toast({ 
-        title: t('tradeForm.noActiveJournal'),
-        description: t('tradeForm.selectJournalFirst'),
+        title: "Chưa có nhật ký giao dịch",
+        description: "Vui lòng tạo nhật ký giao dịch trước khi thêm giao dịch mới",
         variant: "destructive" 
       });
       return;

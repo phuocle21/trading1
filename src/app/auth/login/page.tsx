@@ -35,7 +35,7 @@ export default function LoginPage() {
           description: "Tài khoản của bạn đã được tạo thành công!",
         });
       }
-      router.push("/dashboard");
+      router.push("/journals"); // Chuyển hướng người dùng đến trang nhật ký thay vì dashboard
     } catch (error) {
       console.error(error);
       toast({
