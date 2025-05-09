@@ -9,28 +9,40 @@ export interface User {
 export interface Trade {
   id: string;
   journalId?: string;
-  date: string;
+  date?: string;
+  entryDate?: string;
+  entryTime?: string;
+  exitDate?: string;
+  exitTime?: string;
   symbol: string;
-  direction: 'long' | 'short';
+  tradeType: 'buy' | 'sell';
+  quantity: number;
   entryPrice: number;
-  exitPrice: number;
-  size: number;
+  exitPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
   fees?: number;
+  playbook?: string;
+  risk?: 'low' | 'medium' | 'high';
+  mood?: 'calm' | 'excited' | 'anxious' | 'confident' | 'unsure';
+  rating?: number;
+  notes?: string;
+  screenshots?: string[];
+  direction?: 'long' | 'short';
+  size?: number;
   returnValue?: number;
   returnPercent?: number;
   strategy?: string;
   setup?: string;
-  notes?: string;
   images?: string[];
   tags?: string[];
-  status: 'planned' | 'open' | 'closed' | 'canceled';
+  status?: 'planned' | 'open' | 'closed' | 'canceled';
   emotions?: {
     before?: string;
     during?: string;
     after?: string;
   };
   mistakes?: string[];
-  rating?: number;
 }
 
 export interface Journal {

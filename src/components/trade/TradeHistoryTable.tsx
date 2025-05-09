@@ -47,6 +47,9 @@ import {
   Thermometer,
   ChevronLeft,
   ChevronRight,
+  ImageIcon,
+  ZoomIn,
+  X,
 } from "lucide-react";
 import { useJournals } from "@/contexts/JournalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -66,6 +69,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +97,9 @@ export function TradeHistoryTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [dialogImage, setDialogImage] = useState<string | null>(null);
+  const [currentImages, setCurrentImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     entryTime: false,
     exitTime: false,
@@ -103,6 +110,7 @@ export function TradeHistoryTable() {
     risk: false,
     mood: false,
     rating: false,
+    screenshots: false,
   });
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
@@ -318,6 +326,46 @@ export function TradeHistoryTable() {
         );
       },
     }),
+    columnHelper.accessor((row) => row, {
+      id: "screenshots",
+      header: "Ảnh",
+      cell: (info) => {
+        const trade = info.getValue();
+        const screenshots = trade.screenshots || [];
+        
+        if (!screenshots || screenshots.length === 0) {
+          return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        }
+        
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 mx-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImages(screenshots);
+                    setCurrentImageIndex(0);
+                    setDialogImage(screenshots[0]);
+                  }}
+                >
+                  <ImageIcon className="h-4 w-4 text-primary" />
+                  <span className="sr-only">Xem ảnh</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {screenshots.length > 1 
+                  ? `Xem ${screenshots.length} ảnh chụp màn hình` 
+                  : "Xem ảnh chụp màn hình"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+    }),
     columnHelper.accessor("profitOrLoss", {
       header: ({ column }) => (
         <Button
@@ -408,7 +456,7 @@ export function TradeHistoryTable() {
         );
       },
     }),
-  ], [router, handleDeleteTrade, showDeleteConfirm, t]);
+  ], [router, handleDeleteTrade, showDeleteConfirm, t, setCurrentImages, setCurrentImageIndex, setDialogImage]);
 
   const table = useReactTable({
     data,
@@ -554,6 +602,43 @@ export function TradeHistoryTable() {
                         return selectedPlaybook ? selectedPlaybook.name : trade.playbook;
                       })()}
                     </Badge>
+                  </div>
+                )}
+                {trade.screenshots && trade.screenshots.length > 0 && (
+                  <div className="col-span-2 mt-2">
+                    <div className="text-muted-foreground mb-2">{t('trade.screenshots') || "Ảnh chụp màn hình"}</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {trade.screenshots.slice(0, 3).map((screenshot, index) => (
+                        <div 
+                          key={index} 
+                          className="relative aspect-video rounded-md overflow-hidden border border-muted cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImages(trade.screenshots || []);
+                            setCurrentImageIndex(index);
+                            setDialogImage(screenshot);
+                          }}
+                        >
+                          <img src={screenshot} alt={`Screenshot ${index + 1}`} className="object-cover w-full h-full" />
+                        </div>
+                      ))}
+                      {trade.screenshots.length > 3 && (
+                        <div 
+                          className="relative aspect-video rounded-md overflow-hidden border border-muted bg-accent/20 flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImages(trade.screenshots || []);
+                            setCurrentImageIndex(3);
+                            setDialogImage(trade.screenshots[3]);
+                          }}
+                        >
+                          <div className="text-center">
+                            <span className="text-sm font-medium">+{trade.screenshots.length - 3}</span>
+                            <span className="block text-xs text-muted-foreground">Hình ảnh</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {trade.notes && (
@@ -752,6 +837,7 @@ export function TradeHistoryTable() {
                       else if (column.id === "risk") label = "Rủi Ro";
                       else if (column.id === "mood") label = "Cảm Xúc";
                       else if (column.id === "rating") label = "Đánh Giá";
+                      else if (column.id === "screenshots") label = "Ảnh";
                       else if (column.id === "profitOrLoss") label = "Lãi/Lỗ";
                       else label = t(`trade.${column.id}`);
 
@@ -928,6 +1014,64 @@ export function TradeHistoryTable() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Dialog hiển thị ảnh phóng to */}
+      {dialogImage && (
+        <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
+          <DialogContent className="max-w-4xl p-0">
+            <DialogTitle className="sr-only">Ảnh chụp màn hình</DialogTitle>
+            <div className="relative">
+              <img src={dialogImage} alt="Ảnh chụp màn hình" className="w-full h-auto rounded-md" />
+              
+              <div className="absolute top-2 right-2 flex space-x-2">
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-black/50 text-white border-0 hover:bg-black/70"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DialogClose>
+              </div>
+              
+              {currentImages.length > 1 && (
+                <div className="absolute inset-x-0 bottom-0 flex justify-between p-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 rounded-full bg-black/50 text-white border-0 hover:bg-black/70"
+                    onClick={() => {
+                      const prevIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+                      setCurrentImageIndex(prevIndex);
+                      setDialogImage(currentImages[prevIndex]);
+                    }}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  
+                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {currentImages.length}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 rounded-full bg-black/50 text-white border-0 hover:bg-black/70"
+                    onClick={() => {
+                      const nextIndex = (currentImageIndex + 1) % currentImages.length;
+                      setCurrentImageIndex(nextIndex);
+                      setDialogImage(currentImages[nextIndex]);
+                    }}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

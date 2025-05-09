@@ -30,12 +30,14 @@ import { usePlaybooks } from '@/contexts/PlaybookContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Save, Info, AlertCircle, BookOpenText, Clock, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Save, Info, AlertCircle, BookOpenText, Clock, ArrowRight, ImageIcon, X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, parse } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogClose, DialogTitle } from '@/components/ui/dialog';
 
 const tradeFormSchema = z.object({
   entryDateTime: z.date({ required_error: "Entry date and time is required." }),
@@ -53,6 +55,7 @@ const tradeFormSchema = z.object({
   mood: z.enum(['calm', 'excited', 'anxious', 'confident', 'unsure']).optional().nullable(),
   rating: z.coerce.number().min(1).max(5).optional().nullable(),
   notes: z.string().max(500, "Notes too long.").optional().nullable(),
+  screenshots: z.array(z.string()).optional().default([]),
 }).refine(data => {
   if (data.exitDateTime && !data.exitPrice) {
     return false; 
@@ -97,6 +100,9 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [dialogImage, setDialogImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const convertInitialData = useCallback((data: Trade): Partial<TradeFormValues> => {
     let entryDateTime: Date | null = null;
@@ -138,6 +144,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       mood: data.mood ?? null,
       rating: data.rating ?? null,
       notes: data.notes ?? null,
+      screenshots: data.screenshots ?? [],
     };
   }, []);
 
@@ -160,7 +167,8 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
           risk: null,
           mood: null,
           rating: null,
-          notes: null, 
+          notes: null,
+          screenshots: [], 
         },
   });
 
@@ -168,6 +176,132 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     control: form.control,
     name: "playbook",
   });
+
+  const screenshots = useWatch({
+    control: form.control,
+    name: "screenshots",
+  });
+
+  useEffect(() => {
+    if (screenshots) {
+      setPreviewImages(screenshots);
+    }
+  }, [screenshots]);
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                if (event.target?.result) {
+                  const imageDataUrl = event.target.result.toString();
+                  
+                  const currentScreenshots = form.getValues("screenshots") || [];
+                  form.setValue("screenshots", [...currentScreenshots, imageDataUrl]);
+                  setPreviewImages(prev => [...prev, imageDataUrl]);
+                  
+                  toast({ 
+                    title: t('tradeForm.screenshotAdded'),
+                    description: t('tradeForm.screenshotAddedDesc')
+                  });
+                }
+              };
+              reader.readAsDataURL(file);
+              
+              if (document.activeElement?.tagName !== 'TEXTAREA' && 
+                  document.activeElement?.tagName !== 'INPUT') {
+                e.preventDefault();
+              }
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [form, t, toast]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            const imageDataUrl = event.target.result.toString();
+            
+            const currentScreenshots = form.getValues("screenshots") || [];
+            form.setValue("screenshots", [...currentScreenshots, imageDataUrl]);
+            setPreviewImages(prev => [...prev, imageDataUrl]);
+          }
+        };
+        
+        reader.readAsDataURL(files[i]);
+      }
+      
+      e.target.value = '';
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const currentScreenshots = [...(form.getValues("screenshots") || [])];
+    currentScreenshots.splice(index, 1);
+    form.setValue("screenshots", currentScreenshots);
+    setPreviewImages(prev => {
+      const newPreviews = [...prev];
+      newPreviews.splice(index, 1);
+      return newPreviews;
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-primary');
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-primary');
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-primary');
+    
+    const files = e.dataTransfer.files;
+    
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].type.indexOf('image') !== -1) {
+          const reader = new FileReader();
+          
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              const imageDataUrl = event.target.result.toString();
+              
+              const currentScreenshots = form.getValues("screenshots") || [];
+              form.setValue("screenshots", [...currentScreenshots, imageDataUrl]);
+              setPreviewImages(prev => [...prev, imageDataUrl]);
+            }
+          };
+          
+          reader.readAsDataURL(files[i]);
+        }
+      }
+    }
+  };
 
   const convertFormData = (data: TradeFormValues): Partial<Trade> => {
     const entryDate = data.entryDateTime.toISOString().split('T')[0];
@@ -199,6 +333,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       mood: data.mood || undefined,
       rating: data.rating ?? undefined,
       notes: data.notes || undefined,
+      screenshots: data.screenshots || [],
     };
   };
 
@@ -541,6 +676,64 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                     />
                   </div>
                 </div>
+
+                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
+                  <h3 className="text-base font-medium flex items-center">
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    {t('tradeForm.screenshots') || 'Ảnh chụp màn hình'}
+                  </h3>
+                  
+                  <div 
+                    className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload} 
+                      accept="image/*" 
+                      className="hidden" 
+                      multiple 
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-2 py-4">
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{t('tradeForm.dropImageHere') || 'Kéo thả hình ảnh vào đây'}</p>
+                        <p className="text-xs text-muted-foreground">{t('tradeForm.orClickToUpload') || 'hoặc nhấp để tải lên'}</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {t('tradeForm.pasteScreenshot') || 'Bạn cũng có thể sử dụng Ctrl+V (hoặc Cmd+V) để dán trực tiếp ảnh chụp màn hình'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {previewImages.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                      {previewImages.map((image, index) => (
+                        <div key={index} className="relative group rounded-md overflow-hidden border border-muted">
+                          <div className="relative aspect-video">
+                            <img 
+                              src={image} 
+                              alt={`Screenshot ${index + 1}`}
+                              className="object-cover w-full h-full cursor-pointer"
+                              onClick={() => setDialogImage(image)}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -709,6 +902,26 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
           </CardFooter>
         </form>
       </Form>
+
+      {dialogImage && (
+        <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogTitle className="sr-only">Ảnh chụp màn hình phóng to</DialogTitle>
+            <div className="relative">
+              <img src={dialogImage} alt="Zoomed Screenshot" className="w-full h-auto rounded-md" />
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="absolute top-2 right-2 p-1 rounded-full"
+                  onClick={() => setDialogImage(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }
