@@ -204,9 +204,8 @@ export default function JournalsPage() {
     });
     setCreateDialogOpen(false);
 
-    // Switch to the new journal
+    // Switch to the new journal but stay on the journals page
     switchJournal(newJournal.id);
-    router.push('/dashboard');
   };
 
   const handleCreateTemplateJournal = (templateName: string) => {
@@ -217,9 +216,8 @@ export default function JournalsPage() {
       description: t('journals.templateCreatedDesc'),
     });
 
-    // Switch to the new journal
+    // Switch to the new journal but stay on the journals page
     switchJournal(newJournal.id);
-    router.push('/dashboard');
   };
 
   const handleDeleteJournal = (journalId: string) => {
