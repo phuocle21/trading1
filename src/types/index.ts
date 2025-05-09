@@ -48,31 +48,33 @@ export interface Trade {
 export interface Journal {
   id: string;
   name: string;
-  userId?: string;
   description?: string;
-  createdAt: number;
+  createdAt: string;
+  updatedAt: string;
+  trades: Trade[];
+  icon?: string;
+  color?: string;
   isDefault?: boolean;
   settings?: {
+    currency?: string;
     initialCapital?: number;
+    riskPercentage?: number;
+    tradingHours?: {
+      start: string;
+      end: string;
+    };
+    tradingDays?: string[];
+    preferredTimeframes?: string[];
   };
 }
 
 export interface Playbook {
   id: string;
   name: string;
-  strategy: string;
-  timeframe: string;
-  setupCriteria: string;
-  entryTriggers: string;
-  exitRules: string;
-  riskManagement: string;
-  notes?: string;
-  winRate: number;
-  avgProfit: number;
-  totalTrades: number;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  description?: string;
+  rules: any[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PasswordResetRequest {

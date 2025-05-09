@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPlaybooks, savePlaybooks, getCurrentUserId } from "@/lib/server/data-store";
 import { v4 as uuidv4 } from 'uuid';
+import supabase from "@/lib/supabase";
 
 // Get all playbooks for the current user
 export async function GET(request: NextRequest) {
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!playbook || !playbook.name) {
+    if (!playbook) {
       console.log('POST /api/playbooks: Missing playbook data', { body });
       return NextResponse.json(
         { error: "Playbook data is required" },
@@ -61,44 +62,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a UUID for the new playbook
+    const playbooksData = await getPlaybooks();
     const newPlaybook = {
+      ...playbook,
       id: uuidv4(),
-      name: playbook.name,
-      description: playbook.description || '',
-      rules: playbook.rules || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
-    console.log(`POST /api/playbooks: Creating new playbook for user ${userId}`, { playbook: newPlaybook });
-    
-    // Lấy tất cả playbooks hiện có
-    const playbooksData = await getPlaybooks();
-    
-    // Thêm playbook mới vào danh sách của user
     if (!playbooksData[userId]) {
       playbooksData[userId] = [];
     }
-    
+
     playbooksData[userId].push(newPlaybook);
-    
-    // Lưu lại danh sách đã cập nhật
-    const success = await savePlaybooks(playbooksData);
-    
-    if (!success) {
-      return NextResponse.json(
-        { error: "Failed to save playbook" },
-        { status: 500 }
-      );
-    }
+    await savePlaybooks(playbooksData);
 
     console.log(`POST /api/playbooks: Playbook created successfully`, { id: newPlaybook.id });
     return NextResponse.json({ playbook: newPlaybook });
   } catch (error) {
     console.error('Error creating playbook:', error);
     return NextResponse.json(
-      { error: "Failed to create playbook" },
+      { error: "Failed to create playbook", 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }
@@ -132,7 +118,7 @@ export async function PUT(request: NextRequest) {
     
     console.log(`PUT /api/playbooks: Updating playbook for user ${userId}`, { playbookId: playbook.id });
     
-    // Lấy tất cả playbooks hiện có
+    // Lấy tất cả playbooks hiện có để kiểm tra playbook tồn tại
     const playbooksData = await getPlaybooks();
     
     // Kiểm tra xem user có tồn tại không
@@ -144,10 +130,10 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    // Tìm và cập nhật playbook
-    const playbookIndex = playbooksData[userId].findIndex(p => p.id === playbook.id);
+    // Tìm playbook cần cập nhật
+    const existingPlaybook = playbooksData[userId].find(p => p.id === playbook.id);
     
-    if (playbookIndex === -1) {
+    if (!existingPlaybook) {
       console.log(`PUT /api/playbooks: Playbook ${playbook.id} not found for user ${userId}`);
       return NextResponse.json(
         { error: "Playbook not found" },
@@ -155,106 +141,43 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    // Update updatedAt timestamp và merge thông tin mới
+    // Tạo đối tượng playbook cập nhật
+    const timestamp = new Date().toISOString();
     const updatedPlaybook = {
-      ...playbooksData[userId][playbookIndex],
+      ...existingPlaybook,
       ...playbook,
-      updatedAt: new Date().toISOString()
+      updatedAt: timestamp
     };
     
-    playbooksData[userId][playbookIndex] = updatedPlaybook;
+    // Cập nhật trực tiếp vào Supabase
+    const { error: updateError } = await supabase
+      .from('playbooks')
+      .update({
+        name: updatedPlaybook.name,
+        description: updatedPlaybook.description,
+        content: updatedPlaybook.rules, // Chuyển đổi từ rules trong ứng dụng sang content trong DB
+        updated_at: timestamp
+      })
+      .eq('id', playbook.id)
+      .eq('user_id', userId);
     
-    // Lưu lại danh sách đã cập nhật
-    const success = await savePlaybooks(playbooksData);
-    
-    if (!success) {
-      console.log(`PUT /api/playbooks: Failed to save updated playbook`);
-      return NextResponse.json(
-        { error: "Failed to update playbook" },
-        { status: 500 }
-      );
+    if (updateError) {
+      console.error('Error updating playbook in Supabase:', updateError);
+      throw updateError;
     }
+    
+    // Cập nhật cache local
+    const playbookIndex = playbooksData[userId].findIndex(p => p.id === playbook.id);
+    playbooksData[userId][playbookIndex] = updatedPlaybook;
 
     console.log(`PUT /api/playbooks: Playbook updated successfully`, { id: playbook.id });
     return NextResponse.json({ playbook: updatedPlaybook });
   } catch (error) {
     console.error('Error updating playbook:', error);
     return NextResponse.json(
-      { error: "Failed to update playbook" },
-      { status: 500 }
-    );
-  }
-}
-
-// Delete a playbook
-export async function DELETE(request: NextRequest) {
-  try {
-    console.log('DELETE /api/playbooks: Processing request');
-    
-    const searchParams = request.nextUrl.searchParams;
-    // Ưu tiên userId từ URL, nếu không có thì lấy từ cookie
-    const userId = searchParams.get('userId') || await getCurrentUserId();
-    const playbookId = searchParams.get('playbookId');
-
-    if (!userId) {
-      console.log('DELETE /api/playbooks: No userId available');
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!playbookId) {
-      console.log('DELETE /api/playbooks: No playbookId provided');
-      return NextResponse.json(
-        { error: "Playbook ID is required" },
-        { status: 400 }
-      );
-    }
-    
-    console.log(`DELETE /api/playbooks: Deleting playbook ${playbookId} for user ${userId}`);
-    
-    // Lấy tất cả playbooks hiện có
-    const playbooksData = await getPlaybooks();
-    
-    // Kiểm tra xem user có tồn tại không
-    if (!playbooksData[userId]) {
-      console.log(`DELETE /api/playbooks: No playbooks found for user ${userId}`);
-      return NextResponse.json(
-        { error: "User has no playbooks" },
-        { status: 404 }
-      );
-    }
-    
-    // Kiểm tra xem playbook có tồn tại không
-    const initialCount = playbooksData[userId].length;
-    playbooksData[userId] = playbooksData[userId].filter(p => p.id !== playbookId);
-    
-    if (playbooksData[userId].length === initialCount) {
-      console.log(`DELETE /api/playbooks: Playbook ${playbookId} not found for user ${userId}`);
-      return NextResponse.json(
-        { error: "Playbook not found" },
-        { status: 404 }
-      );
-    }
-    
-    // Lưu lại danh sách đã cập nhật
-    const success = await savePlaybooks(playbooksData);
-    
-    if (!success) {
-      console.log(`DELETE /api/playbooks: Failed to save changes after deletion`);
-      return NextResponse.json(
-        { error: "Failed to delete playbook" },
-        { status: 500 }
-      );
-    }
-
-    console.log(`DELETE /api/playbooks: Playbook deleted successfully`, { id: playbookId });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting playbook:', error);
-    return NextResponse.json(
-      { error: "Failed to delete playbook" },
+      { error: "Failed to update playbook", 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }

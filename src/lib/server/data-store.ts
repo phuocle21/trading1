@@ -136,22 +136,27 @@ export async function saveJournals(data: JournalData): Promise<boolean> {
 // Hàm lấy ID của journal hiện tại
 export async function getCurrentJournalId(): Promise<string | null> {
   try {
-    // Lấy userId bằng cách await function đã sửa
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      return 'default-journal-id'; // Trả về ID mặc định nếu không có userId
-    }
+    // Lấy userId, hiện tại chúng ta đã cố định là 'admin-uid'
+    const userId = 'admin-uid';
     
     // Lấy dữ liệu journal từ Supabase
     const journalData = await getJournals();
+    
+    // Debug thông tin
+    console.log('getCurrentJournalId - userId:', userId);
+    console.log('getCurrentJournalId - journals for user:', journalData.journals[userId] ? journalData.journals[userId].length : 0);
+    console.log('getCurrentJournalId - current journal ID:', journalData.currentJournals[userId] || 'none');
     
     // Kiểm tra xem có journal cho user không
     if (!journalData.currentJournals[userId]) {
       // Nếu không có, kiểm tra xem có journals nào không
       if (journalData.journals[userId] && journalData.journals[userId].length > 0) {
         // Lấy journal đầu tiên nếu có
-        return journalData.journals[userId][0].id;
+        const firstJournalId = journalData.journals[userId][0].id;
+        console.log('getCurrentJournalId - using first journal as default:', firstJournalId);
+        return firstJournalId;
       }
+      console.log('getCurrentJournalId - no journals found, returning default ID');
       return 'default-journal-id';
     }
     
@@ -218,7 +223,7 @@ export async function getPlaybooks(): Promise<PlaybooksData> {
         id: playbook.id,
         name: playbook.name,
         description: playbook.description,
-        rules: playbook.rules,
+        rules: playbook.content || [], // Chuyển đổi từ content trong DB sang rules trong ứng dụng
         createdAt: playbook.created_at,
         updatedAt: playbook.updated_at
       });
@@ -243,7 +248,7 @@ export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
             id: playbook.id,
             name: playbook.name,
             description: playbook.description,
-            rules: playbook.rules,
+            content: playbook.rules, // Chuyển đổi từ rules trong ứng dụng sang content trong DB
             user_id: userId,
             created_at: playbook.createdAt,
             updated_at: playbook.updatedAt

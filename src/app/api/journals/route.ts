@@ -8,6 +8,7 @@ import {
 } from '@/lib/server/data-store';
 import { Journal } from '@/types';
 import { cookies } from 'next/headers';
+import supabase from '@/lib/supabase';
 
 // Chạy di chuyển dữ liệu khi khởi động server
 let migrationPromise: Promise<void> | null = null;
@@ -27,10 +28,22 @@ export async function GET() {
     // Đảm bảo di chuyển dữ liệu được thực hiện
     await ensureMigration();
     
-    const journals = await getJournals();
+    // Lấy userID cố định là admin-uid
+    const userId = 'admin-uid';
+    
+    // Lấy dữ liệu journals từ data-store
+    const journalData = await getJournals();
     const currentJournalId = await getCurrentJournalId();
-    console.log(`GET /api/journals: Found ${journals.length} journals, currentJournalId: ${currentJournalId}`);
-    return NextResponse.json({ journals, currentJournalId });
+    
+    // Kiểm tra xem có journals cho user này không
+    const userJournals = journalData.journals[userId] || [];
+    
+    console.log(`GET /api/journals: Found ${userJournals.length} journals for user ${userId}, currentJournalId: ${currentJournalId}`);
+    
+    return NextResponse.json({ 
+      journals: userJournals, 
+      currentJournalId 
+    });
   } catch (error) {
     console.error('Error retrieving journals:', error);
     return NextResponse.json({ error: 'Failed to fetch journals' }, { status: 500 });
@@ -55,8 +68,12 @@ export async function POST(request: NextRequest) {
     const newJournal: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'> = body.journal;
 
     const timestamp = new Date().toISOString();
-    const journals = await getJournals();
-
+    const journalData = await getJournals();
+    
+    // Lấy userId
+    const userId = 'admin-uid';
+    
+    // Tạo journal mới với đầy đủ thông tin
     const completeJournal: Journal = {
       ...newJournal,
       id: crypto.randomUUID(),
@@ -64,9 +81,49 @@ export async function POST(request: NextRequest) {
       updatedAt: timestamp,
       trades: newJournal.trades || []
     };
-
-    const updatedJournals = [...journals, completeJournal];
-    await saveJournals(updatedJournals);
+    
+    // Thêm journal trực tiếp vào Supabase
+    const { error: insertError } = await supabase
+      .from('journals')
+      .insert({
+        id: completeJournal.id,
+        name: completeJournal.name,
+        description: completeJournal.description,
+        user_id: userId,
+        created_at: completeJournal.createdAt,
+        updated_at: completeJournal.updatedAt,
+        trades: completeJournal.trades || []
+      });
+      
+    if (insertError) {
+      console.error('Error inserting journal to Supabase:', insertError);
+      throw insertError;
+    }
+    
+    // Đảm bảo có mảng journals cho userId trong bộ nhớ local
+    if (!journalData.journals[userId]) {
+      journalData.journals[userId] = [];
+    }
+    
+    // Thêm journal mới vào mảng journals của userId
+    journalData.journals[userId].push(completeJournal);
+    
+    // Đặt journal mới làm current journal
+    journalData.currentJournals[userId] = completeJournal.id;
+    
+    // Cập nhật current journal trong user_preferences
+    const { error: updateError } = await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: userId,
+        current_journal_id: completeJournal.id,
+        updated_at: timestamp
+      });
+      
+    if (updateError) {
+      console.error('Error updating user preferences:', updateError);
+      // Không throw error vì đây không phải lỗi nghiêm trọng
+    }
     
     console.log('POST /api/journals: Journal created successfully', { id: completeJournal.id });
     return NextResponse.json({ journal: completeJournal });
@@ -101,19 +158,53 @@ export async function PUT(request: NextRequest) {
     }
     
     const { id, journal } = body;
-    const journals = await getJournals();
+    console.log(`PUT /api/journals: Updating journal with ID ${id}`);
     
-    if (!journals.some(j => j.id === id)) {
-      return NextResponse.json({ error: `Journal with ID ${id} not found` }, { status: 404 });
+    const userId = 'admin-uid'; // Sử dụng ID cố định
+    const journalData = await getJournals();
+    
+    // Kiểm tra xem có journals cho user này không
+    if (!journalData.journals[userId]) {
+      console.log(`PUT /api/journals: No journals found for user ${userId}, creating empty array`);
+      journalData.journals[userId] = [];
     }
     
-    const updatedJournals = journals.map(j => 
-      j.id === id ? { ...journal, updatedAt: new Date().toISOString() } : j
-    );
+    // Log danh sách journal hiện có
+    const userJournals = journalData.journals[userId] || [];
+    console.log(`PUT /api/journals: Found ${userJournals.length} journals for user ${userId}`);
+    console.log('PUT /api/journals: Available journal IDs:', userJournals.map(j => j.id));
     
-    await saveJournals(updatedJournals);
+    // Tìm journal cần cập nhật
+    const journalIndex = userJournals.findIndex(j => j.id === id);
+    console.log(`PUT /api/journals: Journal index in array: ${journalIndex}`);
+    
+    if (journalIndex === -1) {
+      console.log(`PUT /api/journals: Journal with ID ${id} not found`);
+      return NextResponse.json({ 
+        error: `Journal with ID ${id} not found`,
+        availableIds: userJournals.map(j => j.id)
+      }, { status: 404 });
+    }
+    
+    // Bảo toàn các trường quan trọng từ journal gốc
+    const originalJournal = userJournals[journalIndex];
+    
+    // Cập nhật journal
+    const updatedJournal = {
+      ...journal,
+      id, // Giữ nguyên ID
+      createdAt: originalJournal.createdAt, // Giữ nguyên ngày tạo
+      updatedAt: new Date().toISOString(), // Cập nhật ngày sửa
+      trades: journal.trades || originalJournal.trades || [] // Giữ danh sách giao dịch nếu không được cung cấp
+    };
+    
+    journalData.journals[userId][journalIndex] = updatedJournal;
+    
+    // Lưu lại dữ liệu
+    await saveJournals(journalData);
+    
     console.log('PUT /api/journals: Journal updated successfully', { id });
-    return NextResponse.json({ journal: updatedJournals.find(j => j.id === id) });
+    return NextResponse.json({ journal: updatedJournal });
   } catch (error) {
     console.error('Error updating journal:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -142,17 +233,64 @@ export async function DELETE(request: NextRequest) {
     }
     
     console.log('DELETE /api/journals: Deleting journal', { id });
-    const journals = await getJournals();
     
-    if (!journals.some(j => j.id === id)) {
+    const userId = 'admin-uid'; // Sử dụng ID cố định
+    const journalData = await getJournals();
+    
+    // Kiểm tra xem có journals cho user này không
+    if (!journalData.journals[userId]) {
+      return NextResponse.json({ error: `No journals found for user` }, { status: 404 });
+    }
+    
+    // Kiểm tra journal tồn tại không
+    const journalExists = journalData.journals[userId].some(j => j.id === id);
+    if (!journalExists) {
       return NextResponse.json({ error: `Journal with ID ${id} not found` }, { status: 404 });
     }
     
-    const updatedJournals = journals.filter(journal => journal.id !== id);
+    // Xóa journal trực tiếp từ Supabase
+    const { error: deleteError } = await supabase
+      .from('journals')
+      .delete()
+      .eq('id', id);
+      
+    if (deleteError) {
+      console.error('Error deleting journal from Supabase:', deleteError);
+      throw deleteError;
+    }
     
-    await saveJournals(updatedJournals);
+    // Cập nhật lại dữ liệu local
+    journalData.journals[userId] = journalData.journals[userId].filter(j => j.id !== id);
+    
+    // Nếu journal đang xóa là current journal, cập nhật current journal
+    if (journalData.currentJournals[userId] === id) {
+      // Nếu còn journal khác, lấy journal đầu tiên làm current
+      if (journalData.journals[userId].length > 0) {
+        journalData.currentJournals[userId] = journalData.journals[userId][0].id;
+        
+        // Cập nhật current journal trong user_preferences
+        const { error: updateError } = await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: userId,
+            current_journal_id: journalData.currentJournals[userId],
+            updated_at: new Date().toISOString()
+          });
+          
+        if (updateError) {
+          console.error('Error updating current journal in preferences:', updateError);
+        }
+      } else {
+        // Nếu không còn journal nào, xóa current journal
+        delete journalData.currentJournals[userId];
+      }
+    }
+    
     console.log('DELETE /api/journals: Journal deleted successfully', { id });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      currentJournalId: journalData.currentJournals[userId] || null
+    });
   } catch (error) {
     console.error('Error deleting journal:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -185,11 +323,27 @@ export async function PATCH(request: NextRequest) {
     
     const { journalId } = body;
     
-    const journals = await getJournals();
-    if (!journals.some(j => j.id === journalId)) {
+    // Sử dụng userId cố định là 'admin-uid' thay vì cố gắng lấy từ ID nhật ký
+    const userIdToUse = 'admin-uid';
+    console.log(`PATCH /api/journals: Using userId: ${userIdToUse}`);
+    
+    // Lấy dữ liệu journals
+    const journalData = await getJournals();
+    
+    // Kiểm tra xem journal có tồn tại không
+    const userJournals = journalData.journals[userIdToUse] || [];
+    
+    console.log(`PATCH /api/journals: Looking for journal ${journalId} in ${userJournals.length} journals`);
+    console.log('PATCH /api/journals: Available journal IDs:', userJournals.map(j => j.id));
+    
+    const journalExists = userJournals.some(j => j.id === journalId);
+    
+    if (!journalExists) {
+      console.log(`PATCH /api/journals: Journal with ID ${journalId} not found`);
       return NextResponse.json({ error: `Journal with ID ${journalId} not found` }, { status: 404 });
     }
     
+    // Đặt journal hiện tại
     await setCurrentJournalId(journalId);
     console.log('PATCH /api/journals: Current journal set successfully', { journalId });
     return NextResponse.json({ success: true, currentJournalId: journalId });

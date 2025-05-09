@@ -4,25 +4,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from './LanguageContext';
 import { useAuth } from './AuthContext';
-
-// Define the type for a Playbook
-export interface Playbook {
-  id: string;
-  name: string;
-  strategy: string;
-  timeframe: string;
-  setupCriteria: string;
-  entryTriggers: string;
-  exitRules: string;
-  riskManagement: string;
-  notes?: string;
-  winRate: number;
-  avgProfit: number;
-  totalTrades: number;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+// Sử dụng định nghĩa Playbook từ types/index.ts thay vì định nghĩa lại
+import { Playbook } from '@/types';
 
 // Define the context interface
 interface PlaybookContextType {
@@ -30,7 +13,7 @@ interface PlaybookContextType {
   loading: boolean;
   error: string | null;
   fetchPlaybooks: () => Promise<void>;
-  addPlaybook: (playbook: Omit<Playbook, 'id' | 'winRate' | 'avgProfit' | 'totalTrades'>) => Promise<Playbook | null>;
+  addPlaybook: (playbook: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Playbook | null>;
   updatePlaybook: (playbook: Playbook) => Promise<Playbook | null>;
   deletePlaybook: (id: string) => Promise<boolean>;
   getPlaybookById: (id: string) => Playbook | undefined;
@@ -99,7 +82,7 @@ export function PlaybookProvider({ children }: { children: ReactNode }) {
   };
 
   // Add a new playbook
-  const addPlaybook = async (playbookData: Omit<Playbook, 'id' | 'winRate' | 'avgProfit' | 'totalTrades'>) => {
+  const addPlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (authLoading) {
       console.log("Auth still loading, can't add playbook yet");
       toast({
