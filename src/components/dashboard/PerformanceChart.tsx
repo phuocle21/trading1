@@ -177,7 +177,7 @@ export function PerformanceChart({
         <TabsTrigger value="30d" className="text-xs">30D</TabsTrigger>
         <TabsTrigger value="90d" className="text-xs">90D</TabsTrigger>
         <TabsTrigger value="1y" className="text-xs">1Y</TabsTrigger>
-        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+        <TabsTrigger value="all" className="text-xs">Tất cả</TabsTrigger>
       </TabsList>
     </Tabs>
   );
@@ -188,8 +188,8 @@ export function PerformanceChart({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <CardTitle>Performance</CardTitle>
-              <CardDescription>Your profit and loss over time</CardDescription>
+              <CardTitle>Hiệu Suất</CardTitle>
+              <CardDescription>Lãi và lỗ của bạn theo thời gian</CardDescription>
             </div>
             {!hideTimePeriodSelector && renderTimeFrameTabs()}
           </div>
@@ -207,15 +207,15 @@ export function PerformanceChart({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <CardTitle>Performance</CardTitle>
-              <CardDescription>Your profit and loss over time</CardDescription>
+              <CardTitle>Hiệu Suất</CardTitle>
+              <CardDescription>Lãi và lỗ của bạn theo thời gian</CardDescription>
             </div>
             {!hideTimePeriodSelector && renderTimeFrameTabs()}
           </div>
         </CardHeader>
         <CardContent className="h-[250px] sm:h-[300px] flex flex-col items-center justify-center">
-          <p className="text-muted-foreground">No trade data found for the selected time period.</p>
-          <p className="text-sm text-muted-foreground mt-1">Try selecting a different time range or add more trades.</p>
+          <p className="text-muted-foreground">Không tìm thấy dữ liệu giao dịch cho khoảng thời gian đã chọn.</p>
+          <p className="text-sm text-muted-foreground mt-1">Hãy thử chọn một khoảng thời gian khác hoặc thêm giao dịch mới.</p>
         </CardContent>
       </Card>
     );
@@ -230,8 +230,8 @@ export function PerformanceChart({
       <CardHeader className="pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle>Performance</CardTitle>
-            <CardDescription>Your profit and loss over time</CardDescription>
+            <CardTitle>Hiệu Suất</CardTitle>
+            <CardDescription>Lãi và lỗ của bạn theo thời gian</CardDescription>
           </div>
           {!hideTimePeriodSelector && renderTimeFrameTabs()}
         </div>
@@ -241,15 +241,15 @@ export function PerformanceChart({
           <div className="flex gap-3">
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded-full bg-green-600"></span>
-              <span>Winning Days: {totalWins}</span>
+              <span>Ngày Lãi: {totalWins}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded-full bg-red-600"></span>
-              <span>Losing Days: {totalLosses}</span>
+              <span>Ngày Lỗ: {totalLosses}</span>
             </div>
           </div>
           <div className={`font-medium ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            Total: {formatCurrency(totalPnL)}
+            Tổng: {formatCurrency(totalPnL)}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={250}>
@@ -284,7 +284,7 @@ export function PerformanceChart({
               }}
               labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold', marginBottom: '4px' }}
               formatter={(value: number, name: string) => {
-                const label = name === "total" ? "P/L" : name === "winCount" ? "Wins" : "Losses";
+                const label = name === "total" ? "Lãi/Lỗ" : name === "winCount" ? "Thắng" : "Thua";
                 const color = name === "total" 
                   ? (value >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)') 
                   : (name === "winCount" ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)');

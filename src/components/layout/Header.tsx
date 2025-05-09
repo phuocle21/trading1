@@ -4,7 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Menu, PlusCircle, Bell, User, Globe, Settings, LogOut } from "lucide-react";
+import { Menu, PlusCircle, Bell, User, Settings, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -24,14 +24,14 @@ const getPageTitle = (pathname: string, t: (key: string) => string): string => {
   if (pathname === "/add-trade") return t('tradeForm.title.add');
   if (pathname.startsWith("/edit-trade/")) return t('tradeForm.title.edit');
   if (pathname === "/playbooks") return t('playbooks.title');
-  if (pathname === "/account") return "My Account";
-  if (pathname === "/admin") return "Admin Panel";
+  if (pathname === "/account") return "Tài khoản của tôi"; // Đã Việt hóa
+  if (pathname === "/admin") return "Bảng quản trị"; // Đã Việt hóa
   return t('app.name');
 };
 
 export function Header() {
   const pathname = usePathname();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { currentUser, signOut } = useAuth();
   const pageTitle = getPageTitle(pathname, t);
   const { openMobile, setOpenMobile } = useSidebar();
@@ -76,35 +76,13 @@ export function Header() {
       </h1>
       
       <div className="flex items-center gap-1 sm:gap-3">
-        {/* Language Selector */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Globe className="h-4 w-4" />
-              <span className="sr-only">Change language</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => setLanguage('en')}
-              className={cn(language === 'en' && "bg-accent font-medium")}
-            >
-              English
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setLanguage('vi')}
-              className={cn(language === 'vi' && "bg-accent font-medium")}
-            >
-              Tiếng Việt
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Đã loại bỏ Language Selector */}
 
         {/* Notification button - Mobile only shows icon */}
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
           <Bell className="h-4 w-4" />
           <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-medium h-4 w-4 flex items-center justify-center rounded-full">2</span>
-          <span className="sr-only">Notifications</span>
+          <span className="sr-only">Thông báo</span>
         </Button>
 
         {/* Add Trade button - desktop version */}
@@ -144,35 +122,35 @@ export function Header() {
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{currentUser.email}</p>
                   <p className="text-xs text-muted-foreground">
-                    {currentUser.isAdmin ? "Administrator" : "User"}
+                    {currentUser.isAdmin ? "Quản trị viên" : "Người dùng"}
                   </p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/account" className="cursor-pointer flex w-full">
                     <User className="mr-2 h-4 w-4" />
-                    My Account
+                    Tài khoản của tôi
                   </Link>
                 </DropdownMenuItem>
                 {currentUser.isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin" className="cursor-pointer flex w-full">
                       <Settings className="mr-2 h-4 w-4" />
-                      Admin Panel
+                      Bảng quản trị
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  Đăng xuất
                 </DropdownMenuItem>
               </>
             ) : (
               <DropdownMenuItem asChild>
                 <Link href="/auth/login" className="cursor-pointer flex w-full">
                   <User className="mr-2 h-4 w-4" />
-                  Sign In
+                  Đăng nhập
                 </Link>
               </DropdownMenuItem>
             )}

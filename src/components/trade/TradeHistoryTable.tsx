@@ -727,8 +727,7 @@ export function TradeHistoryTable() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 gap-1 ml-auto">
-                    <Eye className="h-3.5 w-3.5" />
-                    <span className="hidden md:inline">{t('tradeHistory.columns')}</span>
+                    <span>Lọc</span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -737,6 +736,25 @@ export function TradeHistoryTable() {
                     .getAllColumns()
                     .filter((column) => column.getCanHide())
                     .map((column) => {
+                      // Xác định nhãn tiếng Việt cho từng cột
+                      let label = "";
+                      if (column.id === "date") label = "Ngày";
+                      else if (column.id === "entryTime") label = "Giờ Vào";
+                      else if (column.id === "exitTime") label = "Giờ Ra";
+                      else if (column.id === "stockSymbol") label = "Mã CP";
+                      else if (column.id === "tradeType") label = "Hướng";
+                      else if (column.id === "quantity") label = "Số Lượng";
+                      else if (column.id === "prices") label = "Giá";
+                      else if (column.id === "stopLoss") label = "Dừng Lỗ";
+                      else if (column.id === "takeProfit") label = "Chốt Lời";
+                      else if (column.id === "fees") label = "Phí";
+                      else if (column.id === "playbook") label = "Chiến lược";
+                      else if (column.id === "risk") label = "Rủi Ro";
+                      else if (column.id === "mood") label = "Cảm Xúc";
+                      else if (column.id === "rating") label = "Đánh Giá";
+                      else if (column.id === "profitOrLoss") label = "Lãi/Lỗ";
+                      else label = t(`trade.${column.id}`);
+
                       return (
                         <DropdownMenuCheckboxItem
                           key={column.id}
@@ -746,14 +764,7 @@ export function TradeHistoryTable() {
                             column.toggleVisibility(!!value)
                           }
                         >
-                          {column.id === "entryTime" && <Clock className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          {column.id === "exitTime" && <Clock className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          {column.id === "stopLoss" && <Shield className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          {column.id === "takeProfit" && <Target className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          {column.id === "mood" && <Thermometer className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          {column.id === "date" && t('trade.date')}
-                          {column.id === "prices" && t('trade.price')}
-                          {column.id !== "date" && column.id !== "prices" && t(`trade.${column.id}`)}
+                          {label}
                         </DropdownMenuCheckboxItem>
                       )
                     })}

@@ -164,8 +164,8 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
   const renderLoadingState = () => (
     <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
       <CardHeader>
-        <CardTitle>Advanced Analytics</CardTitle>
-        <CardDescription>Detailed insights into your trading performance</CardDescription>
+        <CardTitle>Phân Tích Nâng Cao</CardTitle>
+        <CardDescription>Thông tin chi tiết về hiệu suất giao dịch của bạn</CardDescription>
       </CardHeader>
       <CardContent>
         <Skeleton className="h-[350px] w-full" />
@@ -176,11 +176,11 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
   const renderEmptyState = () => (
     <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
       <CardHeader>
-        <CardTitle>Advanced Analytics</CardTitle>
-        <CardDescription>Detailed insights into your trading performance</CardDescription>
+        <CardTitle>Phân Tích Nâng Cao</CardTitle>
+        <CardDescription>Thông tin chi tiết về hiệu suất giao dịch của bạn</CardDescription>
       </CardHeader>
       <CardContent className="h-[350px] flex items-center justify-center">
-        <p className="text-muted-foreground">Complete more trades to see advanced analytics.</p>
+        <p className="text-muted-foreground">Hoàn thành thêm các giao dịch để xem phân tích nâng cao.</p>
       </CardContent>
     </Card>
   );
@@ -196,23 +196,23 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
   return (
     <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
       <CardHeader>
-        <CardTitle>Advanced Analytics</CardTitle>
-        <CardDescription>Detailed insights into your trading performance</CardDescription>
+        <CardTitle>Phân Tích Nâng Cao</CardTitle>
+        <CardDescription>Thông tin chi tiết về hiệu suất giao dịch của bạn</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="symbols" className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-            <TabsTrigger value="symbols">Symbols</TabsTrigger>
-            <TabsTrigger value="dayOfWeek">Day of Week</TabsTrigger>
-            <TabsTrigger value="winRate">Win Rate Trend</TabsTrigger>
-            <TabsTrigger value="riskReward">Risk/Reward</TabsTrigger>
+            <TabsTrigger value="symbols">Mã CP</TabsTrigger>
+            <TabsTrigger value="dayOfWeek">Ngày trong tuần</TabsTrigger>
+            <TabsTrigger value="winRate">Xu hướng thắng</TabsTrigger>
+            <TabsTrigger value="riskReward">Tỷ lệ R/R</TabsTrigger>
           </TabsList>
           
           {/* Symbol Distribution */}
           <TabsContent value="symbols" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">Top Traded Symbols</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Mã CP Giao Dịch Nhiều Nhất</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -230,7 +230,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value, name, props) => [`${value} trades`, props.payload.name]}
+                      formatter={(value, name, props) => [`${value} giao dịch`, props.payload.name]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',
@@ -242,7 +242,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
               </div>
               
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">P/L by Symbol</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Lãi/Lỗ theo Mã CP</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={symbolDistribution.sort((a, b) => b.profit - a.profit).slice(0, 5)}
@@ -265,7 +265,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       width={50}
                     />
                     <Tooltip
-                      formatter={(value: number) => [formatCurrency(value), "P/L"]}
+                      formatter={(value: number) => [formatCurrency(value), "Lãi/Lỗ"]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',
@@ -291,7 +291,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
           <TabsContent value="dayOfWeek" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">Total P/L by Day of Week</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Tổng Lãi/Lỗ theo Ngày trong Tuần</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={dayOfWeekPerformance}
@@ -309,7 +309,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       tickFormatter={(value) => formatCurrency(value, undefined, true)}
                     />
                     <Tooltip
-                      formatter={(value: number) => [formatCurrency(value), "P/L"]}
+                      formatter={(value: number) => [formatCurrency(value), "Lãi/Lỗ"]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',
@@ -330,7 +330,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
               </div>
               
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">Average P/L by Day of Week</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Lãi/Lỗ Trung Bình theo Ngày trong Tuần</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={dayOfWeekPerformance}
@@ -348,7 +348,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       tickFormatter={(value) => formatCurrency(value, undefined, true)}
                     />
                     <Tooltip
-                      formatter={(value: number) => [formatCurrency(value), "Avg P/L"]}
+                      formatter={(value: number) => [formatCurrency(value), "Trung bình"]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',
@@ -373,7 +373,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
           {/* Win Rate Over Time */}
           <TabsContent value="winRate" className="mt-4">
             <div>
-              <h4 className="text-sm font-medium mb-3 text-center">Win Rate Trend</h4>
+              <h4 className="text-sm font-medium mb-3 text-center">Xu Hướng Tỷ Lệ Thắng</h4>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart
                   data={winRateOverTime}
@@ -395,7 +395,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                     tickFormatter={(value) => `${value}%`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`${value.toFixed(1)}%`, "Win Rate"]}
+                    formatter={(value: number) => [`${value.toFixed(1)}%`, "Tỷ lệ thắng"]}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       borderRadius: 'var(--radius)',
@@ -419,7 +419,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
           <TabsContent value="riskReward" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">Trade Count by Risk/Reward Ratio</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Số Giao Dịch theo Tỷ lệ Rủi ro/Phần thưởng</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={riskRewardAnalysis}
@@ -436,7 +436,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       fontSize={10}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value} trades`, "Count"]}
+                      formatter={(value: number) => [`${value} giao dịch`, "Số lượng"]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',
@@ -453,7 +453,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
               </div>
               
               <div>
-                <h4 className="text-sm font-medium mb-3 text-center">Win Rate by Risk/Reward Ratio</h4>
+                <h4 className="text-sm font-medium mb-3 text-center">Tỷ Lệ Thắng theo Tỷ lệ Rủi ro/Phần thưởng</h4>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={riskRewardAnalysis}
@@ -472,7 +472,7 @@ export function AdvancedAnalytics({ trades, isLoading }: AdvancedAnalyticsProps)
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toFixed(1)}%`, "Win Rate"]}
+                      formatter={(value: number) => [`${value.toFixed(1)}%`, "Tỷ lệ thắng"]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))', 
                         borderRadius: 'var(--radius)',

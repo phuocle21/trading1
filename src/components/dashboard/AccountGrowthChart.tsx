@@ -131,8 +131,8 @@ export function AccountGrowthChart({
     return (
       <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
         <CardHeader>
-          <CardTitle>Account Growth</CardTitle>
-          <CardDescription>Percentage growth of your trading account over time</CardDescription>
+          <CardTitle>Tăng Trưởng Tài Khoản</CardTitle>
+          <CardDescription>Tỷ lệ tăng trưởng của tài khoản giao dịch theo thời gian</CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[350px] w-full" />
@@ -145,11 +145,11 @@ export function AccountGrowthChart({
     return (
       <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
         <CardHeader>
-          <CardTitle>Account Growth</CardTitle>
-          <CardDescription>Percentage growth of your trading account over time</CardDescription>
+          <CardTitle>Tăng Trưởng Tài Khoản</CardTitle>
+          <CardDescription>Tỷ lệ tăng trưởng của tài khoản giao dịch theo thời gian</CardDescription>
         </CardHeader>
         <CardContent className="h-[350px] flex items-center justify-center">
-          <p className="text-muted-foreground">Not enough data to display account growth.</p>
+          <p className="text-muted-foreground">Không đủ dữ liệu để hiển thị tăng trưởng tài khoản.</p>
         </CardContent>
       </Card>
     );
@@ -159,18 +159,18 @@ export function AccountGrowthChart({
     <Card className="shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
       <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0">
         <div>
-          <CardTitle>Account Growth (%)</CardTitle>
-          <CardDescription>Starting balance: {formatCurrency(initialBalance)}</CardDescription>
+          <CardTitle>Tăng Trưởng Tài Khoản (%)</CardTitle>
+          <CardDescription>Số dư ban đầu: {formatCurrency(initialBalance)}</CardDescription>
         </div>
         <div className="flex flex-col space-y-1 sm:items-end">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Current:</span>
+            <span className="text-sm font-medium">Hiện tại:</span>
             <span className={`text-base font-bold ${stats.totalGrowthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {stats.totalGrowthPercent.toFixed(2)}%
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Max Drawdown:</span>
+            <span className="text-sm font-medium">Giảm Tối Đa:</span>
             <span className="text-base font-bold text-red-600">
               {stats.maxDrawdownPercent.toFixed(2)}%
             </span>
@@ -198,7 +198,7 @@ export function AccountGrowthChart({
               dataKey="date" 
               stroke="hsl(var(--muted-foreground))"
               fontSize={10}
-              tickFormatter={(dateStr) => format(parseISO(dateStr), 'MMM dd')}
+              tickFormatter={(dateStr) => format(parseISO(dateStr), 'dd/MM')}
               angle={-30}
               textAnchor="end"
               height={60}
@@ -210,8 +210,8 @@ export function AccountGrowthChart({
               domain={['auto', 'auto']}
             />
             <Tooltip
-              formatter={(value: number) => [`${value.toFixed(2)}%`, "Growth"]}
-              labelFormatter={(dateStr) => format(parseISO(dateStr as string), 'MMM dd, yyyy')}
+              formatter={(value: number) => [`${value.toFixed(2)}%`, "Tăng trưởng"]}
+              labelFormatter={(dateStr) => format(parseISO(dateStr as string), 'dd/MM/yyyy')}
               contentStyle={{ 
                 backgroundColor: 'hsl(var(--background))', 
                 borderRadius: 'var(--radius)',

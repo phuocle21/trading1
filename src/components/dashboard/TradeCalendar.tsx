@@ -125,8 +125,8 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Monthly Trading Calendar</CardTitle>
-          <CardDescription>View your trades by day</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Lịch Giao Dịch Hàng Tháng</CardTitle>
+          <CardDescription>Xem giao dịch của bạn theo ngày</CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[300px] w-full" />
@@ -143,8 +143,8 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
       <CardHeader className="pb-2 sm:pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle className="text-lg sm:text-xl">Monthly Trading Calendar</CardTitle>
-            <CardDescription>View your trades by day</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Lịch Giao Dịch Hàng Tháng</CardTitle>
+            <CardDescription>Xem giao dịch của bạn theo ngày</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={prevMonth}>
@@ -162,7 +162,7 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
       <CardContent className="px-2 sm:px-6">
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {/* Day labels - Use index in key to ensure uniqueness */}
-          {['S', 'M', 'Tu', 'W', 'Th', 'F', 'S'].map((day, i) => (
+          {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day, i) => (
             <div key={`day-${i}`} className="text-center text-xs sm:text-sm font-medium py-1">
               {day}
             </div>
@@ -222,10 +222,10 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5" />
-              Trades on {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''}
+              Giao dịch ngày {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''}
             </DialogTitle>
             <DialogDescription>
-              {selectedDayTrades.length} trade{selectedDayTrades.length !== 1 ? 's' : ''} completed on this day
+              {selectedDayTrades.length} giao dịch hoàn thành trong ngày này
             </DialogDescription>
           </DialogHeader>
           
@@ -240,21 +240,21 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
-                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Win Rate</div>
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Tỷ lệ thắng</div>
                         <div className="text-sm sm:text-lg font-semibold">{stats.winRate.toFixed(0)}%</div>
                       </div>
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
-                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Total P/L</div>
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Tổng Lãi/Lỗ</div>
                         <div className={`text-sm sm:text-lg font-semibold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(stats.totalPnL)}
                         </div>
                       </div>
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
-                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Winners</div>
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Thắng</div>
                         <div className="text-sm sm:text-lg font-semibold text-green-600">{stats.winCount}</div>
                       </div>
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
-                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Losers</div>
+                        <div className="text-xs sm:text-sm font-medium text-muted-foreground">Thua</div>
                         <div className="text-sm sm:text-lg font-semibold text-red-600">{stats.lossCount}</div>
                       </div>
                     </div>
@@ -266,12 +266,12 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[80px]">Symbol</TableHead>
-                        <TableHead className="w-[70px]">Type</TableHead>
-                        <TableHead className="w-[70px]">Qty</TableHead>
-                        <TableHead className="w-[90px]">Entry</TableHead>
-                        <TableHead className="w-[90px]">Exit</TableHead>
-                        <TableHead className="text-right w-[80px]">P/L</TableHead>
+                        <TableHead className="w-[80px]">Mã CP</TableHead>
+                        <TableHead className="w-[70px]">Hướng</TableHead>
+                        <TableHead className="w-[70px]">SL</TableHead>
+                        <TableHead className="w-[90px]">Giá vào</TableHead>
+                        <TableHead className="w-[90px]">Giá ra</TableHead>
+                        <TableHead className="text-right w-[80px]">Lãi/Lỗ</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -284,17 +284,17 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                             <TableCell className="py-2">
                               {trade.tradeType === 'buy' ? (
                                 <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-[0.65rem] sm:text-xs px-1 py-0">
-                                  Long
+                                  Mua
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 text-[0.65rem] sm:text-xs px-1 py-0">
-                                  Short
+                                  Bán
                                 </Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-xs sm:text-sm py-2">{trade.quantity}</TableCell>
                             <TableCell className="text-xs sm:text-sm py-2">{formatCurrency(trade.entryPrice)}</TableCell>
-                            <TableCell className="text-xs sm:text-sm py-2">{trade.exitPrice ? formatCurrency(trade.exitPrice) : 'Open'}</TableCell>
+                            <TableCell className="text-xs sm:text-sm py-2">{trade.exitPrice ? formatCurrency(trade.exitPrice) : 'Đang mở'}</TableCell>
                             <TableCell 
                               className={`text-right font-medium text-xs sm:text-sm py-2 ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
                             >
