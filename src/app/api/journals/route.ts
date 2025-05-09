@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  getJournals, 
+  getJournals,  // Thêm import getJournals
   saveJournals, 
   getCurrentJournalId, 
   setCurrentJournalId,
@@ -17,18 +17,86 @@ export async function GET() {
     
     // Lấy userId từ hàm getCurrentUserId
     const userId = await getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
     
-    // Lấy dữ liệu journals từ data-store
-    const journalData = await getJournals();
-    const currentJournalId = await getCurrentJournalId();
+    console.log(`GET /api/journals: Fetching journals for user ID: ${userId}`);
     
-    // Kiểm tra xem có journals cho user này không
-    const userJournals = journalData.journals[userId] || [];
+    // Lấy trực tiếp journals từ Supabase dựa vào user_id, đồng thời bỏ qua các journal hệ thống
+    const { data: journalsData, error: journalsError } = await supabase
+      .from('journals')
+      .select('*')
+      .eq('user_id', userId)
+      .is('is_system', null);  // Lọc ra journals không phải là system journal
     
-    console.log(`GET /api/journals: Found ${userJournals.length} journals for user ${userId}, currentJournalId: ${currentJournalId}`);
+    if (journalsError) {
+      console.error('Error fetching journals from Supabase:', journalsError);
+      return NextResponse.json({ error: 'Failed to fetch journals' }, { status: 500 });
+    }
+    
+    console.log(`GET /api/journals: Found ${journalsData?.length || 0} journals for user ${userId}`);
+    
+    // Lấy current journal ID cho user này
+    const { data: prefData, error: prefError } = await supabase
+      .from('user_preferences')
+      .select('current_journal_id')
+      .eq('user_id', userId)
+      .single();
+    
+    let currentJournalId = null;
+    
+    if (!prefError && prefData && prefData.current_journal_id) {
+      // Kiểm tra xem current journal ID có nằm trong journals không
+      const currentJournalExists = journalsData.some(j => j.id === prefData.current_journal_id);
+      if (currentJournalExists) {
+        currentJournalId = prefData.current_journal_id;
+        console.log(`GET /api/journals: Current journal ID from preferences: ${currentJournalId}`);
+      }
+    }
+    
+    // Nếu không có current journal ID hoặc ID không hợp lệ, dùng journal đầu tiên
+    if (!currentJournalId && journalsData.length > 0) {
+      currentJournalId = journalsData[0].id;
+      console.log(`GET /api/journals: Using first journal as current: ${currentJournalId}`);
+      
+      // Cập nhật current journal ID trong preferences
+      const { error: updateError } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          current_journal_id: currentJournalId,
+          updated_at: new Date().toISOString(),
+          preferences: {} // Giữ nguyên preferences hiện tại
+        });
+      
+      if (updateError) {
+        console.error('Error updating current journal in preferences:', updateError);
+      }
+    }
+    
+    // Chuyển đổi định dạng dữ liệu để phù hợp với ứng dụng
+    const journals = journalsData.map(journal => ({
+      id: journal.id,
+      name: journal.name,
+      description: journal.description,
+      createdAt: journal.created_at,
+      updatedAt: journal.updated_at,
+      trades: [], // Trades được lấy riêng
+      // Thêm các trường khác nếu cần
+      icon: journal.icon || 'chart',
+      color: journal.color || '#4f46e5',
+      settings: journal.settings || {
+        currency: "USD",
+        initialCapital: 10000,
+        riskPercentage: 1
+      }
+    }));
+    
+    console.log(`GET /api/journals: Found ${journals.length} journals for user ${userId}, currentJournalId: ${currentJournalId}`);
     
     return NextResponse.json({ 
-      journals: userJournals, 
+      journals: journals, 
       currentJournalId 
     });
   } catch (error) {
@@ -337,24 +405,37 @@ export async function PATCH(request: NextRequest) {
     
     console.log(`PATCH /api/journals: Using userId: ${userId}`);
     
-    // Lấy dữ liệu journals
-    const journalData = await getJournals();
+    // Kiểm tra xem journal có tồn tại không và có thuộc về user hiện tại không
+    const { data: journalData, error: journalError } = await supabase
+      .from('journals')
+      .select('id')
+      .eq('id', journalId)
+      .eq('user_id', userId)
+      .single();
     
-    // Kiểm tra xem journal có tồn tại không
-    const userJournals = journalData.journals[userId] || [];
-    
-    console.log(`PATCH /api/journals: Looking for journal ${journalId} in ${userJournals.length} journals`);
-    console.log('PATCH /api/journals: Available journal IDs:', userJournals.map(j => j.id));
-    
-    const journalExists = userJournals.some(j => j.id === journalId);
-    
-    if (!journalExists) {
-      console.log(`PATCH /api/journals: Journal with ID ${journalId} not found`);
-      return NextResponse.json({ error: `Journal with ID ${journalId} not found` }, { status: 404 });
+    if (journalError || !journalData) {
+      console.log(`PATCH /api/journals: Journal with ID ${journalId} not found for user ${userId}`);
+      return NextResponse.json({ error: `Journal with ID ${journalId} not found or does not belong to you` }, { status: 404 });
     }
     
-    // Đặt journal hiện tại
-    await setCurrentJournalId(journalId);
+    // Cập nhật current journal ID trong user_preferences
+    const { error: updateError } = await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: userId,
+        current_journal_id: journalId,
+        updated_at: new Date().toISOString(),
+        preferences: {} // Giữ nguyên preferences hiện tại
+      });
+    
+    if (updateError) {
+      console.error('Error updating current journal in preferences:', updateError);
+      return NextResponse.json({ 
+        error: 'Failed to set current journal', 
+        details: updateError.message
+      }, { status: 500 });
+    }
+    
     console.log('PATCH /api/journals: Current journal set successfully', { journalId });
     return NextResponse.json({ success: true, currentJournalId: journalId });
   } catch (error) {

@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { Journal, Trade } from '@/types';
 import supabase from '@/lib/supabase';
-import { getCurrentUserId as getAuthUserId } from '@/lib/server/middleware/auth';
+import { getUserIdFromCookie } from '@/lib/server/middleware/auth';
 
 // Interface cho cấu trúc dữ liệu journals
 interface JournalData {
@@ -14,23 +14,34 @@ interface PlaybooksData {
   [userId: string]: any[]; // Array of playbooks for each user
 }
 
-// Hàm lấy thông tin người dùng hiện tại - chuyển sang sử dụng middleware auth
+// Hàm lấy thông tin người dùng hiện tại - chuyển sang sử dụng hàm getUserIdFromCookie
 export async function getCurrentUserId(): Promise<string | null> {
-  return getAuthUserId();
+  return getUserIdFromCookie();
 }
 
 // Hàm để đọc dữ liệu journals từ database
 export async function getJournals(): Promise<JournalData> {
   try {
-    // Lấy dữ liệu từ Supabase
-    const { data: journalsData, error: journalsError } = await supabase
-      .from('journals')
-      .select('*');
+    // Lấy userId hiện tại
+    const currentUserId = await getCurrentUserId();
+    console.log(`getJournals: Getting journals for user ID: ${currentUserId}`);
+    
+    // Lấy dữ liệu từ Supabase - CHỈ lấy journals của user hiện tại
+    const { data: journalsData, error: journalsError } = currentUserId 
+      ? await supabase
+          .from('journals')
+          .select('*')
+          .eq('user_id', currentUserId)  // Chỉ lấy journals của user hiện tại
+      : await supabase
+          .from('journals')
+          .select('*');  // Fallback: lấy tất cả trong trường hợp không có userId
     
     if (journalsError) {
       console.error('Error fetching journals from Supabase:', journalsError);
       return { journals: {}, currentJournals: {} };
     }
+    
+    console.log(`getJournals: Found ${journalsData.length} journals for user ${currentUserId}`);
     
     // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
     const result: JournalData = { journals: {}, currentJournals: {} };
@@ -164,15 +175,26 @@ export async function setCurrentJournalId(journalId: string): Promise<boolean> {
 // Hàm để đọc dữ liệu playbooks từ database
 export async function getPlaybooks(): Promise<PlaybooksData> {
   try {
-    // Lấy dữ liệu từ Supabase
-    const { data: playbooksData, error: playbooksError } = await supabase
-      .from('playbooks')
-      .select('*');
+    // Lấy userId hiện tại
+    const currentUserId = await getCurrentUserId();
+    console.log(`getPlaybooks: Getting playbooks for user ID: ${currentUserId}`);
+    
+    // Lấy dữ liệu từ Supabase - CHỈ lấy playbooks của user hiện tại
+    const { data: playbooksData, error: playbooksError } = currentUserId 
+      ? await supabase
+          .from('playbooks')
+          .select('*')
+          .eq('user_id', currentUserId)  // Chỉ lấy playbooks của user hiện tại
+      : await supabase
+          .from('playbooks')
+          .select('*');  // Fallback: lấy tất cả trong trường hợp không có userId
     
     if (playbooksError) {
       console.error('Error fetching playbooks from Supabase:', playbooksError);
       return {};
     }
+    
+    console.log(`getPlaybooks: Found ${playbooksData.length} playbooks for user ${currentUserId}`);
     
     // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
     const result: PlaybooksData = {};
@@ -540,6 +562,42 @@ export async function saveUserPreferences(userId: string, preferences: any): Pro
     return true;
   } catch (error) {
     console.error('Error saving user preferences:', error);
+    return false;
+  }
+}
+
+// Hàm đánh dấu journals của admin là journal hệ thống
+export async function markAdminJournalsAsSystem(userId: string = 'admin-uid'): Promise<boolean> {
+  try {
+    console.log(`markAdminJournalsAsSystem: Marking journals for user ${userId} as system journals`);
+    
+    // Đầu tiên, thêm cột is_system nếu chưa tồn tại
+    const { error: alterError } = await supabase.rpc('add_column_if_not_exists', {
+      table_name: 'journals',
+      column_name: 'is_system',
+      column_type: 'boolean'
+    });
+    
+    if (alterError) {
+      console.error('Error adding is_system column:', alterError);
+      // Nếu không thể thêm cột qua RPC, có thể bỏ qua lỗi vì cột có thể đã tồn tại
+    }
+    
+    // Sau đó, cập nhật journal của admin thành journal hệ thống
+    const { error: updateError } = await supabase
+      .from('journals')
+      .update({ is_system: true })
+      .eq('user_id', userId);
+    
+    if (updateError) {
+      console.error('Error marking admin journals as system:', updateError);
+      return false;
+    }
+    
+    console.log(`markAdminJournalsAsSystem: Successfully marked journals for user ${userId} as system journals`);
+    return true;
+  } catch (error) {
+    console.error('Error marking admin journals as system:', error);
     return false;
   }
 }
