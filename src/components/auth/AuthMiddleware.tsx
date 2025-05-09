@@ -61,7 +61,7 @@ export default function AuthMiddleware({ children }: { children: React.ReactNode
               Cảm ơn bạn đã đăng ký. Tài khoản của bạn hiện đang chờ được phê duyệt trước khi bạn có thể truy cập đầy đủ vào ứng dụng.
             </p>
             <p>
-              Vui lòng kiểm tra lại sau hoặc liên hệ với quản trị viên để biết thêm thông tin.
+              Vui lòng gửi email tới <span className="text-blue-500 font-medium">mrtinanpha@gmail.com</span> để được cấp quyền truy cập.
             </p>
             <Button 
               className="w-full" 

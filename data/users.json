@@ -14,5 +14,13 @@
     "isApproved": true,
     "createdAt": 1746715567065,
     "lastLogin": 1746715603884
+  },
+  "user-1746770111519-qrafwi8be": {
+    "email": "duynprophongtrao@gmail.com",
+    "password": "MTIzNDU2",
+    "isAdmin": false,
+    "isApproved": false,
+    "createdAt": 1746770111519,
+    "lastLogin": 1746770111519
   }
 }
