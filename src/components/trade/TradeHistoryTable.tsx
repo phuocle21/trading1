@@ -220,23 +220,18 @@ export function TradeHistoryTable() {
         <div className="text-right font-medium">{info.getValue()}</div>
       ),
     }),
-    columnHelper.accessor((row) => row, {
-      id: "prices",
-      header: t('trade.price'),
+    columnHelper.accessor("entryPrice", {
+      header: "Giá Mở lệnh",
       cell: (info) => {
-        const trade = info.getValue();
-        return (
-          <div className="min-w-[120px]">
-            <div className="font-medium">
-              {formatCurrency(trade.entryPrice)}
-            </div>
-            {trade.exitPrice ? (
-              <div className="text-xs text-muted-foreground">
-                → {formatCurrency(trade.exitPrice)}
-              </div>
-            ) : null}
-          </div>
-        );
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+      },
+    }),
+    columnHelper.accessor("exitPrice", {
+      header: "Giá Đóng lệnh",
+      cell: (info) => {
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
       },
     }),
     columnHelper.accessor("stopLoss", {
@@ -831,7 +826,8 @@ export function TradeHistoryTable() {
                         else if (column.id === "stockSymbol") label = "Mã CP";
                         else if (column.id === "tradeType") label = "Hướng";
                         else if (column.id === "quantity") label = "Số Lượng";
-                        else if (column.id === "prices") label = "Giá";
+                        else if (column.id === "entryPrice") label = "Giá Mở lệnh";
+                        else if (column.id === "exitPrice") label = "Giá Đóng lệnh";
                         else if (column.id === "stopLoss") label = "Dừng Lỗ";
                         else if (column.id === "takeProfit") label = "Chốt Lời";
                         else if (column.id === "fees") label = "Phí";
