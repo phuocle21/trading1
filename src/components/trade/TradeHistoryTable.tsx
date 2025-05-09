@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { useJournals } from "@/contexts/JournalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlaybooks } from "@/contexts/PlaybookContext";
 import type { Trade, TradeWithProfit } from "@/types";
 import { calculateProfitLoss, formatCurrency, formatDate } from "@/lib/trade-utils";
 import React, { useMemo, useState } from "react";
@@ -87,6 +88,7 @@ const columnHelper = createColumnHelper<TradeWithProfit>();
 export function TradeHistoryTable() {
   const { getCurrentJournal, currentJournalId, deleteTradeFromJournal, isLoading } = useJournals();
   const { t } = useLanguage();
+  const { playbooks } = usePlaybooks();
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export function TradeHistoryTable() {
     stopLoss: false,
     takeProfit: false,
     fees: false,
-    setup: false,
+    playbook: false,
     risk: false,
     mood: false,
     rating: false,
@@ -250,16 +252,19 @@ export function TradeHistoryTable() {
         return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
       },
     }),
-    columnHelper.accessor("setup", {
+    columnHelper.accessor("playbook", {
       header: t('trade.setup'),
       cell: (info) => {
-        const setup = info.getValue();
-        if (!setup) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+        const playbookId = info.getValue();
+        if (!playbookId) return <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
         
-        const setupDisplay = setup.replace(/_/g, ' ');
+        // Tìm tên chiến lược từ ID
+        const selectedPlaybook = playbooks.find(p => p.id === playbookId);
+        const playbookName = selectedPlaybook ? selectedPlaybook.name : playbookId;
+        
         return (
           <Badge variant="outline" className="capitalize">
-            {setupDisplay}
+            {playbookName}
           </Badge>
         );
       },
@@ -521,14 +526,6 @@ export function TradeHistoryTable() {
                     <div>{formatCurrency(trade.takeProfit)}</div>
                   </div>
                 )}
-                {trade.setup && (
-                  <div>
-                    <div className="text-muted-foreground">{t('trade.setup')}</div>
-                    <Badge variant="outline" className="capitalize mt-1">
-                      {trade.setup.replace(/_/g, ' ')}
-                    </Badge>
-                  </div>
-                )}
                 {trade.risk && (
                   <div>
                     <div className="text-muted-foreground">{t('trade.risk')}</div>
@@ -546,6 +543,17 @@ export function TradeHistoryTable() {
                         {trade.risk}
                       </Badge>
                     </div>
+                  </div>
+                )}
+                {trade.playbook && (
+                  <div>
+                    <div className="text-muted-foreground">{t('trade.setup')}</div>
+                    <Badge variant="outline" className="capitalize mt-1">
+                      {(() => {
+                        const selectedPlaybook = playbooks.find(p => p.id === trade.playbook);
+                        return selectedPlaybook ? selectedPlaybook.name : trade.playbook;
+                      })()}
+                    </Badge>
                   </div>
                 )}
                 {trade.notes && (

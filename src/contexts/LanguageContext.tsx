@@ -384,8 +384,8 @@ export const translations: Translations = {
     vi: "Phí"
   },
   "trade.setup": {
-    en: "Setup",
-    vi: "Mô Hình"
+    en: "Playbook",
+    vi: "Chiến lược"
   },
   "trade.risk": {
     en: "Risk",
