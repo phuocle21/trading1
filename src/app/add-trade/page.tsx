@@ -11,8 +11,8 @@ export default function AddTradePage() {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4">
       <JournalHeader 
-        title={t('trade.addNewTrade') || "Thêm giao dịch mới"}
-        description={t('trade.addNewTradeDescription') || "Tạo giao dịch mới cho nhật ký của bạn"}
+        title="Thêm giao dịch mới"
+        description="Tạo giao dịch mới cho nhật ký của bạn"
         icon={<PlusCircle className="h-6 w-6 text-primary" />}
       />
       <TradeForm />
