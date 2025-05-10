@@ -8,9 +8,29 @@ import supabase from '@/lib/supabase';
  */
 export async function getUserIdFromCookie(): Promise<string | null> {
   try {
+    // Ưu tiên kiểm tra userId cookie trước tiên 
+    const cookieStore = await cookies();
+    const userIdCookie = cookieStore.get('userId');
+    
+    if (userIdCookie && userIdCookie.value) {
+      console.log(`getUserIdFromCookie: Using userId from cookie: ${userIdCookie.value}`);
+      
+      // Kiểm tra xem user có tồn tại trong bảng users không
+      const { data, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userIdCookie.value)
+        .single();
+      
+      if (!userError && data) {
+        console.log(`getUserIdFromCookie: Valid user ID from cookie: ${userIdCookie.value}`);
+        return userIdCookie.value;
+      }
+    }
+    
     // Trong Next.js 14+, cần sử dụng một cách tiếp cận khác cho cookies trong Route Handlers
     
-    // Thử lấy session từ Supabase Auth trước
+    // Thử lấy session từ Supabase Auth tiếp theo
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (!error && session?.user?.id) {
@@ -29,26 +49,9 @@ export async function getUserIdFromCookie(): Promise<string | null> {
       }
     }
     
-    // Trước khi sử dụng cookie hoặc fallback, kiểm tra xem đã có users trong database chưa
-    // Nếu có, sử dụng user đầu tiên không phải admin
-    const { data: existingUsers, error: usersError } = await supabase
-      .from('users')
-      .select('id, is_admin')
-      .neq('id', 'admin-uid')
-      .order('created_at', { ascending: true })
-      .limit(5);
-    
-    if (!usersError && existingUsers && existingUsers.length > 0) {
-      // Ưu tiên sử dụng user không phải admin
-      const regularUser = existingUsers.find(u => !u.is_admin);
-      const userId = regularUser ? regularUser.id : existingUsers[0].id;
-      
-      console.log(`getUserIdFromCookie: Using existing user from database: ${userId}`);
-      return userId;
-    }
+    // Các fallback methods khác chỉ sử dụng khi không có userId cookie hoặc auth session
     
     // Lấy cookie session hiện tại
-    const cookieStore = cookies();
     const sessionCookie = cookieStore.get('app-session');
     
     // Nếu có cookie session, sử dụng như một userId tạm thời
@@ -87,6 +90,24 @@ export async function getUserIdFromCookie(): Promise<string | null> {
         console.log(`getUserIdFromCookie: Created new temp user: ${tempUserId}`);
         return tempUserId;
       }
+    }
+    
+    // Chỉ tìm người dùng khác nếu không có userId cookie
+    // (Đây là phần đã gây ra vấn đề - trước đây nó ưu tiên hơn userId cookie)
+    const { data: existingUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id, is_admin')
+      .neq('id', 'admin-uid')
+      .order('created_at', { ascending: true })
+      .limit(5);
+    
+    if (!usersError && existingUsers && existingUsers.length > 0) {
+      // Ưu tiên sử dụng user không phải admin
+      const regularUser = existingUsers.find(u => !u.is_admin);
+      const userId = regularUser ? regularUser.id : existingUsers[0].id;
+      
+      console.log(`getUserIdFromCookie: Using existing user from database: ${userId}`);
+      return userId;
     }
     
     // Tạo một ID người dùng demo cố định thay vì fallback về admin-uid

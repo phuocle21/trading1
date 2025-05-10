@@ -26,15 +26,16 @@ export async function getJournals(): Promise<JournalData> {
     const currentUserId = await getCurrentUserId();
     console.log(`getJournals: Getting journals for user ID: ${currentUserId}`);
     
+    if (!currentUserId) {
+      console.log('getJournals: No user ID found, returning empty data');
+      return { journals: {}, currentJournals: {} };
+    }
+    
     // Lấy dữ liệu từ Supabase - CHỈ lấy journals của user hiện tại
-    const { data: journalsData, error: journalsError } = currentUserId 
-      ? await supabase
-          .from('journals')
-          .select('*')
-          .eq('user_id', currentUserId)  // Chỉ lấy journals của user hiện tại
-      : await supabase
-          .from('journals')
-          .select('*');  // Fallback: lấy tất cả trong trường hợp không có userId
+    const { data: journalsData, error: journalsError } = await supabase
+      .from('journals')
+      .select('*')
+      .eq('user_id', currentUserId);  // Chỉ lấy journals của user hiện tại
     
     if (journalsError) {
       console.error('Error fetching journals from Supabase:', journalsError);
@@ -46,12 +47,10 @@ export async function getJournals(): Promise<JournalData> {
     // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
     const result: JournalData = { journals: {}, currentJournals: {} };
     
+    // Luôn khởi tạo mảng journals cho userId hiện tại
+    result.journals[currentUserId] = [];
+    
     journalsData.forEach(dbJournal => {
-      const userId = dbJournal.user_id;
-      if (!result.journals[userId]) {
-        result.journals[userId] = [];
-      }
-      
       const journal: Journal = {
         id: dbJournal.id,
         name: dbJournal.name,
@@ -61,11 +60,11 @@ export async function getJournals(): Promise<JournalData> {
         trades: [] // Không lưu trades trong journal nữa mà lấy từ bảng trades
       };
       
-      result.journals[userId].push(journal);
+      result.journals[currentUserId].push(journal);
       
       // Nếu là journal mới nhất, đặt làm current
-      if (!result.currentJournals[userId] || new Date(journal.updatedAt) > new Date(result.journals[userId].find(j => j.id === result.currentJournals[userId])?.updatedAt || 0)) {
-        result.currentJournals[userId] = journal.id;
+      if (!result.currentJournals[currentUserId] || new Date(journal.updatedAt) > new Date(result.journals[currentUserId].find(j => j.id === result.currentJournals[currentUserId])?.updatedAt || 0)) {
+        result.currentJournals[currentUserId] = journal.id;
       }
     });
     
@@ -179,15 +178,16 @@ export async function getPlaybooks(): Promise<PlaybooksData> {
     const currentUserId = await getCurrentUserId();
     console.log(`getPlaybooks: Getting playbooks for user ID: ${currentUserId}`);
     
+    if (!currentUserId) {
+      console.log('getPlaybooks: No user ID found, returning empty data');
+      return {};
+    }
+    
     // Lấy dữ liệu từ Supabase - CHỈ lấy playbooks của user hiện tại
-    const { data: playbooksData, error: playbooksError } = currentUserId 
-      ? await supabase
-          .from('playbooks')
-          .select('*')
-          .eq('user_id', currentUserId)  // Chỉ lấy playbooks của user hiện tại
-      : await supabase
-          .from('playbooks')
-          .select('*');  // Fallback: lấy tất cả trong trường hợp không có userId
+    const { data: playbooksData, error: playbooksError } = await supabase
+      .from('playbooks')
+      .select('*')
+      .eq('user_id', currentUserId);  // Chỉ lấy playbooks của user hiện tại
     
     if (playbooksError) {
       console.error('Error fetching playbooks from Supabase:', playbooksError);
@@ -199,13 +199,11 @@ export async function getPlaybooks(): Promise<PlaybooksData> {
     // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết
     const result: PlaybooksData = {};
     
+    // Luôn khởi tạo mảng playbooks cho userId hiện tại
+    result[currentUserId] = [];
+    
     playbooksData.forEach(playbook => {
-      const userId = playbook.user_id;
-      if (!result[userId]) {
-        result[userId] = [];
-      }
-      
-      result[userId].push({
+      result[currentUserId].push({
         id: playbook.id,
         name: playbook.name,
         description: playbook.description,
