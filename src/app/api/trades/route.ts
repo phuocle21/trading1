@@ -1,14 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrades, saveTrade, saveTrades, deleteTrade } from '@/lib/server/data-store';
+import { getTrades, saveTrade, saveTrades, deleteTrade, getAllTrades } from '@/lib/server/data-store';
 import { Trade } from '@/types';
 import { requireAuth } from '@/lib/server/middleware/auth';
 
 // GET /api/trades - Lấy tất cả trades
-export async function GET() {
+export async function GET(request: NextRequest) {
   return requireAuth(async () => {
     try {
       console.log('GET /api/trades: Processing request');
-      const trades = await getTrades();
+      const url = new URL(request.url);
+      const allJournals = url.searchParams.get('allJournals') === 'true';
+      const journalId = url.searchParams.get('journalId');
+      
+      let trades;
+      if (allJournals) {
+        console.log('GET /api/trades: Fetching trades from all journals');
+        trades = await getAllTrades();
+      } else if (journalId) {
+        console.log(`GET /api/trades: Fetching trades for specific journal: ${journalId}`);
+        // Lấy tất cả giao dịch rồi lọc theo journalId
+        const allTrades = await getAllTrades();
+        trades = allTrades.filter(trade => trade.journalId === journalId);
+      } else {
+        console.log('GET /api/trades: Fetching trades from current journal only');
+        trades = await getTrades();
+      }
+      
       console.log(`GET /api/trades: Found ${trades.length} trades`);
       return NextResponse.json({ trades });
     } catch (error) {

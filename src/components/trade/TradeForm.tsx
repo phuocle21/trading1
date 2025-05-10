@@ -334,6 +334,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       rating: data.rating ?? undefined,
       notes: data.notes || undefined,
       screenshots: data.screenshots || [],
+      journalId: currentJournalId, // Thêm trường journalId để đảm bảo giao dịch được gán với nhật ký đúng
     };
   };
 

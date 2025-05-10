@@ -125,13 +125,14 @@ export function TradeHistoryTable() {
     const fetchTrades = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/trades');
+        // Đảm bảo sử dụng currentJournalId để lấy giao dịch của nhật ký đang xem
+        const response = await fetch(`/api/trades?journalId=${currentJournalId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
         const data = await response.json();
         if (data.trades && Array.isArray(data.trades)) {
-          console.log(`Loaded ${data.trades.length} trades from API`);
+          console.log(`Loaded ${data.trades.length} trades from API for journal ${currentJournalId}`);
           setTradeData(data.trades);
         }
       } catch (error) {
@@ -141,8 +142,12 @@ export function TradeHistoryTable() {
       }
     };
     
-    fetchTrades();
-  }, []);
+    if (currentJournalId) {
+      fetchTrades();
+    } else {
+      setTradeData([]);
+    }
+  }, [currentJournalId]); // Cập nhật khi currentJournalId thay đổi
 
   const currentJournal = getCurrentJournal();
   

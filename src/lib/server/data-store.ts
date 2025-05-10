@@ -355,6 +355,57 @@ export async function getTradesByJournalId(journalId: string): Promise<Trade[]> 
   }
 }
 
+// Hàm lấy tất cả giao dịch từ tất cả nhật ký của người dùng hiện tại
+export async function getAllTrades(): Promise<Trade[]> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return [];
+    
+    console.log('getAllTrades: Retrieving all trades for user ID:', userId);
+    
+    // Truy vấn tất cả trades của người dùng từ bảng trades (không lọc theo journal_id)
+    const { data, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('Error fetching all trades from Supabase:', error);
+      return [];
+    }
+    
+    console.log(`getAllTrades: Found ${data.length} trades for user ${userId}`);
+    
+    // Chuyển đổi dữ liệu từ Supabase về định dạng cần thiết trong ứng dụng
+    return data.map(trade => ({
+      id: trade.id,
+      journalId: trade.journal_id,
+      symbol: trade.symbol,
+      tradeType: trade.type, // Ánh xạ từ type sang tradeType
+      entryDate: trade.entry_date,
+      entryTime: trade.entry_time,
+      entryPrice: trade.entry_price,
+      exitDate: trade.exit_date,
+      exitTime: trade.exit_time,
+      exitPrice: trade.exit_price,
+      quantity: trade.quantity,
+      stopLoss: trade.stop_loss,
+      takeProfit: trade.take_profit,
+      fees: trade.fees,
+      playbook: trade.playbook,
+      risk: trade.risk,
+      mood: trade.mood,
+      rating: trade.rating,
+      notes: trade.notes,
+      screenshots: trade.screenshots || [],
+      updatedAt: trade.updated_at || trade.entry_date // Thêm trường updatedAt để theo dõi thời gian cập nhật
+    }));
+  } catch (error) {
+    console.error('Error getting all trades:', error);
+    return [];
+  }
+}
+
 // Lưu một giao dịch vào database
 export async function saveTrade(trade: Trade): Promise<boolean> {
   try {

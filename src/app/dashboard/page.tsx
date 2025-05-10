@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
-  const { getCurrentJournal, isLoading: journalLoading } = useJournals();
+  const { getCurrentJournal, currentJournalId, isLoading: journalLoading } = useJournals();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("all");
@@ -30,13 +30,14 @@ export default function DashboardPage() {
     const fetchTrades = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/trades');
+        // Thêm tham số journalId để lọc giao dịch theo nhật ký hiện tại
+        const response = await fetch(`/api/trades?journalId=${currentJournalId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
         const data = await response.json();
         if (data.trades && Array.isArray(data.trades)) {
-          console.log(`Dashboard loaded ${data.trades.length} trades from API`);
+          console.log(`Dashboard loaded ${data.trades.length} trades for journal ${currentJournalId}`);
           setTrades(data.trades);
         } else {
           setTrades([]);
@@ -49,10 +50,12 @@ export default function DashboardPage() {
       }
     };
     
-    if (!journalLoading) {
+    if (!journalLoading && currentJournalId) {
       fetchTrades();
+    } else {
+      setTrades([]);
     }
-  }, [journalLoading]);
+  }, [journalLoading, currentJournalId]); // Thêm currentJournalId vào dependency array
 
   const currentJournal = getCurrentJournal();
   

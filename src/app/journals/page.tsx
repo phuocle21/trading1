@@ -99,12 +99,14 @@ export default function JournalsPage() {
   useEffect(() => {
     const fetchTrades = async () => {
       try {
-        const response = await fetch('/api/trades');
+        // Thêm tham số allJournals=true để lấy giao dịch từ tất cả nhật ký
+        const response = await fetch('/api/trades?allJournals=true');
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
         const data = await response.json();
         if (data.trades && Array.isArray(data.trades)) {
+          console.log(`Loaded ${data.trades.length} trades from all journals`);
           setTrades(data.trades);
         } else {
           setTrades([]);
@@ -281,9 +283,25 @@ export default function JournalsPage() {
     }
   };
 
-  const handleSwitchJournal = (journalId: string) => {
-    switchJournal(journalId);
-    router.push('/dashboard');
+  const handleSwitchJournal = async (journalId: string) => {
+    try {
+      // Đợi cho tới khi switchJournal hoàn thành việc chuyển đổi nhật ký
+      await switchJournal(journalId);
+      
+      // Thêm một chút độ trễ để đảm bảo context được cập nhật đầy đủ
+      setTimeout(() => {
+        // Sau đó mới chuyển hướng đến trang dashboard
+        router.push('/dashboard');
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error switching journal:', error);
+      toast({
+        title: 'Lỗi chuyển đổi nhật ký',
+        description: 'Có lỗi xảy ra khi chuyển đổi nhật ký, vui lòng thử lại.',
+        variant: "destructive"
+      });
+    }
   };
 
   const renderIcon = (iconName: string) => {
