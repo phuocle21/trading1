@@ -315,7 +315,37 @@ export default function JournalsPage() {
     
     const winRate = closedTrades > 0 ? Math.round((winningTrades / closedTrades) * 100) : 0;
     
-    return { totalTrades, closedTrades, openTrades, winningTrades, winRate };
+    // Tính toán thời gian hoạt động gần đây dựa trên giao dịch mới nhất
+    let lastActivity = journal.updatedAt || journal.createdAt;
+    
+    // Tìm giao dịch mới nhất (dựa trên thời gian tạo hoặc cập nhật)
+    if (journalTrades.length > 0) {
+      // Sắp xếp giao dịch theo thời gian mới nhất
+      const sortedTrades = [...journalTrades].sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.entryDate).getTime();
+        const dateB = new Date(b.updatedAt || b.entryDate).getTime();
+        return dateB - dateA; // Sắp xếp giảm dần (mới nhất trước)
+      });
+      
+      // Lấy thời gian từ giao dịch mới nhất
+      const newestTrade = sortedTrades[0];
+      if (newestTrade) {
+        const tradeDate = newestTrade.updatedAt || newestTrade.entryDate;
+        // Chỉ cập nhật nếu giao dịch mới hơn thời gian cập nhật của nhật ký
+        if (new Date(tradeDate) > new Date(lastActivity)) {
+          lastActivity = tradeDate;
+        }
+      }
+    }
+    
+    return { 
+      totalTrades, 
+      closedTrades, 
+      openTrades, 
+      winningTrades, 
+      winRate,
+      lastActivity 
+    };
   };
 
   if (isLoading) {
@@ -596,7 +626,7 @@ export default function JournalsPage() {
                         <div className="flex flex-col">
                           <span className="text-muted-foreground">{t('journals.lastActivity')}</span>
                           <span className="font-medium">
-                            {journal.updatedAt ? formatDistanceToNow(parseISO(journal.updatedAt), { addSuffix: true }) : t('journals.never')}
+                            {stats.lastActivity ? formatDistanceToNow(parseISO(stats.lastActivity), { addSuffix: true }) : t('journals.never')}
                           </span>
                         </div>
                       </div>
@@ -730,7 +760,7 @@ export default function JournalsPage() {
                         <div className="flex flex-col">
                           <span className="text-muted-foreground">{t('journals.lastActivity')}</span>
                           <span className="font-medium">
-                            {journal.updatedAt ? formatDistanceToNow(parseISO(journal.updatedAt), { addSuffix: true }) : t('journals.never')}
+                            {stats.lastActivity ? formatDistanceToNow(parseISO(stats.lastActivity), { addSuffix: true }) : t('journals.never')}
                           </span>
                         </div>
                       </div>
