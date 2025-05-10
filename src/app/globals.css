@@ -104,14 +104,14 @@ body {
     --chart-5: 280 90% 65%; /* Tím sáng */
 
     /* Sidebar */
-    --sidebar-background: 216 90% 20%; /* Sidebar tông xanh đậm */
-    --sidebar-foreground: 220 15% 95%; /* Chữ sáng */
-    --sidebar-primary: 190 90% 45%; /* Màu accent cho item active */
+    --sidebar-background: 220 25% 18%; /* Tương đồng với màu secondary trong dark mode */
+    --sidebar-foreground: 220 15% 95%; /* Chữ sáng, dễ đọc */
+    --sidebar-primary: 190 90% 50%; /* Màu accent cho item active - xanh lơ sáng */
     --sidebar-primary-foreground: 220 15% 95%;
-    --sidebar-accent: 216 90% 30%; /* Hover sáng hơn */
+    --sidebar-accent: 220 25% 25%; /* Hover sáng hơn một chút so với background */
     --sidebar-accent-foreground: 220 15% 95%;
-    --sidebar-border: 216 90% 15%;
-    --sidebar-ring: 190 90% 50%;
+    --sidebar-border: 220 25% 15%; /* Viền tối hơn một chút */
+    --sidebar-ring: 190 90% 50%; /* Ring theo màu accent */
     
     /* Màu cho thông báo vị thế đang mở trong chế độ tối */
     --warning-background: 40 80% 30%; /* Vàng ấm áp, dễ nhìn */
