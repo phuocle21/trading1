@@ -53,6 +53,11 @@ body {
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 233 64% 20%; /* Border color within sidebar, darker primary */
     --sidebar-ring: 187 100% 45%; /* Ring color for focus, slightly lighter accent */
+    
+    /* Màu cho thông báo vị thế đang mở */
+    --warning-background: 45 100% 90%; /* Màu vàng nhạt */
+    --warning-foreground: 30 90% 30%; /* Màu chữ sẫm */
+    --warning-border: 40 90% 50%; /* Viền màu cam */
   }
 
   .dark {
@@ -99,6 +104,11 @@ body {
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 233 60% 10%;
     --sidebar-ring: 187 100% 50%;
+    
+    /* Màu cho thông báo vị thế đang mở trong chế độ tối */
+    --warning-background: 45 70% 25%; /* Màu vàng tối */
+    --warning-foreground: 45 100% 85%; /* Màu chữ sáng */
+    --warning-border: 40 90% 40%; /* Viền màu cam */
   }
 }
 

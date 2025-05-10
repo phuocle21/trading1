@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { 
   LayoutDashboard, 
   History, 
@@ -14,7 +15,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   User,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +38,7 @@ import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
 
 const mainNavItems = (t: (key: string) => string) => [
   { href: "/journals", label: t('sidebar.journals'), icon: BookOpen },
@@ -191,6 +195,9 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="flex flex-col gap-3 p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
+        {/* Theme toggle button */}
+        <ThemeToggleButton />
+        
         <Button 
           variant="ghost" 
           className={cn(

@@ -246,13 +246,13 @@ export default function DashboardPage() {
         
         <TabsContent value="overview" className="space-y-4 md:space-y-6">
           {openTradesCount > 0 && (
-            <Card className="bg-accent/20 border-accent shadow-md">
+            <Card className="bg-[hsl(var(--warning-background))] border-[hsl(var(--warning-border))] shadow-md">
               <CardHeader className="flex flex-col items-start space-y-2 pb-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
-                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
-                <CardTitle className="text-base sm:text-lg text-accent-foreground">{t('dashboard.openPositions')}</CardTitle>
+                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--warning-foreground))]" />
+                <CardTitle className="text-base sm:text-lg text-[hsl(var(--warning-foreground))]">{t('dashboard.openPositions')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-accent-foreground text-sm sm:text-base">
+                <p className="text-[hsl(var(--warning-foreground))] text-sm sm:text-base">
                   {t('dashboard.openPositionsMessage').replace('{count}', openTradesCount)}
                 </p>
               </CardContent>
