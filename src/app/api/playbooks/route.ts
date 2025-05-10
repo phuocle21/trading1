@@ -182,3 +182,63 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// Delete a playbook
+export async function DELETE(request: NextRequest) {
+  try {
+    console.log('DELETE /api/playbooks: Processing request');
+    
+    const searchParams = request.nextUrl.searchParams;
+    const userId = searchParams.get('userId') || await getCurrentUserId();
+    const playbookId = searchParams.get('playbookId');
+
+    if (!userId) {
+      console.log('DELETE /api/playbooks: No userId provided');
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!playbookId) {
+      console.log('DELETE /api/playbooks: No playbookId provided');
+      return NextResponse.json(
+        { error: "Playbook ID is required" },
+        { status: 400 }
+      );
+    }
+
+    console.log(`DELETE /api/playbooks: Deleting playbook ${playbookId} for user ${userId}`);
+    
+    // Delete from Supabase first
+    const { error: deleteError } = await supabase
+      .from('playbooks')
+      .delete()
+      .eq('id', playbookId)
+      .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error('Error deleting playbook from Supabase:', deleteError);
+      throw deleteError;
+    }
+    
+    // Then update local cache
+    const playbooksData = await getPlaybooks();
+    
+    if (playbooksData[userId]) {
+      playbooksData[userId] = playbooksData[userId].filter(p => p.id !== playbookId);
+      await savePlaybooks(playbooksData);
+    }
+
+    console.log(`DELETE /api/playbooks: Playbook ${playbookId} deleted successfully`);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting playbook:', error);
+    return NextResponse.json(
+      { error: "Failed to delete playbook",
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
+      { status: 500 }
+    );
+  }
+}

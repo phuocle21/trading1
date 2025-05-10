@@ -34,11 +34,25 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePlaybooks, Playbook } from "@/contexts/PlaybookContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTrades } from "@/contexts/TradeContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpenText, PlusCircle, Trash2, Edit, 
   Save, LayoutList, ArrowRightLeft, BarChart, Loader2
 } from "lucide-react";
+import PlaybookStats from "@/components/playbook/PlaybookStats";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Define the form schema
 const playBookFormSchema = z.object({
@@ -67,8 +81,12 @@ type PlaybookFormValues = z.infer<typeof playBookFormSchema>;
 export default function PlaybooksPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
+  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
+  const [showStats, setShowStats] = useState(false);
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const { trades } = useTrades();
   const { 
     playbooks, 
     loading, 
@@ -76,7 +94,8 @@ export default function PlaybooksPage() {
     fetchPlaybooks, 
     addPlaybook, 
     updatePlaybook, 
-    deletePlaybook 
+    deletePlaybook,
+    isAuthReady
   } = usePlaybooks();
 
   // Initialize form
@@ -94,14 +113,35 @@ export default function PlaybooksPage() {
     },
   });
 
-  // Load playbooks when component mounts
+  // Load playbooks when component mounts and auth is ready
   useEffect(() => {
-    fetchPlaybooks();
+    if (isAuthReady) {
+      console.log("Auth is ready in PlaybooksPage, fetching playbooks");
+      fetchPlaybooks();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array to run only on mount
+  }, [isAuthReady]); 
 
   async function onSubmit(data: PlaybookFormValues) {
     try {
+      if (!isAuthReady) {
+        toast({
+          title: t('error'),
+          description: t('errors.waitingForAuth'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!currentUser) {
+        toast({
+          title: t('error'),
+          description: t('errors.notLoggedIn'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (editingPlaybook) {
         // Update existing playbook
         const result = await updatePlaybook({
@@ -153,12 +193,26 @@ export default function PlaybooksPage() {
 
   async function handleDelete(id: string) {
     try {
+      if (!isAuthReady || !currentUser) {
+        toast({
+          title: t('error'),
+          description: t('errors.notLoggedIn'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const success = await deletePlaybook(id);
       if (!success) {
         toast({
           title: t('error'),
           description: t('errors.failedToDeletePlaybook'),
           variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('playbooks.playbookDeleted'),
+          description: t('playbooks.playbookDeletedDesc'),
         });
       }
     } catch (error) {
@@ -175,6 +229,81 @@ export default function PlaybooksPage() {
     form.reset();
     setEditingPlaybook(null);
     setActiveTab("edit");
+  }
+
+  function handleShowStats(playbook: Playbook) {
+    setSelectedPlaybook(playbook);
+    setShowStats(true);
+  }
+
+  function handleCloseStats() {
+    setShowStats(false);
+    setSelectedPlaybook(null);
+  }
+
+  // Tính toán số liệu thống kê cho mỗi playbook dựa trên dữ liệu giao dịch
+  const calculatePlaybookStats = (playbookId: string) => {
+    if (!trades || trades.length === 0) {
+      return { winRate: 0, avgProfit: 0, totalTrades: 0 };
+    }
+
+    const filteredTrades = trades.filter(
+      trade => trade.playbook === playbookId && trade.status === 'closed'
+    );
+
+    if (filteredTrades.length === 0) {
+      return { winRate: 0, avgProfit: 0, totalTrades: 0 };
+    }
+
+    const winningTrades = filteredTrades.filter(
+      trade => trade.returnValue && trade.returnValue > 0
+    );
+
+    const winRate = (winningTrades.length / filteredTrades.length) * 100;
+    
+    const totalProfit = filteredTrades.reduce(
+      (acc, trade) => acc + (trade.returnValue || 0), 0
+    );
+    
+    const avgProfit = totalProfit / filteredTrades.length;
+
+    return {
+      winRate,
+      avgProfit,
+      totalTrades: filteredTrades.length,
+    };
+  };
+
+  // Thêm kiểm tra khi không có người dùng đăng nhập
+  if (!isAuthReady) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span>Đang kiểm tra thông tin đăng nhập...</span>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('playbooks.title')}</h1>
+          <p className="text-muted-foreground">
+            {t('playbooks.description')}
+          </p>
+        </div>
+        <Card>
+          <CardContent className="py-10 text-center">
+            <BookOpenText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+            <h3 className="mt-4 text-lg font-medium">{t('errors.notLoggedIn')}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t('errors.pleaseLogInToView')}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -246,65 +375,88 @@ export default function PlaybooksPage() {
             </Card>
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {playbooks.map((playbook) => (
-                <Card key={playbook.id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">{playbook.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {playbook.strategy}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{t('playbooks.winRate')}</span>
-                        <span className="text-lg">{playbook.winRate}%</span>
+              {playbooks.map((playbook) => {
+                // Tính số liệu thống kê cho mỗi playbook
+                const stats = calculatePlaybookStats(playbook.id);
+                
+                return (
+                  <Card key={playbook.id} className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{playbook.name}</CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {playbook.strategy}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t('playbooks.winRate')}</span>
+                          <span className="text-lg">{stats.winRate.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t('playbooks.avgRR')}</span>
+                          <span className="text-lg">{stats.avgProfit.toFixed(2)}R</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t('playbooks.timeframe')}</span>
+                          <span>{playbook.timeframe || t('playbooks.na')}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t('playbooks.totalTrades')}</span>
+                          <span>{stats.totalTrades}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{t('playbooks.avgRR')}</span>
-                        <span className="text-lg">{playbook.avgProfit}R</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{t('playbooks.timeframe')}</span>
-                        <span>{playbook.timeframe || t('playbooks.na')}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{t('playbooks.totalTrades')}</span>
-                        <span>{playbook.totalTrades}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="border-t bg-muted/50 p-3">
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between w-full">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleEdit(playbook)}
-                        className="justify-start sm:justify-center"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> {t('playbooks.edit')}
-                      </Button>
-                      <div className="flex gap-1 justify-end">
+                    </CardContent>
+                    <CardFooter className="border-t bg-muted/50 p-3">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between w-full">
                         <Button 
                           variant="ghost" 
-                          size="sm"
-                          className="text-blue-500"
+                          size="sm" 
+                          onClick={() => handleEdit(playbook)}
+                          className="justify-start sm:justify-center"
                         >
-                          <BarChart className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.stats')}</span>
+                          <Edit className="h-4 w-4 mr-1" /> {t('playbooks.edit')}
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDelete(playbook.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.delete')}</span>
-                        </Button>
+                        <div className="flex gap-1 justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-blue-500"
+                            onClick={() => handleShowStats(playbook)}
+                          >
+                            <BarChart className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.stats')}</span>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t('playbooks.delete')}</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('playbooks.confirmDelete')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('playbooks.confirmDeleteDesc')}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(playbook.id)} className="bg-destructive">
+                                  {t('playbooks.delete')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </TabsContent>
@@ -356,11 +508,9 @@ export default function PlaybooksPage() {
                               <SelectItem value="5min">{t('playbooks.timeframes.5min')}</SelectItem>
                               <SelectItem value="15min">{t('playbooks.timeframes.15min')}</SelectItem>
                               <SelectItem value="30min">{t('playbooks.timeframes.30min')}</SelectItem>
-                              <SelectItem value="1hour">{t('playbooks.timeframes.1hour')}</SelectItem>
-                              <SelectItem value="4hour">{t('playbooks.timeframes.4hour')}</SelectItem>
-                              <SelectItem value="Daily">{t('playbooks.timeframes.daily')}</SelectItem>
-                              <SelectItem value="Weekly">{t('playbooks.timeframes.weekly')}</SelectItem>
-                              <SelectItem value="Monthly">{t('playbooks.timeframes.monthly')}</SelectItem>
+                              <SelectItem value="1h">{t('playbooks.timeframes.1h')}</SelectItem>
+                              <SelectItem value="4h">{t('playbooks.timeframes.4h')}</SelectItem>
+                              <SelectItem value="1d">{t('playbooks.timeframes.1d')}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -377,25 +527,7 @@ export default function PlaybooksPage() {
                         <FormLabel>{t('playbooks.strategyDescription')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder={t('playbooks.strategyPlaceholder')}
-                            className="min-h-20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="setupCriteria"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('playbooks.setupCriteria')}</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder={t('playbooks.setupCriteriaPlaceholder')}
+                            placeholder={t('playbooks.strategyDescriptionPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
@@ -406,6 +538,23 @@ export default function PlaybooksPage() {
                   />
 
                   <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="setupCriteria"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('playbooks.setupCriteria')}</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder={t('playbooks.setupCriteriaPlaceholder')}
+                              className="min-h-20"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="entryTriggers"
@@ -423,7 +572,9 @@ export default function PlaybooksPage() {
                         </FormItem>
                       )}
                     />
+                  </div>
 
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="exitRules"
@@ -441,25 +592,24 @@ export default function PlaybooksPage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="riskManagement"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('playbooks.riskManagement')}</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder={t('playbooks.riskManagementPlaceholder')}
+                              className="min-h-20"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="riskManagement"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('playbooks.riskManagement')}</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder={t('playbooks.riskManagementPlaceholder')}
-                            className="min-h-20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}
@@ -502,6 +652,17 @@ export default function PlaybooksPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showStats && selectedPlaybook && (
+        <Card className="fixed inset-0 z-50 overflow-auto bg-background/95 p-4 sm:p-6 md:p-8">
+          <CardContent>
+            <PlaybookStats 
+              playbook={selectedPlaybook} 
+              onClose={handleCloseStats} 
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

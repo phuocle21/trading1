@@ -71,8 +71,20 @@ export interface Journal {
 export interface Playbook {
   id: string;
   name: string;
-  description?: string;
-  rules: any[];
+  strategy: string;
+  timeframe?: string;
+  setupCriteria: string;
+  entryTriggers: string;
+  exitRules: string;
+  riskManagement?: string;
+  notes?: string;
+  winRate?: number;
+  avgProfit?: number;
+  totalTrades?: number;
+  profitFactor?: number;
+  consecutiveWins?: number;
+  consecutiveLosses?: number;
+  averageHoldingTime?: number;
   createdAt: string;
   updatedAt: string;
 }
