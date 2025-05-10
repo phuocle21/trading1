@@ -906,7 +906,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       {dialogImage && (
         <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
           <DialogContent className="max-w-4xl">
-            <DialogTitle className="sr-only">Ảnh chụp màn hình phóng to</DialogTitle>
+            <DialogTitle className="sr-only">{t('tradeForm.zoomedScreenshot')}</DialogTitle>
             <div className="relative">
               <img src={dialogImage} alt="Zoomed Screenshot" className="w-full h-auto rounded-md" />
               <DialogClose asChild>
