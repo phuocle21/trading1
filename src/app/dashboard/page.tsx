@@ -7,6 +7,7 @@ import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { TradeCalendar } from "@/components/dashboard/TradeCalendar";
 import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
+import { JournalHeader } from "@/components/ui/journal-header";
 import { calculateProfitLoss, formatCurrency } from "@/lib/trade-utils";
 import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database, BookOpen } from "lucide-react";
 import type { Trade } from "@/types";
@@ -186,25 +187,11 @@ export default function DashboardPage() {
   const openTradesCount = trades.length - closedTrades.length;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {currentJournal?.name || t('dashboard.title')}
-        </h1>
-        {trades.length > 0 && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            asChild
-            className="flex items-center gap-2"
-          >
-            <Link href="/journals">
-              <BookOpen className="h-4 w-4" />
-              {t('dashboard.manageJournals')}
-            </Link>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-4 md:space-y-6 px-2 sm:px-0">
+      <JournalHeader 
+        title={t('dashboard.title')}
+        icon={<BarChart className="h-6 w-6 text-primary" />}
+      />
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
