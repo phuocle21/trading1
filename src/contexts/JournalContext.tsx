@@ -60,15 +60,16 @@ const fetchTradesForJournal = async (journalId: string) => {
 interface JournalContextType {
   journals: Journal[];
   currentJournalId: string | null;
-  addJournal: (journal: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addJournal: (journal: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => Journal;
   updateJournal: (updatedJournal: Journal) => void;
   deleteJournal: (journalId: string) => void;
-  switchJournal: (journalId: string) => void;
+  switchJournal: (journalId: string) => Promise<void>;
   getCurrentJournal: () => Journal | undefined;
-  addTradeToJournal: (journalId: string, tradeData: Omit<Trade, 'id'>) => void;
-  updateTradeInJournal: (journalId: string, updatedTrade: Trade) => void;
-  deleteTradeFromJournal: (journalId: string, tradeId: string) => void;
+  addTradeToJournal: (journalId: string, tradeData: Omit<Trade, 'id'>) => Promise<Trade>;
+  updateTradeInJournal: (journalId: string, updatedTrade: Trade) => Promise<Trade>;
+  deleteTradeFromJournal: (journalId: string, tradeId: string) => Promise<void>;
   createTemplateJournal: (templateName: string) => Journal;
+  refreshJournalData: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -516,6 +517,36 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const refreshJournalData = useCallback(async () => {
+    console.log("Refreshing journal data...");
+    setIsLoading(true);
+    try {
+      // Tải lại dữ liệu journal từ server
+      const { data } = await safeFetch('/api/journals', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (data.journals && Array.isArray(data.journals)) {
+        console.log(`Refreshed ${data.journals.length} journals from server`);
+        setJournals(data.journals);
+        
+        // Cập nhật currentJournalId nếu cần
+        if (data.currentJournalId && data.journals.some(j => j.id === data.currentJournalId)) {
+          setCurrentJournalId(data.currentJournalId);
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error("Failed to refresh journals", errorMessage);
+      setError(`Failed to refresh journals: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return (
     <JournalContext.Provider value={{ 
       journals, 
@@ -529,6 +560,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       updateTradeInJournal,
       deleteTradeFromJournal,
       createTemplateJournal,
+      refreshJournalData,
       isLoading,
       error
     }}>

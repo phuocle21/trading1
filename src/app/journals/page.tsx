@@ -68,6 +68,7 @@ export default function JournalsPage() {
     deleteJournal, 
     switchJournal,
     createTemplateJournal,
+    refreshJournalData,
     isLoading 
   } = useJournals();
 
@@ -86,24 +87,48 @@ export default function JournalsPage() {
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [tradesLoading, setTradesLoading] = useState(true);
 
   const [newJournalData, setNewJournalData] = useState({
     name: '',
     description: '',
     icon: 'chart',
     color: '#4f46e5',
-    initialCapital: 10000, // Add initial capital with default value
+    initialCapital: 10000,
   });
   
-  // Tải dữ liệu giao dịch từ API khi component được tải
+  // Refresh journals data when component is mounted
+  useEffect(() => {
+    const refreshData = async () => {
+      console.log("Journals page mounted - refreshing data...");
+      try {
+        await refreshJournalData();
+      } catch (error) {
+        console.error("Failed to refresh journals on mount:", error);
+      }
+    };
+    
+    refreshData();
+  }, [refreshJournalData]);
+  
+  // Tải dữ liệu giao dịch từ API
   useEffect(() => {
     const fetchTrades = async () => {
+      setTradesLoading(true);
       try {
-        // Thêm tham số allJournals=true để lấy giao dịch từ tất cả nhật ký
-        const response = await fetch('/api/trades?allJournals=true');
+        // Thêm timestamp để bypass cache
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/trades?allJournals=true&_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
+        
         const data = await response.json();
         if (data.trades && Array.isArray(data.trades)) {
           console.log(`Loaded ${data.trades.length} trades from all journals`);
@@ -114,10 +139,28 @@ export default function JournalsPage() {
       } catch (error) {
         console.error('Error loading trades:', error);
         setTrades([]);
+      } finally {
+        setTradesLoading(false);
       }
     };
     
     fetchTrades();
+    
+    // Thêm event listener để cập nhật khi tab được focus lại
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Tab became visible - reloading trades data');
+        fetchTrades();
+      }
+    };
+    
+    // Thêm event listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup khi component unmount
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Handle opening the edit dialog
@@ -366,7 +409,7 @@ export default function JournalsPage() {
     };
   };
 
-  if (isLoading) {
+  if (isLoading || tradesLoading) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
