@@ -57,20 +57,20 @@ import {
 // Define the form schema
 const playBookFormSchema = z.object({
   name: z.string().min(2, {
-    message: "Playbook name must be at least 2 characters.",
+    message: "Tên chiến lược phải có ít nhất 2 ký tự.",
   }),
   strategy: z.string().min(5, {
-    message: "Strategy description must be at least 5 characters.",
+    message: "Mô tả chiến lược phải có ít nhất 5 ký tự.",
   }),
   timeframe: z.string().optional(),
   setupCriteria: z.string().min(1, {
-    message: "Setup criteria is required.",
+    message: "Tiêu chí thiết lập là bắt buộc.",
   }),
   entryTriggers: z.string().min(1, {
-    message: "Entry trigger is required.",
+    message: "Tín hiệu mở lệnh là bắt buộc.",
   }),
   exitRules: z.string().min(1, {
-    message: "Exit rules are required.",
+    message: "Quy tắc thoát lệnh là bắt buộc.",
   }),
   riskManagement: z.string().optional(),
   notes: z.string().optional(),
@@ -527,7 +527,7 @@ export default function PlaybooksPage() {
                         <FormLabel>{t('playbooks.strategyDescription')}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder={t('playbooks.strategyDescriptionPlaceholder')}
+                            placeholder={t('playbooks.strategyPlaceholder')}
                             className="min-h-20"
                             {...field}
                           />
