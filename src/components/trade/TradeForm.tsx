@@ -338,7 +338,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     };
   };
 
-  const onSubmit: SubmitHandler<TradeFormValues> = (data) => {
+  const onSubmit: SubmitHandler<TradeFormValues> = async (data) => {
     if (!currentJournalId) {
       toast({ 
         title: "Chưa có nhật ký giao dịch",
@@ -348,16 +348,29 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       return;
     }
 
-    const tradePayload = convertFormData(data);
-
-    if (isEditMode && initialData) {
-      updateTradeInJournal(currentJournalId, { ...initialData, ...tradePayload });
-      toast({ title: t('tradeForm.tradeUpdated'), description: t('tradeForm.tradeUpdatedDesc') });
-    } else {
-      addTradeToJournal(currentJournalId, tradePayload as Omit<Trade, 'id'>);
-      toast({ title: t('tradeForm.tradeAdded'), description: t('tradeForm.tradeAddedDesc') });
+    try {
+      const tradePayload = convertFormData(data);
+      
+      if (isEditMode && initialData) {
+        await updateTradeInJournal(currentJournalId, { ...initialData, ...tradePayload });
+        toast({ title: t('tradeForm.tradeUpdated'), description: t('tradeForm.tradeUpdatedDesc') });
+      } else {
+        await addTradeToJournal(currentJournalId, tradePayload as Omit<Trade, 'id'>);
+        toast({ title: t('tradeForm.tradeAdded'), description: t('tradeForm.tradeAddedDesc') });
+      }
+      
+      // Thêm một chút delay để đảm bảo dữ liệu được lưu trữ đầy đủ trước khi chuyển hướng
+      setTimeout(() => {
+        router.push('/history');
+      }, 300);
+    } catch (error) {
+      console.error('Error submitting trade:', error);
+      toast({ 
+        title: "Lỗi khi lưu giao dịch", 
+        description: "Đã xảy ra lỗi khi lưu giao dịch, vui lòng thử lại sau",
+        variant: "destructive" 
+      });
     }
-    router.push('/history');
   };
 
   const selectedPlaybookDetails = playbooks.find(p => p.id === selectedPlaybook);
