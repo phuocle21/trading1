@@ -91,17 +91,46 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       }
     });
     
-    // Tính thời gian giữ trung bình (nếu có dữ liệu thời gian)
+    // Cải thiện cách tính thời gian giữ trung bình
     let totalHoldingTime = 0;
     let tradesWithTime = 0;
     
     filteredTrades.forEach(trade => {
       if (trade.entryDate && trade.exitDate) {
-        const entryTime = new Date(`${trade.entryDate} ${trade.entryTime || '00:00:00'}`).getTime();
-        const exitTime = new Date(`${trade.exitDate} ${trade.exitTime || '00:00:00'}`).getTime();
-        if (entryTime && exitTime) {
-          totalHoldingTime += (exitTime - entryTime) / (1000 * 60 * 60); // Giờ
-          tradesWithTime++;
+        try {
+          const entryDate = new Date(trade.entryDate);
+          const exitDate = new Date(trade.exitDate);
+          
+          if (!isNaN(entryDate.getTime()) && !isNaN(exitDate.getTime())) {
+            // Thời gian entry và exit hợp lệ
+            let entryTime = entryDate.getTime();
+            let exitTime = exitDate.getTime();
+            
+            // Thêm giờ nếu có
+            if (trade.entryTime) {
+              const [hours, minutes, seconds] = trade.entryTime.split(':').map(Number);
+              if (!isNaN(hours) && !isNaN(minutes)) {
+                entryDate.setHours(hours, minutes, seconds || 0);
+                entryTime = entryDate.getTime();
+              }
+            }
+            
+            if (trade.exitTime) {
+              const [hours, minutes, seconds] = trade.exitTime.split(':').map(Number);
+              if (!isNaN(hours) && !isNaN(minutes)) {
+                exitDate.setHours(hours, minutes, seconds || 0);
+                exitTime = exitDate.getTime();
+              }
+            }
+            
+            // Kiểm tra thời gian hợp lệ (exitTime > entryTime)
+            if (exitTime > entryTime) {
+              totalHoldingTime += (exitTime - entryTime) / (1000 * 60 * 60); // Giờ
+              tradesWithTime++;
+            }
+          }
+        } catch (error) {
+          console.error("Lỗi khi xử lý thời gian:", error);
         }
       }
     });
@@ -119,10 +148,10 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       }
     });
     
-    // Tính profit factor (tổng lợi nhuận / tổng lỗ)
+    // Cải thiện cách tính profit factor để tránh lỗi chia cho 0
     const totalGain = winningTrades.reduce((acc, trade) => acc + (trade.returnValue || 0), 0);
     const totalLoss = Math.abs(losingTrades.reduce((acc, trade) => acc + (trade.returnValue || 0), 0));
-    const profitFactor = totalLoss > 0 ? totalGain / totalLoss : 0;
+    const profitFactor = totalLoss > 0 ? totalGain / totalLoss : (totalGain > 0 ? Infinity : 0);
     
     setStats({
       winRate,
@@ -146,37 +175,51 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     { name: t('playbooks.losses'), value: stats.totalLosses }
   ];
 
-  // Dữ liệu biểu đồ theo tháng
+  // Dữ liệu biểu đồ theo tháng - cải thiện xử lý dữ liệu trống
   const monthlyData = () => {
+    if (!playbookTrades || playbookTrades.length === 0) {
+      return [{ name: t('playbooks.noData'), profit: 0, trades: 0 }];
+    }
+    
     const data: any = {};
     
     playbookTrades.forEach(trade => {
       if (trade.exitDate) {
-        const date = new Date(trade.exitDate);
-        const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-        
-        if (!data[monthYear]) {
-          data[monthYear] = {
-            name: monthYear,
-            profit: 0,
-            trades: 0,
-            wins: 0,
-            losses: 0
-          };
-        }
-        
-        data[monthYear].profit += trade.returnValue || 0;
-        data[monthYear].trades += 1;
-        
-        if (trade.returnValue && trade.returnValue > 0) {
-          data[monthYear].wins += 1;
-        } else {
-          data[monthYear].losses += 1;
+        try {
+          const date = new Date(trade.exitDate);
+          
+          if (!isNaN(date.getTime())) {
+            const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+            
+            if (!data[monthYear]) {
+              data[monthYear] = {
+                name: monthYear,
+                profit: 0,
+                trades: 0,
+                wins: 0,
+                losses: 0
+              };
+            }
+            
+            data[monthYear].profit += trade.returnValue || 0;
+            data[monthYear].trades += 1;
+            
+            if (trade.returnValue && trade.returnValue > 0) {
+              data[monthYear].wins += 1;
+            } else {
+              data[monthYear].losses += 1;
+            }
+          }
+        } catch (error) {
+          console.error("Lỗi khi xử lý dữ liệu theo tháng:", error);
         }
       }
     });
     
-    return Object.values(data);
+    const result = Object.values(data);
+    
+    // Nếu không có dữ liệu, trả về mảng với một phần tử mặc định
+    return result.length > 0 ? result : [{ name: t('playbooks.noData'), profit: 0, trades: 0 }];
   };
 
   return (
@@ -234,7 +277,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                       <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                     </dt>
                     <dd className="text-2xl font-bold">
-                      {stats.profitFactor.toFixed(2)}
+                      {stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2)}
                     </dd>
                   </div>
                 </dl>
@@ -339,18 +382,24 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" name={t('playbooks.trades')} fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {stats.totalTrades > 0 ? (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }} />
+                        <Legend />
+                        <Bar dataKey="value" name={t('playbooks.trades')} fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-muted-foreground">
+                    {t('playbooks.noTradesForChart')}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -362,25 +411,38 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                      <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                      <Tooltip />
-                      <Legend />
-                      <Bar yAxisId="left" dataKey="profit" name={t('playbooks.profit')} fill="#8884d8" />
-                      <Bar yAxisId="right" dataKey="trades" name={t('playbooks.trades')} fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {stats.totalTrades > 0 ? (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                        <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }} />
+                        <Legend />
+                        <Bar yAxisId="left" dataKey="profit" name={t('playbooks.profit')} fill="#8884d8" />
+                        <Bar yAxisId="right" dataKey="trades" name={t('playbooks.trades')} fill="#82ca9d" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-muted-foreground">
+                    {t('playbooks.noTradesForChart')}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+      
+      {playbookTrades.length === 0 && (
+        <div className="p-4 border rounded-md bg-muted/40 text-center">
+          <p className="mb-2 font-medium">{t('playbooks.noTradesYet')}</p>
+          <p className="text-sm text-muted-foreground">{t('playbooks.addTradesHint')}</p>
+        </div>
+      )}
     </div>
   );
 }

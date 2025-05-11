@@ -330,7 +330,7 @@ export default function PlaybooksPage() {
           <TabsTrigger value="list" className="flex items-center gap-1">
             <LayoutList className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">{t('playbooks.playbookList')}</span>
-            <span className="sm:hidden">List</span>
+            <span className="sm:hidden">{t('playbooks.list')}</span>
           </TabsTrigger>
           <TabsTrigger value="edit" className="flex items-center gap-1">
             <BookOpenText className="h-4 w-4 sm:mr-1" />
@@ -338,7 +338,7 @@ export default function PlaybooksPage() {
               {editingPlaybook ? t('playbooks.editPlaybook') : t('playbooks.createPlaybook')}
             </span>
             <span className="sm:hidden">
-              {editingPlaybook ? "Edit" : "Create"}
+              {editingPlaybook ? t('playbooks.edit') : t('playbooks.create')}
             </span>
           </TabsTrigger>
         </TabsList>
@@ -347,15 +347,15 @@ export default function PlaybooksPage() {
           {loading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-lg">Loading playbooks...</span>
+              <span className="ml-2 text-lg">{t('playbooks.loadingPlaybooks')}</span>
             </div>
           ) : error ? (
             <Card>
               <CardContent className="py-10 text-center">
-                <h3 className="mt-4 text-lg font-medium text-destructive">Error loading playbooks</h3>
+                <h3 className="mt-4 text-lg font-medium text-destructive">{t('playbooks.errorLoadingPlaybooks')}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{error}</p>
                 <Button className="mt-4" onClick={() => fetchPlaybooks()}>
-                  Try Again
+                  {t('playbooks.tryAgain')}
                 </Button>
               </CardContent>
             </Card>
