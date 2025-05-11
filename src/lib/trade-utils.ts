@@ -27,12 +27,25 @@ export function formatCurrency(amount: number | null | undefined, currency: stri
     return 'N/A';
   }
   
-  const options: Intl.NumberFormatOptions = { style: 'currency', currency };
-  if (compact) {
+  // Xử lý các số cực lớn
+  // Nếu số quá lớn (lớn hơn 1 tỷ) hoặc yêu cầu compact, sử dụng định dạng rút gọn
+  const absAmount = Math.abs(amount);
+  const mustCompact = absAmount >= 1000000000 || compact;
+  
+  const options: Intl.NumberFormatOptions = { 
+    style: 'currency', 
+    currency 
+  };
+  
+  if (mustCompact) {
     options.notation = "compact";
     options.compactDisplay = "short";
-    options.minimumFractionDigits = 0;
+    options.minimumFractionDigits = 1;
     options.maximumFractionDigits = 1;
+  } else {
+    // Cho các số nhỏ hơn, giới hạn số chữ số thập phân
+    options.minimumFractionDigits = 0;
+    options.maximumFractionDigits = 2;
   }
 
   return new Intl.NumberFormat('en-US', options).format(amount);

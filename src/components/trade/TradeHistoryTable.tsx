@@ -417,10 +417,23 @@ export function TradeHistoryTable() {
         const profit = info.getValue();
         if (profit === null || profit === undefined) return <Minus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mx-auto" />;
         const profitColor = profit > 0 ? "text-green-600" : profit < 0 ? "text-red-600" : "text-foreground";
+        
+        // Xử lý các số lớn bằng cách rút gọn tự động
+        const useCompact = Math.abs(profit) > 999999;
+        
         return (
-          <div className={`font-medium ${profitColor} text-right`}>
-            {formatCurrency(profit)}
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={`font-medium ${profitColor} text-right truncate max-w-[100px]`}>
+                  {formatCurrency(profit, 'USD', useCompact)}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">{formatCurrency(profit)}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
       sortingFn: 'alphanumeric', 
@@ -769,8 +782,8 @@ export function TradeHistoryTable() {
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="shadow-lg">
+    <div className="space-y-4 max-w-full overflow-x-hidden">
+      <Card className="shadow-lg overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-4 gap-3">
             <div>
@@ -802,7 +815,7 @@ export function TradeHistoryTable() {
           </div>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           {/* Summary stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <div className="bg-accent/20 rounded-lg p-3">
@@ -819,9 +832,18 @@ export function TradeHistoryTable() {
             </div>
             <div className="bg-accent/20 rounded-lg p-3">
               <div className="text-xs text-muted-foreground uppercase font-medium">{t('tradeHistory.totalPL')}</div>
-              <div className={`text-xl sm:text-2xl font-bold ${stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(stats.totalProfit)}
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`text-xl sm:text-2xl font-bold ${stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'} truncate max-w-[140px] sm:max-w-full`}>
+                      {formatCurrency(stats.totalProfit, 'USD', Math.abs(stats.totalProfit) > 999999)}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">{formatCurrency(stats.totalProfit)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         
@@ -975,8 +997,8 @@ export function TradeHistoryTable() {
               </div>
               
               {/* Desktop view */}
-              <div className="hidden md:block">
-                <div className="rounded-md border shadow-sm overflow-hidden">
+              <div className="hidden md:block overflow-x-auto">
+                <div className="rounded-md border shadow-sm overflow-hidden min-w-full">
                   <Table className="w-full [&_tr:not(:last-child)]:border-b [&_th]:border-r [&_th:last-child]:border-r-0 [&_td]:border-r [&_td:last-child]:border-r-0">
                     <TableHeader className="bg-muted/30">
                       {table.getHeaderGroups().map((headerGroup) => (
