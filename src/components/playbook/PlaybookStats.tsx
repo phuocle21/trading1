@@ -202,16 +202,66 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     let largestLoss = 0;
     
     filteredTrades.forEach(trade => {
-      if (trade.returnValue) {
-        if (trade.returnValue > largestWin) largestWin = trade.returnValue;
-        if (trade.returnValue < largestLoss) largestLoss = trade.returnValue;
+      let tradeValue = 0;
+      
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        tradeValue = trade.returnValue;
+      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          tradeValue = exitAmount - entryAmount;
+        } else {
+          tradeValue = entryAmount - exitAmount;
+        }
+      }
+      
+      if (tradeValue > 0 && tradeValue > largestWin) {
+        largestWin = tradeValue;
+      }
+      
+      if (tradeValue < 0 && tradeValue < largestLoss) {
+        largestLoss = tradeValue;
       }
     });
     
     // Cải thiện cách tính profit factor để tránh lỗi chia cho 0
-    const totalGain = winningTrades.reduce((acc, trade) => acc + (trade.returnValue || 0), 0);
-    const totalLoss = Math.abs(losingTrades.reduce((acc, trade) => acc + (trade.returnValue || 0), 0));
-    const profitFactor = totalLoss > 0 ? totalGain / totalLoss : (totalGain > 0 ? Infinity : 0);
+    const totalGain = winningTrades.reduce((acc, trade) => {
+      let gain = 0;
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        gain = trade.returnValue;
+      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          gain = exitAmount - entryAmount;
+        } else {
+          gain = entryAmount - exitAmount;
+        }
+      }
+      return acc + (gain > 0 ? gain : 0);
+    }, 0);
+    
+    const totalLoss = Math.abs(losingTrades.reduce((acc, trade) => {
+      let loss = 0;
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        loss = trade.returnValue;
+      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          loss = exitAmount - entryAmount;
+        } else {
+          loss = entryAmount - exitAmount;
+        }
+      }
+      return acc + (loss < 0 ? loss : 0);
+    }, 0));
+    
+    const profitFactor = totalLoss > 0 ? totalGain / Math.abs(totalLoss) : (totalGain > 0 ? Infinity : 0);
     
     setStats({
       winRate,
@@ -323,7 +373,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                       <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgProfit')}
                     </dt>
                     <dd className="text-2xl font-bold">
-                      {stats.avgProfit.toFixed(2)}
+                      ${stats.avgProfit.toFixed(2)}
                     </dd>
                   </div>
                   <div className="flex flex-col space-y-1">
@@ -339,7 +389,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                       <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                     </dt>
                     <dd className="text-2xl font-bold">
-                      {stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2)}
+                      {stats.profitFactor === Infinity ? "∞" : `${stats.profitFactor.toFixed(2)}R`}
                     </dd>
                   </div>
                 </dl>
@@ -417,7 +467,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                       {t('playbooks.bestTrade')}
                     </dt>
                     <dd className="text-2xl font-bold text-green-500">
-                      {stats.largestWin.toFixed(2)}
+                      ${stats.largestWin.toFixed(2)}
                     </dd>
                   </div>
                   <div className="flex flex-col space-y-1">
@@ -425,7 +475,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                       {t('playbooks.worstTrade')}
                     </dt>
                     <dd className="text-2xl font-bold text-red-500">
-                      {stats.largestLoss.toFixed(2)}
+                      ${stats.largestLoss.toFixed(2)}
                     </dd>
                   </div>
                 </dl>

@@ -514,7 +514,7 @@ export default function PlaybooksPage() {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex flex-col">
                           <span className="font-medium">{t('playbooks.winRate')}</span>
-                          <span className="text-lg">{stats.winRate.toFixed(1)}%</span>
+                          <span className="text-lg">{stats.winRate ? stats.winRate.toFixed(1) : '0.0'}%</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="font-medium">{t('playbooks.timeframe')}</span>
@@ -522,11 +522,11 @@ export default function PlaybooksPage() {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-medium">{t('playbooks.totalTrades')}</span>
-                          <span>{stats.totalTrades}</span>
+                          <span>{stats.totalTrades || 0}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="font-medium">{t('playbooks.profitFactor')}</span>
-                          <span>{stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2)}R</span>
+                          <span>{stats.profitFactor === Infinity ? "∞" : (stats.profitFactor ? `${stats.profitFactor.toFixed(2)}` : '0.00')}R</span>
                         </div>
                       </div>
                     </CardContent>
