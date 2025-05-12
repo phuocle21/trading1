@@ -310,6 +310,7 @@ export const translations: Translations = {
   "playbooks.timeframes.4h": "4 Giờ",
   "playbooks.timeframes.1d": "1 Ngày",
   "playbooks.avgProfit": "Lợi nhuận TB",
+  "playbooks.avgLoss": "Thua lỗ TB",
   "journals.title": "Nhật ký Giao dịch",
   "journals.description": "Quản lý nhật ký giao dịch và theo dõi hiệu suất riêng cho các chiến lược và tài khoản khác nhau",
   "journals.createNew": "Tạo mới",

@@ -22,6 +22,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
   const [stats, setStats] = useState({
     winRate: 0,
     avgProfit: 0,
+    avgLoss: 0, // Thêm phần thua lỗ trung bình
     totalTrades: 0,
     profitFactor: 0,
     consecutiveWins: 0,
@@ -110,6 +111,29 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     }, 0);
     
     const avgProfit = totalProfit / filteredTrades.length;
+    
+    // Tính thua lỗ trung bình cho các giao dịch thua lỗ
+    const totalLossAmount = losingTrades.reduce((acc, trade) => {
+      let lossValue = 0;
+      
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        lossValue = trade.returnValue;
+      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          lossValue = exitAmount - entryAmount;
+        } else {
+          lossValue = entryAmount - exitAmount;
+        }
+      }
+      
+      return acc + lossValue;
+    }, 0);
+    
+    // Tính giá trị thua lỗ trung bình (giá trị tuyệt đối)
+    const avgLoss = losingTrades.length > 0 ? Math.abs(totalLossAmount / losingTrades.length) : 0;
     
     // Tìm chuỗi thắng/thua lớn nhất
     let currentWins = 0;
@@ -264,6 +288,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     setStats({
       winRate,
       avgProfit,
+      avgLoss, // Thêm giá trị thua lỗ trung bình vào state
       totalTrades: filteredTrades.length,
       profitFactor,
       consecutiveWins: maxWins,
@@ -321,6 +346,14 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                 </dd>
               </div>
               <div className="flex flex-col space-y-1">
+                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+                  <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgLoss')}
+                </dt>
+                <dd className="text-2xl font-bold text-red-500">
+                  ${stats.avgLoss.toFixed(2)}
+                </dd>
+              </div>
+              <div className="flex flex-col space-y-1 col-span-2">
                 <dt className="text-sm font-medium text-muted-foreground flex items-center">
                   <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                 </dt>
