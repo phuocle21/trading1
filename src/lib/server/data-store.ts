@@ -213,11 +213,20 @@ export async function getPlaybooks(): Promise<PlaybooksData> {
     result[currentUserId] = [];
     
     playbooksData.forEach(playbook => {
+      // Lấy các trường từ trường content của playbook
+      const content = playbook.content || {};
+      
       result[currentUserId].push({
         id: playbook.id,
         name: playbook.name,
         description: playbook.description,
-        rules: playbook.content || [], // Chuyển đổi từ content trong DB sang rules trong ứng dụng
+        strategy: content.strategy || '',
+        timeframe: content.timeframe || '',
+        setupCriteria: content.setupCriteria || '',
+        entryTriggers: content.entryTriggers || '',
+        exitRules: content.exitRules || '',
+        riskManagement: content.riskManagement || '',
+        notes: content.notes || '',
         createdAt: playbook.created_at,
         updatedAt: playbook.updated_at
       });
@@ -236,17 +245,29 @@ export async function savePlaybooks(data: PlaybooksData): Promise<boolean> {
     // Lưu vào Supabase
     for (const userId in data) {
       for (const playbook of data[userId]) {
+        // Tạo đối tượng content từ các trường của playbook
+        const contentObject = {
+          strategy: playbook.strategy || '',
+          timeframe: playbook.timeframe || '',
+          setupCriteria: playbook.setupCriteria || '',
+          entryTriggers: playbook.entryTriggers || '',
+          exitRules: playbook.exitRules || '',
+          riskManagement: playbook.riskManagement || '',
+          notes: playbook.notes || ''
+        };
+        
         const { error } = await supabase
           .from('playbooks')
           .upsert({
             id: playbook.id,
             name: playbook.name,
-            description: playbook.description,
-            content: playbook.rules, // Chuyển đổi từ rules trong ứng dụng sang content trong DB
+            description: playbook.description || playbook.strategy,
+            content: contentObject,
             user_id: userId,
             created_at: playbook.createdAt,
             updated_at: playbook.updatedAt
           });
+        
         
         if (error) {
           console.error('Error saving playbook to Supabase:', error);

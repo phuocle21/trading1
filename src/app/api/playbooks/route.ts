@@ -149,13 +149,25 @@ export async function PUT(request: NextRequest) {
       updatedAt: timestamp
     };
     
+    // Chuẩn bị dữ liệu để lưu vào Supabase
+    // Tạo content object từ các trường của playbook
+    const contentObject = {
+      strategy: updatedPlaybook.strategy,
+      timeframe: updatedPlaybook.timeframe,
+      setupCriteria: updatedPlaybook.setupCriteria,
+      entryTriggers: updatedPlaybook.entryTriggers,
+      exitRules: updatedPlaybook.exitRules,
+      riskManagement: updatedPlaybook.riskManagement,
+      notes: updatedPlaybook.notes
+    };
+
     // Cập nhật trực tiếp vào Supabase
     const { error: updateError } = await supabase
       .from('playbooks')
       .update({
         name: updatedPlaybook.name,
-        description: updatedPlaybook.description,
-        content: updatedPlaybook.rules, // Chuyển đổi từ rules trong ứng dụng sang content trong DB
+        description: updatedPlaybook.description || updatedPlaybook.strategy,
+        content: contentObject,
         updated_at: timestamp
       })
       .eq('id', playbook.id)
@@ -169,6 +181,9 @@ export async function PUT(request: NextRequest) {
     // Cập nhật cache local
     const playbookIndex = playbooksData[userId].findIndex(p => p.id === playbook.id);
     playbooksData[userId][playbookIndex] = updatedPlaybook;
+    
+    // Lưu cache local
+    await savePlaybooks(playbooksData);
 
     console.log(`PUT /api/playbooks: Playbook updated successfully`, { id: playbook.id });
     return NextResponse.json({ playbook: updatedPlaybook });
