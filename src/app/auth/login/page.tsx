@@ -75,11 +75,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
-          <CardTitle>{isLoginMode ? "Đăng nhập" : "Đăng ký"}</CardTitle>
-          <CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-md mx-4 border border-border shadow-xl dark:shadow-primary/5">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">{isLoginMode ? "Đăng nhập" : "Đăng ký"}</CardTitle>
+          <CardDescription className="text-center">
             {isLoginMode
               ? "Nhập thông tin đăng nhập để truy cập vào tài khoản của bạn"
               : "Tạo tài khoản mới để bắt đầu"}
@@ -97,6 +97,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                className="bg-background border-border"
                 required
               />
             </div>
@@ -110,6 +111,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                className="bg-background border-border"
                 required
               />
             </div>
@@ -118,13 +120,17 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm text-blue-600 hover:underline mt-1 block"
+                className="text-sm text-accent hover:text-accent/80 hover:underline mt-1 block transition-colors"
               >
                 Quên mật khẩu?
               </button>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors" 
+              disabled={loading}
+            >
               {loading
                 ? "Đang xử lý..."
                 : isLoginMode
@@ -133,10 +139,11 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col space-y-4 mt-2">
+          <div className="w-full h-px bg-border"></div>
           <Button
             variant="ghost"
-            className="w-full"
+            className="w-full hover:bg-secondary hover:text-secondary-foreground transition-colors"
             onClick={() => setIsLoginMode(!isLoginMode)}
           >
             {isLoginMode
