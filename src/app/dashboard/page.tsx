@@ -18,6 +18,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { subDays } from 'date-fns';
 
+// Định nghĩa type TimePeriod
+type PerformanceTimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
+
 export default function DashboardPage() {
   const { getCurrentJournal, currentJournalId, isLoading: journalLoading } = useJournals();
   const { t } = useLanguage();
@@ -63,12 +66,11 @@ export default function DashboardPage() {
   const closedTrades = useMemo(() => trades.filter(trade => trade.exitPrice && trade.exitDate), [trades]);
 
   // Map dashboard time period to performance chart time period
-  const mapToPerfChartTimePeriod = (dashboardTimePeriod: string): string => {
+  const mapToPerfChartTimePeriod = (dashboardTimePeriod: string): PerformanceTimePeriod => {
     switch (dashboardTimePeriod) {
       case "7days": return "7d";
       case "30days": return "30d";
       case "90days": return "90d";
-      case "all": return "all";
       default: return "all";
     }
   };
@@ -240,7 +242,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-[hsl(var(--warning-foreground))] text-sm sm:text-base">
-                  {t('dashboard.openPositionsMessage').replace('{count}', openTradesCount)}
+                  {t('dashboard.openPositionsMessage').replace('{count}', String(openTradesCount))}
                 </p>
               </CardContent>
             </Card>
@@ -261,24 +263,28 @@ export default function DashboardPage() {
                 icon={DollarSign}
                 isLoading={isLoading}
                 valueClassName={dashboardStats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}
+                variant={dashboardStats.totalProfitLoss >= 0 ? "green" : "red"}
               />
               <StatCard
                 title={t('dashboard.winRate')}
                 value={`${dashboardStats.winRate.toFixed(1)}%`}
                 icon={Percent}
                 isLoading={isLoading}
+                variant="blue"
               />
               <StatCard
                 title={t('dashboard.avgTradeDuration')}
                 value={`${dashboardStats.averageTradeDuration.toFixed(1)} ${t('dashboard.days')}`}
                 icon={CalendarDays}
                 isLoading={isLoading}
+                variant="purple"
               />
               <StatCard
                 title={t('dashboard.totalClosedTrades')}
                 value={filteredTrades.length}
                 icon={BarChart}
                 isLoading={isLoading}
+                variant="amber"
               />
               <StatCard
                 title={t('dashboard.winningTrades')}
@@ -286,6 +292,7 @@ export default function DashboardPage() {
                 icon={TrendingUp}
                 isLoading={isLoading}
                 valueClassName="text-green-600"
+                variant="green"
               />
               <StatCard
                 title={t('dashboard.losingTrades')}
@@ -293,6 +300,7 @@ export default function DashboardPage() {
                 icon={TrendingDown}
                 isLoading={isLoading}
                 valueClassName="text-red-600"
+                variant="red"
               />
             </div>
           </div>
