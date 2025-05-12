@@ -232,6 +232,9 @@ export default function PlaybooksPage() {
   }
 
   function handleShowStats(playbook: Playbook) {
+    console.log(`Hiển thị thống kê cho chiến lược: ${playbook.name} (ID: ${playbook.id})`);
+    console.log(`Tổng số giao dịch hiện có: ${trades?.length || 0}`);
+    
     setSelectedPlaybook(playbook);
     setShowStats(true);
   }
@@ -244,26 +247,71 @@ export default function PlaybooksPage() {
   // Tính toán số liệu thống kê cho mỗi playbook dựa trên dữ liệu giao dịch
   const calculatePlaybookStats = (playbookId: string) => {
     if (!trades || trades.length === 0) {
+      console.log(`Không có giao dịch nào để tính toán thống kê cho playbook: ${playbookId}`);
       return { winRate: 0, avgProfit: 0, totalTrades: 0 };
     }
 
-    const filteredTrades = trades.filter(
-      trade => trade.playbook === playbookId && trade.status === 'closed'
-    );
+    console.log(`Tổng số giao dịch: ${trades.length}`);
+    console.log(`Tính toán thống kê cho playbook ID: ${playbookId}`);
+
+    // Lọc các giao dịch thuộc playbook này
+    const filteredTrades = trades.filter(trade => {
+      // Kiểm tra playbook ID khớp
+      const playbookMatched = String(trade.playbook) === String(playbookId);
+      
+      // Kiểm tra xem giao dịch đã đóng chưa - giao dịch được coi là đóng khi có exitDate hoặc trường status là 'closed'
+      const isClosed = (trade.status === 'closed') || 
+                       (trade.exitDate && trade.exitDate !== '');
+      
+      return playbookMatched && isClosed;
+    });
+
+    console.log(`Số giao dịch đã lọc theo playbook ${playbookId}: ${filteredTrades.length}`);
 
     if (filteredTrades.length === 0) {
       return { winRate: 0, avgProfit: 0, totalTrades: 0 };
     }
 
-    const winningTrades = filteredTrades.filter(
-      trade => trade.returnValue && trade.returnValue > 0
-    );
+    // Tính toán trades thắng/thua dựa trên returnValue hoặc giá mua/bán
+    const winningTrades = filteredTrades.filter(trade => {
+      // Nếu có returnValue thì dùng returnValue
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        return trade.returnValue > 0;
+      }
+      
+      // Nếu có entryPrice và exitPrice thì tính thủ công
+      if (trade.entryPrice && trade.exitPrice) {
+        if (trade.tradeType === 'buy') {
+          return trade.exitPrice > trade.entryPrice;
+        } else {
+          return trade.exitPrice < trade.entryPrice;
+        }
+      }
+      
+      return false; // Không đủ dữ liệu để tính
+    });
 
     const winRate = (winningTrades.length / filteredTrades.length) * 100;
     
-    const totalProfit = filteredTrades.reduce(
-      (acc, trade) => acc + (trade.returnValue || 0), 0
-    );
+    // Tính toán profit
+    const totalProfit = filteredTrades.reduce((acc, trade) => {
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        return acc + trade.returnValue;
+      }
+      
+      if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          return acc + (exitAmount - entryAmount);
+        } else {
+          return acc + (entryAmount - exitAmount);
+        }
+      }
+      
+      return acc;
+    }, 0);
     
     const avgProfit = totalProfit / filteredTrades.length;
 

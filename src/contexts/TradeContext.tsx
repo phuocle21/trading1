@@ -25,17 +25,24 @@ export function TradeProvider({ children }: { children: ReactNode }) {
     
     const fetchTrades = async () => {
       try {
-        const response = await fetch('/api/trades');
+        console.log("Đang tải TẤT CẢ dữ liệu giao dịch của người dùng...");
+        // Thêm tham số allJournals=true để lấy tất cả giao dịch từ tất cả journal của người dùng
+        const response = await fetch('/api/trades?allJournals=true');
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
         
         const data = await response.json();
         if (data.trades && Array.isArray(data.trades)) {
+          console.log(`Đã tải ${data.trades.length} giao dịch từ TẤT CẢ các journal`);
           setTrades(data.trades);
+        } else {
+          console.log("Không có dữ liệu giao dịch hoặc dữ liệu không phải mảng");
+          setTrades([]);
         }
       } catch (error) {
         console.error('Error loading trades from server', error);
+        setTrades([]); // Đặt mảng rỗng nếu có lỗi
       } finally {
         setIsLoading(false);
       }

@@ -37,12 +37,32 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
 
   // Lọc giao dịch thuộc playbook hiện tại và tính toán thống kê
   useEffect(() => {
-    if (!trades || trades.length === 0) return;
+    if (!trades || trades.length === 0) {
+      console.log("Không có giao dịch nào để hiển thị thống kê");
+      return;
+    }
 
+    console.log("Tổng số giao dịch:", trades.length);
+    console.log("Playbook ID cần lọc:", playbook.id);
+    
     // Lọc các giao dịch thuộc playbook này
-    const filteredTrades = trades.filter(trade => 
-      trade.playbook === playbook.id && trade.status === 'closed'
-    );
+    const filteredTrades = trades.filter(trade => {
+      // Kiểm tra playbook ID khớp
+      const playbookMatched = String(trade.playbook) === String(playbook.id);
+      
+      // Kiểm tra xem giao dịch đã đóng chưa - giao dịch được coi là đóng khi có exitDate hoặc trường status là 'closed'
+      const isClosed = (trade.status === 'closed') || 
+                       (trade.exitDate && trade.exitDate !== '');
+      
+      console.log(`Giao dịch ${trade.id}: playbook=${trade.playbook}, closed=${isClosed}`);
+      
+      return playbookMatched && isClosed;
+    });
+    
+    console.log("Số giao dịch đã lọc theo playbook:", filteredTrades.length);
+    if (filteredTrades.length > 0) {
+      console.log("Ví dụ giao dịch đầu tiên:", filteredTrades[0]);
+    }
     
     setPlaybookTrades(filteredTrades);
     
@@ -50,19 +70,46 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     if (filteredTrades.length === 0) return;
 
     // Tính toán thống kê
-    const winningTrades = filteredTrades.filter(trade => 
-      trade.returnValue && trade.returnValue > 0
-    );
+    const winningTrades = filteredTrades.filter(trade => {
+      // Nếu có returnValue thì dùng returnValue
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        return trade.returnValue > 0;
+      }
+      
+      // Nếu có entryPrice và exitPrice thì tính thủ công
+      if (trade.entryPrice && trade.exitPrice) {
+        if (trade.tradeType === 'buy') {
+          return trade.exitPrice > trade.entryPrice;
+        } else {
+          return trade.exitPrice < trade.entryPrice;
+        }
+      }
+      
+      return false; // Không đủ dữ liệu để tính
+    });
     
-    const losingTrades = filteredTrades.filter(trade => 
-      trade.returnValue && trade.returnValue <= 0
-    );
+    const losingTrades = filteredTrades.filter(trade => !winningTrades.includes(trade));
     
     const winRate = (winningTrades.length / filteredTrades.length) * 100;
     
-    const totalProfit = filteredTrades.reduce((acc, trade) => 
-      acc + (trade.returnValue || 0), 0
-    );
+    const totalProfit = filteredTrades.reduce((acc, trade) => {
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        return acc + trade.returnValue;
+      }
+      
+      if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        
+        if (trade.tradeType === 'buy') {
+          return acc + (exitAmount - entryAmount);
+        } else {
+          return acc + (entryAmount - exitAmount);
+        }
+      }
+      
+      return acc;
+    }, 0);
     
     const avgProfit = totalProfit / filteredTrades.length;
     
@@ -80,7 +127,20 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     });
     
     sortedTrades.forEach(trade => {
-      if (trade.returnValue && trade.returnValue > 0) {
+      // Xác định thắng/thua dựa trên giá trị returnValue hoặc giá mua/bán
+      let isWin = false;
+      
+      if (trade.returnValue !== undefined && trade.returnValue !== null) {
+        isWin = trade.returnValue > 0;
+      } else if (trade.entryPrice && trade.exitPrice) {
+        if (trade.tradeType === 'buy') {
+          isWin = trade.exitPrice > trade.entryPrice;
+        } else {
+          isWin = trade.exitPrice < trade.entryPrice;
+        }
+      }
+      
+      if (isWin) {
         currentWins++;
         currentLosses = 0;
         if (currentWins > maxWins) maxWins = currentWins;
@@ -178,9 +238,11 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
   // Dữ liệu biểu đồ theo tháng - cải thiện xử lý dữ liệu trống
   const monthlyData = () => {
     if (!playbookTrades || playbookTrades.length === 0) {
+      console.log("Không có dữ liệu giao dịch cho biểu đồ hàng tháng");
       return [{ name: t('playbooks.noData'), profit: 0, trades: 0 }];
     }
     
+    console.log("Đang xử lý dữ liệu biểu đồ theo tháng với", playbookTrades.length, "giao dịch");
     const data: any = {};
     
     playbookTrades.forEach(trade => {
@@ -397,7 +459,10 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                   </div>
                 ) : (
                   <div className="h-80 flex items-center justify-center text-muted-foreground">
-                    {t('playbooks.noTradesForChart')}
+                    <div className="text-center">
+                      <p className="mb-2">{t('playbooks.noTradesForChart')}</p>
+                      <p className="text-sm">Thêm giao dịch với chiến lược này để xem biểu đồ</p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -428,7 +493,10 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                   </div>
                 ) : (
                   <div className="h-80 flex items-center justify-center text-muted-foreground">
-                    {t('playbooks.noTradesForChart')}
+                    <div className="text-center">
+                      <p className="mb-2">{t('playbooks.noTradesForChart')}</p>
+                      <p className="text-sm">Thêm giao dịch với chiến lược này để xem biểu đồ theo tháng</p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -438,9 +506,13 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       </Tabs>
       
       {playbookTrades.length === 0 && (
-        <div className="p-4 border rounded-md bg-muted/40 text-center">
+        <div className="p-4 border rounded-md bg-muted/40 text-center mt-4">
           <p className="mb-2 font-medium">{t('playbooks.noTradesYet')}</p>
           <p className="text-sm text-muted-foreground">{t('playbooks.addTradesHint')}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Hãy thêm giao dịch với chiến lược "{playbook.name}" để xem thống kê chi tiết.
+            <br />Đảm bảo giao dịch của bạn có chọn chiến lược này trong phần cài đặt.
+          </p>
         </div>
       )}
     </div>
