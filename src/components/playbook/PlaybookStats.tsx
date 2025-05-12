@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, DollarSign, LineChart, PercentIcon, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { 
+  Calendar, Clock, DollarSign, LineChart, PercentIcon, 
+  TrendingUp, TrendingDown, BarChart3, Award, Users,
+  BarChart4, Target, Activity, BarChart, BookOpen, BadgePercent
+} from "lucide-react";
 import { Playbook } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/contexts/TradeContext';
@@ -306,7 +310,10 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">{playbook.name}</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-primary" />
+            {playbook.name}
+          </h2>
           <p className="text-muted-foreground">{t('playbooks.statisticsAndAnalysis')}</p>
         </div>
         <Button onClick={onClose} variant="outline">
@@ -315,49 +322,52 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>{t('playbooks.performanceMetrics')}</CardTitle>
+        <Card className="overflow-hidden border-l-4 border-l-blue-500 dark:border-l-blue-600 shadow-md">
+          <CardHeader className="pb-2 bg-gradient-to-r from-blue-50/70 to-transparent dark:from-blue-950/30">
+            <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+              <BadgePercent className="h-5 w-5" />
+              {t('playbooks.performanceMetrics')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <dt className="text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center">
                   <PercentIcon className="w-4 h-4 mr-1" /> {t('playbooks.winRate')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-blue-800 dark:text-blue-300">
                   {stats.winRate.toFixed(1)}%
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
+                <dt className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center">
                   <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgProfit')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-green-800 dark:text-green-300">
                   ${stats.avgProfit.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/40 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800">
+                <dt className="text-sm font-medium text-purple-700 dark:text-purple-400 flex items-center">
                   <BarChart3 className="w-4 h-4 mr-1" /> {t('playbooks.totalTrades')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-purple-800 dark:text-purple-300">
                   {stats.totalTrades}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
+                <dt className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center">
                   <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgLoss')}
                 </dt>
-                <dd className="text-2xl font-bold text-red-500">
+                <dd className="text-2xl font-bold text-red-800 dark:text-red-300">
                   ${stats.avgLoss.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 col-span-2">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800 col-span-2">
+                <dt className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center">
                   <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-amber-800 dark:text-amber-300">
                   {stats.profitFactor === Infinity ? "∞" : `${stats.profitFactor.toFixed(2)}R`}
                 </dd>
               </div>
@@ -365,41 +375,44 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>{t('playbooks.streaksAndTiming')}</CardTitle>
+        <Card className="overflow-hidden border-l-4 border-l-indigo-500 dark:border-l-indigo-600 shadow-md">
+          <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50/70 to-transparent dark:from-indigo-950/30">
+            <CardTitle className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+              <Activity className="h-5 w-5" />
+              {t('playbooks.streaksAndTiming')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <dt className="text-sm font-medium text-emerald-700 dark:text-emerald-400 flex items-center">
                   <TrendingUp className="w-4 h-4 mr-1" /> {t('playbooks.consecutiveWins')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
                   {stats.consecutiveWins}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-pink-50 to-pink-100/50 dark:from-pink-950/40 dark:to-pink-900/20 border border-pink-200 dark:border-pink-800">
+                <dt className="text-sm font-medium text-pink-700 dark:text-pink-400 flex items-center">
                   <TrendingDown className="w-4 h-4 mr-1" /> {t('playbooks.consecutiveLosses')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-pink-800 dark:text-pink-300">
                   {stats.consecutiveLosses}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-sky-50 to-sky-100/50 dark:from-sky-950/40 dark:to-sky-900/20 border border-sky-200 dark:border-sky-800">
+                <dt className="text-sm font-medium text-sky-700 dark:text-sky-400 flex items-center">
                   <Clock className="w-4 h-4 mr-1" /> {t('playbooks.avgHoldingTime')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-sky-800 dark:text-sky-300">
                   {stats.averageHoldingTime.toFixed(1)}h
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground flex items-center">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-950/40 dark:to-teal-900/20 border border-teal-200 dark:border-teal-800">
+                <dt className="text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center">
                   <Calendar className="w-4 h-4 mr-1" /> {t('playbooks.timeframe')}
                 </dt>
-                <dd className="text-2xl font-bold">
+                <dd className="text-2xl font-bold text-teal-800 dark:text-teal-300">
                   {playbook.timeframe || t('playbooks.na')}
                 </dd>
               </div>
@@ -409,41 +422,44 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       </div>
       
       <div className="mt-4 grid grid-cols-1 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>{t('playbooks.tradeResults')}</CardTitle>
+        <Card className="overflow-hidden border-l-4 border-l-orange-500 dark:border-l-orange-600 shadow-md">
+          <CardHeader className="pb-2 bg-gradient-to-r from-orange-50/70 to-transparent dark:from-orange-950/30">
+            <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+              <Award className="h-5 w-5" />
+              {t('playbooks.tradeResults')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
+                <dt className="text-sm font-medium text-green-700 dark:text-green-400">
                   {t('playbooks.totalWins')}
                 </dt>
-                <dd className="text-2xl font-bold text-green-500">
+                <dd className="text-2xl font-bold text-green-800 dark:text-green-300">
                   {stats.totalWins}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
+                <dt className="text-sm font-medium text-red-700 dark:text-red-400">
                   {t('playbooks.totalLosses')}
                 </dt>
-                <dd className="text-2xl font-bold text-red-500">
+                <dd className="text-2xl font-bold text-red-800 dark:text-red-300">
                   {stats.totalLosses}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <dt className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
                   {t('playbooks.bestTrade')}
                 </dt>
-                <dd className="text-2xl font-bold text-green-500">
+                <dd className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
                   ${stats.largestWin.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1">
-                <dt className="text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 border border-rose-200 dark:border-rose-800">
+                <dt className="text-sm font-medium text-rose-700 dark:text-rose-400">
                   {t('playbooks.worstTrade')}
                 </dt>
-                <dd className="text-2xl font-bold text-red-500">
+                <dd className="text-2xl font-bold text-rose-800 dark:text-rose-300">
                   ${stats.largestLoss.toFixed(2)}
                 </dd>
               </div>
@@ -453,11 +469,12 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
       </div>
       
       {playbookTrades.length === 0 && (
-        <div className="p-4 border rounded-md bg-muted/40 text-center mt-4">
-          <p className="mb-2 font-medium">{t('playbooks.noTradesYet')}</p>
+        <div className="p-6 border rounded-lg bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-950/40 dark:to-gray-900/20 border-gray-200 dark:border-gray-800 text-center mt-4 shadow-sm">
+          <Target className="mx-auto h-10 w-10 text-indigo-500 mb-2" />
+          <p className="mb-2 font-medium text-lg">{t('playbooks.noTradesYet')}</p>
           <p className="text-sm text-muted-foreground">{t('playbooks.addTradesHint')}</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Hãy thêm giao dịch với chiến lược "{playbook.name}" để xem thống kê chi tiết.
+            Hãy thêm giao dịch với chiến lược "<span className="font-semibold text-primary">{playbook.name}</span>" để xem thống kê chi tiết.
             <br />Đảm bảo giao dịch của bạn có chọn chiến lược này trong phần cài đặt.
           </p>
         </div>

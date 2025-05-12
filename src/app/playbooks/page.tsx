@@ -39,7 +39,8 @@ import { useTrades } from "@/contexts/TradeContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpenText, PlusCircle, Trash2, Edit, 
-  Save, LayoutList, ArrowRightLeft, BarChart, Loader2
+  Save, LayoutList, ArrowRightLeft, BarChart, Loader2,
+  PercentIcon, Clock, LineChart, BarChart3
 } from "lucide-react";
 import PlaybookStats from "@/components/playbook/PlaybookStats";
 import {
@@ -503,7 +504,7 @@ export default function PlaybooksPage() {
                 const stats = calculatePlaybookStats(playbook.id);
                 
                 return (
-                  <Card key={playbook.id} className="overflow-hidden">
+                  <Card key={playbook.id} className="overflow-hidden hover:shadow-md transition-all duration-300 border-t-4 border-t-primary">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg">{playbook.name}</CardTitle>
                       <CardDescription className="line-clamp-2">
@@ -511,22 +512,38 @@ export default function PlaybooksPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{t('playbooks.winRate')}</span>
-                          <span className="text-lg">{stats.winRate ? stats.winRate.toFixed(1) : '0.0'}%</span>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex flex-col p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 shadow-sm">
+                          <span className="font-medium flex items-center text-blue-700 dark:text-blue-400">
+                            <PercentIcon className="h-4 w-4 mr-1" /> {t('playbooks.winRate')}
+                          </span>
+                          <span className="text-lg font-bold text-blue-800 dark:text-blue-300">
+                            {stats.winRate ? stats.winRate.toFixed(1) : '0.0'}%
+                          </span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{t('playbooks.timeframe')}</span>
-                          <span>{playbook.timeframe || t('playbooks.na')}</span>
+                        <div className="flex flex-col p-2 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/40 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 shadow-sm">
+                          <span className="font-medium flex items-center text-purple-700 dark:text-purple-400">
+                            <Clock className="h-4 w-4 mr-1" /> {t('playbooks.timeframe')}
+                          </span>
+                          <span className="text-lg font-bold text-purple-800 dark:text-purple-300">
+                            {playbook.timeframe || t('playbooks.na')}
+                          </span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{t('playbooks.totalTrades')}</span>
-                          <span>{stats.totalTrades || 0}</span>
+                        <div className="flex flex-col p-2 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                          <span className="font-medium flex items-center text-emerald-700 dark:text-emerald-400">
+                            <BarChart3 className="h-4 w-4 mr-1" /> {t('playbooks.totalTrades')}
+                          </span>
+                          <span className="text-lg font-bold text-emerald-800 dark:text-emerald-300">
+                            {stats.totalTrades || 0}
+                          </span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{t('playbooks.profitFactor')}</span>
-                          <span>{stats.profitFactor === Infinity ? "∞" : (stats.profitFactor ? `${stats.profitFactor.toFixed(2)}` : '0.00')}R</span>
+                        <div className="flex flex-col p-2 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800 shadow-sm">
+                          <span className="font-medium flex items-center text-amber-700 dark:text-amber-400">
+                            <LineChart className="h-4 w-4 mr-1" /> {t('playbooks.profitFactor')}
+                          </span>
+                          <span className="text-lg font-bold text-amber-800 dark:text-amber-300">
+                            {stats.profitFactor === Infinity ? "∞" : (stats.profitFactor ? `${stats.profitFactor.toFixed(2)}` : '0.00')}R
+                          </span>
                         </div>
                       </div>
                     </CardContent>
