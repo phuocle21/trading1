@@ -146,7 +146,10 @@ export async function POST(request: NextRequest) {
         description: completeJournal.description,
         user_id: userId,
         created_at: completeJournal.createdAt,
-        updated_at: completeJournal.updatedAt
+        updated_at: completeJournal.updatedAt,
+        icon: completeJournal.icon,
+        color: completeJournal.color,
+        settings: completeJournal.settings
         // Không lưu trades vào journals nữa
       });
       

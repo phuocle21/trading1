@@ -57,6 +57,13 @@ export async function getJournals(): Promise<JournalData> {
         description: dbJournal.description,
         createdAt: dbJournal.created_at,
         updatedAt: dbJournal.updated_at,
+        icon: dbJournal.icon || 'chart',
+        color: dbJournal.color || '#4f46e5',
+        settings: dbJournal.settings || {
+          currency: "USD",
+          initialCapital: 10000,
+          riskPercentage: 1
+        },
         trades: [] // Không lưu trades trong journal nữa mà lấy từ bảng trades
       };
       
@@ -89,7 +96,10 @@ export async function saveJournals(data: JournalData): Promise<boolean> {
             description: journal.description,
             user_id: userId,
             created_at: journal.createdAt,
-            updated_at: journal.updatedAt
+            updated_at: journal.updatedAt,
+            icon: journal.icon,
+            color: journal.color,
+            settings: journal.settings
             // trades field đã bị loại bỏ vì trades sẽ được lưu riêng
           });
         
