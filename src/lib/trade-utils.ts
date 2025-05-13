@@ -22,7 +22,8 @@ export function calculateProfitLoss(trade: Trade): number | null {
   }
 }
 
-// Hàm tính hệ số lợi nhuận (trung bình lãi chia cho trung bình lỗ)
+// Hàm tính hệ số lợi nhuận
+// Công thức: [(tổng lệnh thắng)*(lợi nhuận trung bình)]/[(tổng lệnh thua)*(thua lỗ trung bình)]
 export function calculateRMultiple(trades: Trade[]): number {
   if (!trades || trades.length === 0) return 0;
   
@@ -42,25 +43,32 @@ export function calculateRMultiple(trades: Trade[]): number {
     }
   });
   
-  // Calculate average profit and average loss
+  // Tổng số lệnh thắng
+  const totalWinningTrades = profitValues.length;
+  // Tổng số lệnh thua
+  const totalLosingTrades = lossValues.length;
+  
+  // Lợi nhuận trung bình
   const avgProfit = profitValues.length > 0 
     ? profitValues.reduce((sum, profit) => sum + profit, 0) / profitValues.length 
     : 0;
     
+  // Thua lỗ trung bình
   const avgLoss = lossValues.length > 0 
     ? lossValues.reduce((sum, loss) => sum + loss, 0) / lossValues.length 
     : 0;
   
   // Handle edge cases
-  if (avgLoss === 0) {
-    if (avgProfit > 0) {
+  if (totalLosingTrades === 0 || avgLoss === 0) {
+    if (totalWinningTrades > 0 && avgProfit > 0) {
       return 10; // If no losses but have profits, return a high value (can be customized)
     }
     return 0; // No profits and no losses
   }
   
-  // Calculate R-multiple as ratio of average profit to average loss
-  return avgProfit / avgLoss;
+  // Calculate profit ratio according to formula:
+  // [(tổng lệnh thắng)*(lợi nhuận trung bình)]/[(tổng lệnh thua)*(thua lỗ trung bình)]
+  return (totalWinningTrades * avgProfit) / (totalLosingTrades * avgLoss);
 }
 
 export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false, showNegativeSign: boolean = true): string {

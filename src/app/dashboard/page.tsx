@@ -108,6 +108,8 @@ export default function DashboardPage() {
         totalTrades: 0,
         winningTrades: 0,
         losingTrades: 0,
+        avgProfit: 0,
+        avgLoss: 0,
     };
 
     let totalProfitLoss = 0;
@@ -115,13 +117,20 @@ export default function DashboardPage() {
     let losingTrades = 0;
     let totalDuration = 0;
     let tradesWithDuration = 0;
+    let totalProfit = 0;
+    let totalLoss = 0;
 
     filteredTrades.forEach((trade: Trade) => {
       const pnl = calculateProfitLoss(trade);
       if (pnl !== null) {
         totalProfitLoss += pnl;
-        if (pnl > 0) winningTrades++;
-        else if (pnl < 0) losingTrades++;
+        if (pnl > 0) {
+          winningTrades++;
+          totalProfit += pnl;
+        } else if (pnl < 0) {
+          losingTrades++;
+          totalLoss += Math.abs(pnl); // Lưu giá trị tuyệt đối của khoản lỗ
+        }
       }
 
       if (trade.entryDate && trade.exitDate) {
@@ -137,6 +146,8 @@ export default function DashboardPage() {
     const totalClosedTrades = filteredTrades.length;
     const winRate = totalClosedTrades > 0 ? (winningTrades / totalClosedTrades) * 100 : 0;
     const averageTradeDuration = tradesWithDuration > 0 ? totalDuration / tradesWithDuration : 0;
+    const avgProfit = winningTrades > 0 ? totalProfit / winningTrades : 0;
+    const avgLoss = losingTrades > 0 ? totalLoss / losingTrades : 0;
 
     return {
       totalProfitLoss,
@@ -145,6 +156,8 @@ export default function DashboardPage() {
       totalTrades: trades.length,
       winningTrades,
       losingTrades,
+      avgProfit,
+      avgLoss,
     };
   }, [trades, filteredTrades, isLoading]);
   
@@ -273,26 +286,26 @@ export default function DashboardPage() {
             <StatCard
               title={t('dashboard.rMultiple')}
               value={(() => {
-                const rMultiple = calculateRMultiple(filteredTrades);
-                return !isNaN(rMultiple) && isFinite(rMultiple) 
-                  ? `${rMultiple.toFixed(2)}R` 
-                  : `0.00R`;
+                const profitRatio = calculateRMultiple(filteredTrades);
+                return !isNaN(profitRatio) && isFinite(profitRatio) 
+                  ? profitRatio.toFixed(2) 
+                  : "0.00";
               })()}
               icon={BarChart}
               isLoading={isLoading}
               variant="amber"
             />
             <StatCard
-              title={t('dashboard.winningTrades')}
-              value={dashboardStats.winningTrades}
+              title={t('dashboard.avgProfit')}
+              value={formatCurrency(dashboardStats.avgProfit)}
               icon={TrendingUp}
               isLoading={isLoading}
               valueClassName="text-green-600"
               variant="green"
             />
             <StatCard
-              title={t('dashboard.losingTrades')}
-              value={dashboardStats.losingTrades}
+              title={t('dashboard.avgLoss')}
+              value={formatCurrency(dashboardStats.avgLoss)}
               icon={TrendingDown}
               isLoading={isLoading}
               valueClassName="text-red-600"
