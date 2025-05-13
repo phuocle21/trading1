@@ -8,7 +8,7 @@ import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { TradeCalendar } from "@/components/dashboard/TradeCalendar";
 import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
 import { JournalHeader } from "@/components/ui/journal-header";
-import { calculateProfitLoss, formatCurrency } from "@/lib/trade-utils";
+import { calculateProfitLoss, formatCurrency, calculateRMultiple } from "@/lib/trade-utils";
 import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database, BookOpen } from "lucide-react";
 import type { Trade } from "@/types";
 import { useMemo, useState, useEffect } from "react";
@@ -280,8 +280,8 @@ export default function DashboardPage() {
                 variant="purple"
               />
               <StatCard
-                title={t('dashboard.totalClosedTrades')}
-                value={filteredTrades.length}
+                title={t('dashboard.rMultiple')}
+                value={calculateRMultiple(filteredTrades).toFixed(2) + 'R'}
                 icon={BarChart}
                 isLoading={isLoading}
                 variant="amber"

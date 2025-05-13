@@ -22,6 +22,46 @@ export function calculateProfitLoss(trade: Trade): number | null {
   }
 }
 
+// Hàm tính hệ số lợi nhuận với đơn vị R
+export function calculateRMultiple(trades: Trade[]): number {
+  if (!trades || trades.length === 0) return 0;
+  
+  let totalProfit = 0;
+  let totalRisk = 0;
+  
+  trades.forEach(trade => {
+    const pnl = calculateProfitLoss(trade);
+    if (pnl === null) return;
+    
+    totalProfit += pnl;
+    
+    // Tính toán rủi ro (R) dựa trên stop loss
+    // Nếu không có stop loss, bỏ qua giao dịch này
+    if (trade.stopLoss && trade.entryPrice && trade.quantity) {
+      let riskPerTrade;
+      
+      if (trade.tradeType === 'buy') {
+        // Long: (Entry Price - Stop Loss) * Quantity
+        riskPerTrade = (trade.entryPrice - trade.stopLoss) * trade.quantity;
+      } else {
+        // Short: (Stop Loss - Entry Price) * Quantity
+        riskPerTrade = (trade.stopLoss - trade.entryPrice) * trade.quantity;
+      }
+      
+      // Chỉ tính các giao dịch có rủi ro hợp lệ (dương)
+      if (riskPerTrade > 0) {
+        totalRisk += riskPerTrade;
+      }
+    }
+  });
+  
+  // Nếu không có rủi ro, trả về 0
+  if (totalRisk <= 0) return 0;
+  
+  // Tính R multiple (lợi nhuận chia cho tổng rủi ro)
+  return totalProfit / totalRisk;
+}
+
 export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false): string {
   if (amount === null || amount === undefined) {
     return 'N/A';
