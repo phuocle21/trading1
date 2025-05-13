@@ -330,44 +330,36 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <dt className="text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center">
+            <dl className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <dt className="text-xs sm:text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center">
                   <PercentIcon className="w-4 h-4 mr-1" /> {t('playbooks.winRate')}
                 </dt>
-                <dd className="text-2xl font-bold text-blue-800 dark:text-blue-300">
+                <dd className="text-xl sm:text-2xl font-bold text-blue-800 dark:text-blue-300">
                   {stats.winRate.toFixed(1)}%
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
-                <dt className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
+                <dt className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-400 flex items-center">
                   <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgProfit')}
                 </dt>
-                <dd className="text-2xl font-bold text-green-800 dark:text-green-300">
+                <dd className="text-xl sm:text-2xl font-bold text-green-800 dark:text-green-300 truncate">
                   ${stats.avgProfit.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/40 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800">
-                <dt className="text-sm font-medium text-purple-700 dark:text-purple-400 flex items-center">
-                  <BarChart3 className="w-4 h-4 mr-1" /> {t('playbooks.totalTrades')}
-                </dt>
-                <dd className="text-2xl font-bold text-purple-800 dark:text-purple-300">
-                  {stats.totalTrades}
-                </dd>
-              </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
-                <dt className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
+                <dt className="text-xs sm:text-sm font-medium text-red-700 dark:text-red-400 flex items-center">
                   <DollarSign className="w-4 h-4 mr-1" /> {t('playbooks.avgLoss')}
                 </dt>
-                <dd className="text-2xl font-bold text-red-800 dark:text-red-300">
+                <dd className="text-xl sm:text-2xl font-bold text-red-800 dark:text-red-300 truncate">
                   ${stats.avgLoss.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800 col-span-2">
-                <dt className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <dt className="text-xs sm:text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center">
                   <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                 </dt>
-                <dd className="text-2xl font-bold text-amber-800 dark:text-amber-300">
+                <dd className="text-xl sm:text-2xl font-bold text-amber-800 dark:text-amber-300 truncate">
                   {stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2)}
                 </dd>
               </div>
@@ -383,36 +375,36 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                <dt className="text-sm font-medium text-emerald-700 dark:text-emerald-400 flex items-center">
+            <dl className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <dt className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400 flex items-center">
                   <TrendingUp className="w-4 h-4 mr-1" /> {t('playbooks.consecutiveWins')}
                 </dt>
-                <dd className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
+                <dd className="text-xl sm:text-2xl font-bold text-emerald-800 dark:text-emerald-300">
                   {stats.consecutiveWins}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-pink-50 to-pink-100/50 dark:from-pink-950/40 dark:to-pink-900/20 border border-pink-200 dark:border-pink-800">
-                <dt className="text-sm font-medium text-pink-700 dark:text-pink-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-pink-50 to-pink-100/50 dark:from-pink-950/40 dark:to-pink-900/20 border border-pink-200 dark:border-pink-800">
+                <dt className="text-xs sm:text-sm font-medium text-pink-700 dark:text-pink-400 flex items-center">
                   <TrendingDown className="w-4 h-4 mr-1" /> {t('playbooks.consecutiveLosses')}
                 </dt>
-                <dd className="text-2xl font-bold text-pink-800 dark:text-pink-300">
+                <dd className="text-xl sm:text-2xl font-bold text-pink-800 dark:text-pink-300">
                   {stats.consecutiveLosses}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-sky-50 to-sky-100/50 dark:from-sky-950/40 dark:to-sky-900/20 border border-sky-200 dark:border-sky-800">
-                <dt className="text-sm font-medium text-sky-700 dark:text-sky-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-sky-50 to-sky-100/50 dark:from-sky-950/40 dark:to-sky-900/20 border border-sky-200 dark:border-sky-800">
+                <dt className="text-xs sm:text-sm font-medium text-sky-700 dark:text-sky-400 flex items-center">
                   <Clock className="w-4 h-4 mr-1" /> {t('playbooks.avgHoldingTime')}
                 </dt>
-                <dd className="text-2xl font-bold text-sky-800 dark:text-sky-300">
+                <dd className="text-xl sm:text-2xl font-bold text-sky-800 dark:text-sky-300">
                   {stats.averageHoldingTime.toFixed(1)}h
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-950/40 dark:to-teal-900/20 border border-teal-200 dark:border-teal-800">
-                <dt className="text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-950/40 dark:to-teal-900/20 border border-teal-200 dark:border-teal-800">
+                <dt className="text-xs sm:text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center">
                   <Calendar className="w-4 h-4 mr-1" /> {t('playbooks.timeframe')}
                 </dt>
-                <dd className="text-2xl font-bold text-teal-800 dark:text-teal-300">
+                <dd className="text-xl sm:text-2xl font-bold text-teal-800 dark:text-teal-300 truncate">
                   {playbook.timeframe || t('playbooks.na')}
                 </dd>
               </div>
