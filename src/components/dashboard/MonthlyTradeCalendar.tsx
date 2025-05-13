@@ -165,7 +165,7 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
                     <TableCell 
                       className={`text-right text-xs sm:text-sm py-2 ${day.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
-                      {formatCurrency(day.totalPnL, 'USD', true)}
+                      {formatCurrency(day.totalPnL, 'USD', true, false)}
                     </TableCell>
                     <TableCell 
                       className={`text-right font-medium text-xs sm:text-sm py-2 ${winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}
@@ -186,7 +186,7 @@ export function MonthlyTradeCalendar({ trades, isLoading }: MonthlyTradeCalendar
                 <TableCell 
                   className={`text-right text-xs sm:text-sm py-2 ${periodStats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
-                  {formatCurrency(periodStats.totalPnL, 'USD', true)}
+                  {formatCurrency(periodStats.totalPnL, 'USD', true, false)}
                 </TableCell>
                 <TableCell 
                   className={`text-right font-medium text-xs sm:text-sm py-2 ${periodStats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}

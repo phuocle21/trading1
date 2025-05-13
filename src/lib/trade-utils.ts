@@ -62,7 +62,7 @@ export function calculateRMultiple(trades: Trade[]): number {
   return totalProfit / totalRisk;
 }
 
-export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false): string {
+export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false, showNegativeSign: boolean = true): string {
   if (amount === null || amount === undefined) {
     return 'N/A';
   }
@@ -71,10 +71,12 @@ export function formatCurrency(amount: number | null | undefined, currency: stri
   // Nếu số quá lớn (lớn hơn 1 tỷ) hoặc yêu cầu compact, sử dụng định dạng rút gọn
   const absAmount = Math.abs(amount);
   const mustCompact = absAmount >= 1000000000 || compact;
+  const isNegative = amount < 0;
   
   const options: Intl.NumberFormatOptions = { 
     style: 'currency', 
-    currency 
+    currency,
+    signDisplay: showNegativeSign ? 'auto' : 'never' // Ẩn dấu âm nếu không yêu cầu hiển thị
   };
   
   if (mustCompact) {
@@ -88,7 +90,7 @@ export function formatCurrency(amount: number | null | undefined, currency: stri
     options.maximumFractionDigits = 2;
   }
 
-  return new Intl.NumberFormat('en-US', options).format(amount);
+  return new Intl.NumberFormat('en-US', options).format(Math.abs(amount));
 }
 
 export function formatDate(dateString?: string): string {

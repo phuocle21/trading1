@@ -80,7 +80,7 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
     let winCount = 0;
     let lossCount = 0;
     
-    dayTrades.forEach(trade => {
+    dayTrades.forEach((trade: Trade) => {
       const pnl = calculateProfitLoss(trade);
       if (pnl === null) return;
       
@@ -206,7 +206,7 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                       className={`text-[0.65rem] sm:text-xs text-center font-medium 
                         ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
-                      {formatCurrency(stats.totalPnL, 'USD', true)}
+                      {formatCurrency(stats.totalPnL, 'USD', true, false)}
                     </div>
                   </div>
                 )}
@@ -218,18 +218,18 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
       
       {/* Dialog for day detail */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto p-3 sm:p-6">
+          <DialogHeader className="space-y-1 pb-2">
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5" />
               Giao dịch ngày {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               {selectedDayTrades.length} giao dịch hoàn thành trong ngày này
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-3">
             {selectedDate && (
               <>
                 {/* Daily stats summary */}
@@ -246,7 +246,7 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
                         <div className="text-xs sm:text-sm font-medium text-muted-foreground">Tổng Lãi/Lỗ</div>
                         <div className={`text-sm sm:text-lg font-semibold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(stats.totalPnL)}
+                          {formatCurrency(stats.totalPnL, 'USD', false, false)}
                         </div>
                       </div>
                       <div className="bg-muted/30 p-2 sm:p-3 rounded-md">
@@ -261,8 +261,50 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                   );
                 })()}
                 
-                {/* Trades table */}
-                <div className="rounded-md border overflow-x-auto">
+                {/* Mobile-optimized trade list */}
+                <div className="mt-4 space-y-2 sm:hidden">
+                  {selectedDayTrades.map((trade: Trade) => {
+                    const pnl = calculateProfitLoss(trade);
+                    return (
+                      <div key={trade.id} className="border rounded-md p-2">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="font-medium flex items-center gap-1.5">
+                            <span>{trade.symbol}</span>
+                            {trade.tradeType === 'buy' ? (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-[0.65rem] px-1 py-0">
+                                Mua
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 text-[0.65rem] px-1 py-0">
+                                Bán
+                              </Badge>
+                            )}
+                          </div>
+                          <div className={`font-medium text-sm ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {pnl !== null ? formatCurrency(pnl, 'USD', false, false) : '—'}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">SL:</span> 
+                            <span>{trade.quantity}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Giá vào:</span>
+                            <span>{formatCurrency(trade.entryPrice, 'USD', false)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Giá ra:</span>
+                            <span>{trade.exitPrice ? formatCurrency(trade.exitPrice, 'USD', false) : 'Đang mở'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Desktop trade table - hidden on mobile */}
+                <div className="rounded-md border overflow-x-auto hidden sm:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -275,30 +317,30 @@ export function TradeCalendar({ trades, isLoading }: TradeCalendarProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedDayTrades.map(trade => {
+                      {selectedDayTrades.map((trade: Trade) => {
                         const pnl = calculateProfitLoss(trade);
                         
                         return (
                           <TableRow key={trade.id}>
-                            <TableCell className="font-medium text-xs sm:text-sm py-2">{trade.symbol}</TableCell>
+                            <TableCell className="font-medium text-sm py-2">{trade.symbol}</TableCell>
                             <TableCell className="py-2">
                               {trade.tradeType === 'buy' ? (
-                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-[0.65rem] sm:text-xs px-1 py-0">
+                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-xs px-1 py-0">
                                   Mua
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 text-[0.65rem] sm:text-xs px-1 py-0">
+                                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 text-xs px-1 py-0">
                                   Bán
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell className="text-xs sm:text-sm py-2">{trade.quantity}</TableCell>
-                            <TableCell className="text-xs sm:text-sm py-2">{formatCurrency(trade.entryPrice)}</TableCell>
-                            <TableCell className="text-xs sm:text-sm py-2">{trade.exitPrice ? formatCurrency(trade.exitPrice) : 'Đang mở'}</TableCell>
+                            <TableCell className="text-sm py-2">{trade.quantity}</TableCell>
+                            <TableCell className="text-sm py-2">{formatCurrency(trade.entryPrice, 'USD', false)}</TableCell>
+                            <TableCell className="text-sm py-2">{trade.exitPrice ? formatCurrency(trade.exitPrice, 'USD', false) : 'Đang mở'}</TableCell>
                             <TableCell 
-                              className={`text-right font-medium text-xs sm:text-sm py-2 ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                              className={`text-right font-medium text-sm py-2 ${pnl && pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
                             >
-                              {pnl !== null ? formatCurrency(pnl) : '—'}
+                              {pnl !== null ? formatCurrency(pnl, 'USD', false, false) : '—'}
                             </TableCell>
                           </TableRow>
                         );
