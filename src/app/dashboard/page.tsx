@@ -284,11 +284,11 @@ export default function DashboardPage() {
               variant="purple"
             />
             <StatCard
-              title={t('dashboard.rMultiple')}
+              title={t('dashboard.profitFactor')}
               value={(() => {
-                const profitRatio = calculateRMultiple(filteredTrades);
-                return !isNaN(profitRatio) && isFinite(profitRatio) 
-                  ? profitRatio.toFixed(2) 
+                const profitFactor = calculateRMultiple(filteredTrades);
+                return !isNaN(profitFactor) && isFinite(profitFactor) 
+                  ? profitFactor.toFixed(2) 
                   : "0.00";
               })()}
               icon={BarChart}

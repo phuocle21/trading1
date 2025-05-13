@@ -22,53 +22,38 @@ export function calculateProfitLoss(trade: Trade): number | null {
   }
 }
 
-// Hàm tính hệ số lợi nhuận
-// Công thức: [(tổng lệnh thắng)*(lợi nhuận trung bình)]/[(tổng lệnh thua)*(thua lỗ trung bình)]
+// Hàm tính hệ số lợi nhuận (Profit Factor)
+// Công thức: Tổng lợi nhuận / Tổng thua lỗ
 export function calculateRMultiple(trades: Trade[]): number {
   if (!trades || trades.length === 0) return 0;
   
-  // Arrays to store profit and loss values
-  const profitValues: number[] = [];
-  const lossValues: number[] = [];
+  let totalGain = 0;
+  let totalLoss = 0;
   
-  // Separate profitable trades and losing trades
+  // Tính tổng lợi nhuận và tổng thua lỗ
   trades.forEach(trade => {
     const pnl = calculateProfitLoss(trade);
     if (pnl === null) return;
     
     if (pnl > 0) {
-      profitValues.push(pnl);
+      // Lợi nhuận
+      totalGain += pnl;
     } else if (pnl < 0) {
-      lossValues.push(Math.abs(pnl)); // Store absolute value of loss
+      // Thua lỗ (lưu giá trị tuyệt đối)
+      totalLoss += Math.abs(pnl);
     }
   });
   
-  // Tổng số lệnh thắng
-  const totalWinningTrades = profitValues.length;
-  // Tổng số lệnh thua
-  const totalLosingTrades = lossValues.length;
-  
-  // Lợi nhuận trung bình
-  const avgProfit = profitValues.length > 0 
-    ? profitValues.reduce((sum, profit) => sum + profit, 0) / profitValues.length 
-    : 0;
-    
-  // Thua lỗ trung bình
-  const avgLoss = lossValues.length > 0 
-    ? lossValues.reduce((sum, loss) => sum + loss, 0) / lossValues.length 
-    : 0;
-  
-  // Handle edge cases
-  if (totalLosingTrades === 0 || avgLoss === 0) {
-    if (totalWinningTrades > 0 && avgProfit > 0) {
-      return 10; // If no losses but have profits, return a high value (can be customized)
+  // Xử lý trường hợp đặc biệt
+  if (totalLoss === 0) {
+    if (totalGain > 0) {
+      return 10; // Nếu không có thua lỗ nhưng có lợi nhuận, trả về giá trị cao (có thể tùy chỉnh)
     }
-    return 0; // No profits and no losses
+    return 0; // Không có lợi nhuận và không có thua lỗ
   }
   
-  // Calculate profit ratio according to formula:
-  // [(tổng lệnh thắng)*(lợi nhuận trung bình)]/[(tổng lệnh thua)*(thua lỗ trung bình)]
-  return (totalWinningTrades * avgProfit) / (totalLosingTrades * avgLoss);
+  // Tính hệ số lợi nhuận (Profit Factor)
+  return totalGain / totalLoss;
 }
 
 export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false, showNegativeSign: boolean = true): string {

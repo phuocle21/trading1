@@ -89,7 +89,7 @@ export const translations: Translations = {
   "dashboard.winRate": "Tỷ Lệ Thắng",
   "dashboard.avgTradeDuration": "Thời Gian Giao Dịch TB",
   "dashboard.days": "ngày",
-  "dashboard.rMultiple": "Hệ Số Lợi Nhuận (R)",
+  "dashboard.profitFactor": "Hệ Số Lợi Nhuận (R)",
   "dashboard.avgProfit": "Lợi Nhuận Trung Bình",
   "dashboard.avgLoss": "Thua Lỗ Trung Bình",
   "dashboard.winningTrades": "Giao Dịch Thắng",
