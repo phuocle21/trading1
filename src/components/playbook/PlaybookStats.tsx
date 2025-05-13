@@ -430,36 +430,36 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
-                <dt className="text-sm font-medium text-green-700 dark:text-green-400">
+            <dl className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/40 dark:to-green-900/20 border border-green-200 dark:border-green-800">
+                <dt className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-400">
                   {t('playbooks.totalWins')}
                 </dt>
-                <dd className="text-2xl font-bold text-green-800 dark:text-green-300">
+                <dd className="text-xl sm:text-2xl font-bold text-green-800 dark:text-green-300">
                   {stats.totalWins}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
-                <dt className="text-sm font-medium text-red-700 dark:text-red-400">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800">
+                <dt className="text-xs sm:text-sm font-medium text-red-700 dark:text-red-400">
                   {t('playbooks.totalLosses')}
                 </dt>
-                <dd className="text-2xl font-bold text-red-800 dark:text-red-300">
+                <dd className="text-xl sm:text-2xl font-bold text-red-800 dark:text-red-300">
                   {stats.totalLosses}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                <dt className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <dt className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400">
                   {t('playbooks.bestTrade')}
                 </dt>
-                <dd className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
+                <dd className="text-xl sm:text-2xl font-bold text-emerald-800 dark:text-emerald-300 truncate">
                   ${stats.largestWin.toFixed(2)}
                 </dd>
               </div>
-              <div className="flex flex-col space-y-1 p-3 rounded-lg bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 border border-rose-200 dark:border-rose-800">
-                <dt className="text-sm font-medium text-rose-700 dark:text-rose-400">
+              <div className="flex flex-col space-y-1 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 border border-rose-200 dark:border-rose-800">
+                <dt className="text-xs sm:text-sm font-medium text-rose-700 dark:text-rose-400">
                   {t('playbooks.worstTrade')}
                 </dt>
-                <dd className="text-2xl font-bold text-rose-800 dark:text-rose-300">
+                <dd className="text-xl sm:text-2xl font-bold text-rose-800 dark:text-rose-300 truncate">
                   ${stats.largestLoss.toFixed(2)}
                 </dd>
               </div>
