@@ -6,10 +6,11 @@ import { User } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +18,7 @@ export default function AdminPage() {
   const { currentUser, getUsersList, updateUserAdmin, approveUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -48,7 +50,6 @@ export default function AdminPage() {
     try {
       await updateUserAdmin(userId, !isCurrentlyAdmin);
       
-      // Update local state after successful API call
       setUsers(users.map(user => 
         user.id === userId ? { ...user, isAdmin: !isCurrentlyAdmin } : user
       ));
@@ -71,7 +72,6 @@ export default function AdminPage() {
     try {
       await approveUser(userId, !isCurrentlyApproved);
       
-      // Update local state after successful API call
       setUsers(users.map(user => 
         user.id === userId ? { ...user, isApproved: !isCurrentlyApproved } : user
       ));
@@ -92,8 +92,8 @@ export default function AdminPage() {
 
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md mx-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Chưa đăng nhập</CardTitle>
             <CardDescription>
@@ -112,8 +112,8 @@ export default function AdminPage() {
 
   if (!currentUser.isAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md mx-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Từ chối truy cập</CardTitle>
             <CardDescription>
@@ -129,10 +129,165 @@ export default function AdminPage() {
       </div>
     );
   }
+  
+  const renderMobileUserCard = (user: User) => {
+    return (
+      <Card key={user.id} className="mb-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{user.email}</CardTitle>
+          <CardDescription className="flex justify-between">
+            <span>Đăng ký: {new Date(user.createdAt).toLocaleDateString()}</span>
+            <span>Đăng nhập: {new Date(user.lastLogin).toLocaleDateString()}</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pb-2 space-y-3">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium">Trạng thái</p>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={user.isApproved} 
+                onCheckedChange={() => handleToggleApproval(user.id, user.isApproved)}
+                disabled={user.email === "mrtinanpha@gmail.com"}
+              />
+              {user.isApproved ? (
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
+                  Đã phê duyệt
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                  Chờ duyệt
+                </Badge>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium">Quyền Admin</p>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={user.isAdmin} 
+                onCheckedChange={() => handleToggleAdmin(user.id, user.isAdmin)}
+                disabled={user.email === "mrtinanpha@gmail.com"}
+              />
+              <span>{user.isAdmin ? "Admin" : "Người dùng"}</span>
+            </div>
+          </div>
+        </CardContent>
+        {user.email !== "mrtinanpha@gmail.com" && (
+          <CardFooter className="flex flex-col items-stretch space-y-2 pt-0">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full"
+              onClick={() => handleToggleApproval(user.id, user.isApproved)}
+            >
+              {user.isApproved ? "Hủy phê duyệt" : "Phê duyệt"}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full"
+              onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
+            >
+              {user.isAdmin ? "Thu hồi quyền Admin" : "Cấp quyền Admin"}
+            </Button>
+          </CardFooter>
+        )}
+        {user.email === "mrtinanpha@gmail.com" && (
+          <CardFooter className="pt-0">
+            <span className="text-sm text-muted-foreground w-full text-center">Admin chính</span>
+          </CardFooter>
+        )}
+      </Card>
+    );
+  };
+
+  const renderDesktopTable = () => {
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Email</TableHead>
+              <TableHead>Ngày đăng ký</TableHead>
+              <TableHead>Đăng nhập gần đây</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead>Quyền Admin</TableHead>
+              <TableHead>Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.email}</TableCell>
+                <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(user.lastLogin).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      checked={user.isApproved} 
+                      onCheckedChange={() => handleToggleApproval(user.id, user.isApproved)}
+                      disabled={user.email === "mrtinanpha@gmail.com"}
+                    />
+                    {user.isApproved ? (
+                      <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
+                        Đã phê duyệt
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                        Chờ duyệt
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      checked={user.isAdmin} 
+                      onCheckedChange={() => handleToggleAdmin(user.id, user.isAdmin)}
+                      disabled={user.email === "mrtinanpha@gmail.com"}
+                    />
+                    <span>{user.isAdmin ? "Admin" : "Người dùng"}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {user.email === "mrtinanpha@gmail.com" ? (
+                    <span className="text-sm text-muted-foreground">Admin chính</span>
+                  ) : (
+                    <div className="flex flex-col space-y-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleToggleApproval(user.id, user.isApproved)}
+                      >
+                        {user.isApproved ? "Hủy phê duyệt" : "Phê duyệt"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
+                      >
+                        {user.isAdmin ? "Thu hồi quyền Admin" : "Cấp quyền Admin"}
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+            {users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">Không tìm thấy người dùng nào</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
   return (
-    <div className="container mx-auto max-w-5xl py-8">
-      <h1 className="text-3xl font-bold mb-6">Trang Quản trị</h1>
+    <div className="container px-4 sm:px-6 mx-auto max-w-5xl py-4 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Trang Quản trị</h1>
       
       <Card>
         <CardHeader>
@@ -145,82 +300,18 @@ export default function AdminPage() {
           {loading ? (
             <div className="text-center py-4">Đang tải danh sách người dùng...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Ngày đăng ký</TableHead>
-                  <TableHead>Đăng nhập gần đây</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Quyền Admin</TableHead>
-                  <TableHead>Hành động</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(user.lastLogin).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          checked={user.isApproved} 
-                          onCheckedChange={() => handleToggleApproval(user.id, user.isApproved)}
-                          disabled={user.email === "mrtinanpha@gmail.com"}
-                        />
-                        {user.isApproved ? (
-                          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
-                            Đã phê duyệt
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-                            Chờ duyệt
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          checked={user.isAdmin} 
-                          onCheckedChange={() => handleToggleAdmin(user.id, user.isAdmin)}
-                          disabled={user.email === "mrtinanpha@gmail.com"}
-                        />
-                        <span>{user.isAdmin ? "Admin" : "Người dùng"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {user.email === "mrtinanpha@gmail.com" ? (
-                        <span className="text-sm text-muted-foreground">Admin chính</span>
-                      ) : (
-                        <div className="flex flex-col space-y-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleToggleApproval(user.id, user.isApproved)}
-                          >
-                            {user.isApproved ? "Hủy phê duyệt" : "Phê duyệt"}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
-                          >
-                            {user.isAdmin ? "Thu hồi quyền Admin" : "Cấp quyền Admin"}
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {users.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center">Không tìm thấy người dùng nào</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+            <>
+              {isMobile ? (
+                <div className="space-y-4">
+                  {users.map(renderMobileUserCard)}
+                  {users.length === 0 && (
+                    <p className="text-center py-4">Không tìm thấy người dùng nào</p>
+                  )}
+                </div>
+              ) : (
+                renderDesktopTable()
+              )}
+            </>
           )}
         </CardContent>
       </Card>
