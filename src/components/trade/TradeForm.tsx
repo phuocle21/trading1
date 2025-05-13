@@ -471,7 +471,12 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                   field.onChange(new Date(value));
                                 }
                               }}
-                              className="w-full text-left focus-visible:ring-1 focus-visible:ring-primary"
+                              className="w-full text-left focus-visible:ring-1 focus-visible:ring-primary px-3 py-2 text-base mobile:text-sm"
+                              style={{
+                                minHeight: '42px',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none'
+                              }}
                             />
                           </FormControl>
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
@@ -561,7 +566,12 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                   field.onChange(null);
                                 }
                               }}
-                              className="w-full text-left"
+                              className="w-full text-left focus-visible:ring-1 focus-visible:ring-primary px-3 py-2 text-base mobile:text-sm"
+                              style={{
+                                minHeight: '42px',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none'
+                              }}
                             />
                           </FormControl>
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
