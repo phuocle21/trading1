@@ -471,7 +471,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                                   field.onChange(new Date(value));
                                 }
                               }}
-                              className="w-full"
+                              className="w-full text-left"
                             />
                           </FormControl>
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
