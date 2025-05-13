@@ -4,16 +4,14 @@ import { useJournals } from "@/contexts/JournalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
-import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { TradeCalendar } from "@/components/dashboard/TradeCalendar";
 import { AccountGrowthChart } from "@/components/dashboard/AccountGrowthChart";
 import { JournalHeader } from "@/components/ui/journal-header";
 import { calculateProfitLoss, formatCurrency, calculateRMultiple } from "@/lib/trade-utils";
-import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, Database, BookOpen } from "lucide-react";
+import { DollarSign, Percent, TrendingUp, TrendingDown, CalendarDays, BarChart, AlertTriangle, BookOpen } from "lucide-react";
 import type { Trade } from "@/types";
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { subDays } from 'date-fns';
@@ -24,7 +22,6 @@ type PerformanceTimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 export default function DashboardPage() {
   const { getCurrentJournal, currentJournalId, isLoading: journalLoading } = useJournals();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("all");
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,141 +192,124 @@ export default function DashboardPage() {
         icon={<BarChart className="h-6 w-6 text-primary" />}
       />
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
-          <TabsTrigger value="advanced">{t('dashboard.advancedAnalytics')}</TabsTrigger>
-        </TabsList>
+      {/* Time period selector placed at top */}
+      <div className="flex justify-end gap-2 mt-4 mb-2">
+        <Button 
+          size="sm" 
+          variant={timePeriod === "7days" ? "default" : "outline"}
+          onClick={() => setTimePeriod("7days")}
+        >
+          {t('dashboard.7days')}
+        </Button>
+        <Button 
+          size="sm" 
+          variant={timePeriod === "30days" ? "default" : "outline"}
+          onClick={() => setTimePeriod("30days")}
+        >
+          {t('dashboard.30days')}
+        </Button>
+        <Button 
+          size="sm" 
+          variant={timePeriod === "90days" ? "default" : "outline"}
+          onClick={() => setTimePeriod("90days")}
+        >
+          {t('dashboard.90days')}
+        </Button>
+        <Button 
+          size="sm" 
+          variant={timePeriod === "all" ? "default" : "outline"}
+          onClick={() => setTimePeriod("all")}
+        >
+          {t('dashboard.allTime')}
+        </Button>
+      </div>
+      
+      <div className="space-y-4 md:space-y-6">
+        {openTradesCount > 0 && (
+          <Card className="bg-[hsl(var(--warning-background))] border-[hsl(var(--warning-border))] shadow-md">
+            <CardHeader className="flex flex-col items-start space-y-2 pb-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
+              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--warning-foreground))]" />
+              <CardTitle className="text-base sm:text-lg text-[hsl(var(--warning-foreground))]">{t('dashboard.openPositions')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-[hsl(var(--warning-foreground))] text-sm sm:text-base">
+                {t('dashboard.openPositionsMessage').replace('{count}', String(openTradesCount))}
+              </p>
+            </CardContent>
+          </Card>
+        )}
         
-        {/* Time period selector placed at top */}
-        <div className="flex justify-end gap-2 mt-4 mb-2">
-          <Button 
-            size="sm" 
-            variant={timePeriod === "7days" ? "default" : "outline"}
-            onClick={() => setTimePeriod("7days")}
-          >
-            {t('dashboard.7days')}
-          </Button>
-          <Button 
-            size="sm" 
-            variant={timePeriod === "30days" ? "default" : "outline"}
-            onClick={() => setTimePeriod("30days")}
-          >
-            {t('dashboard.30days')}
-          </Button>
-          <Button 
-            size="sm" 
-            variant={timePeriod === "90days" ? "default" : "outline"}
-            onClick={() => setTimePeriod("90days")}
-          >
-            {t('dashboard.90days')}
-          </Button>
-          <Button 
-            size="sm" 
-            variant={timePeriod === "all" ? "default" : "outline"}
-            onClick={() => setTimePeriod("all")}
-          >
-            {t('dashboard.allTime')}
-          </Button>
+        {/* Layout: Calendar on left, Stats on right for larger screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          {/* Monthly Trade Calendar takes up 2/3 of the space */}
+          <div className="lg:col-span-2">
+            <TradeCalendar trades={trades} isLoading={isLoading} />
+          </div>
+          
+          {/* Stats take up 1/3 of the space in a vertical layout */}
+          <div className="space-y-3 lg:space-y-4">
+            <StatCard
+              title={t('dashboard.totalPL')}
+              value={formatCurrency(dashboardStats.totalProfitLoss)}
+              icon={DollarSign}
+              isLoading={isLoading}
+              valueClassName={dashboardStats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}
+              variant={dashboardStats.totalProfitLoss >= 0 ? "green" : "red"}
+            />
+            <StatCard
+              title={t('dashboard.winRate')}
+              value={`${dashboardStats.winRate.toFixed(1)}%`}
+              icon={Percent}
+              isLoading={isLoading}
+              variant="blue"
+            />
+            <StatCard
+              title={t('dashboard.avgTradeDuration')}
+              value={`${dashboardStats.averageTradeDuration.toFixed(1)} ${t('dashboard.days')}`}
+              icon={CalendarDays}
+              isLoading={isLoading}
+              variant="purple"
+            />
+            <StatCard
+              title={t('dashboard.rMultiple')}
+              value={calculateRMultiple(filteredTrades).toFixed(2) + 'R'}
+              icon={BarChart}
+              isLoading={isLoading}
+              variant="amber"
+            />
+            <StatCard
+              title={t('dashboard.winningTrades')}
+              value={dashboardStats.winningTrades}
+              icon={TrendingUp}
+              isLoading={isLoading}
+              valueClassName="text-green-600"
+              variant="green"
+            />
+            <StatCard
+              title={t('dashboard.losingTrades')}
+              value={dashboardStats.losingTrades}
+              icon={TrendingDown}
+              isLoading={isLoading}
+              valueClassName="text-red-600"
+              variant="red"
+            />
+          </div>
         </div>
         
-        <TabsContent value="overview" className="space-y-4 md:space-y-6">
-          {openTradesCount > 0 && (
-            <Card className="bg-[hsl(var(--warning-background))] border-[hsl(var(--warning-border))] shadow-md">
-              <CardHeader className="flex flex-col items-start space-y-2 pb-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
-                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--warning-foreground))]" />
-                <CardTitle className="text-base sm:text-lg text-[hsl(var(--warning-foreground))]">{t('dashboard.openPositions')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-[hsl(var(--warning-foreground))] text-sm sm:text-base">
-                  {t('dashboard.openPositionsMessage').replace('{count}', String(openTradesCount))}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Layout: Calendar on left, Stats on right for larger screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            {/* Monthly Trade Calendar takes up 2/3 of the space */}
-            <div className="lg:col-span-2">
-              <TradeCalendar trades={trades} isLoading={isLoading} />
-            </div>
-            
-            {/* Stats take up 1/3 of the space in a vertical layout */}
-            <div className="space-y-3 lg:space-y-4">
-              <StatCard
-                title={t('dashboard.totalPL')}
-                value={formatCurrency(dashboardStats.totalProfitLoss)}
-                icon={DollarSign}
-                isLoading={isLoading}
-                valueClassName={dashboardStats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}
-                variant={dashboardStats.totalProfitLoss >= 0 ? "green" : "red"}
-              />
-              <StatCard
-                title={t('dashboard.winRate')}
-                value={`${dashboardStats.winRate.toFixed(1)}%`}
-                icon={Percent}
-                isLoading={isLoading}
-                variant="blue"
-              />
-              <StatCard
-                title={t('dashboard.avgTradeDuration')}
-                value={`${dashboardStats.averageTradeDuration.toFixed(1)} ${t('dashboard.days')}`}
-                icon={CalendarDays}
-                isLoading={isLoading}
-                variant="purple"
-              />
-              <StatCard
-                title={t('dashboard.rMultiple')}
-                value={calculateRMultiple(filteredTrades).toFixed(2) + 'R'}
-                icon={BarChart}
-                isLoading={isLoading}
-                variant="amber"
-              />
-              <StatCard
-                title={t('dashboard.winningTrades')}
-                value={dashboardStats.winningTrades}
-                icon={TrendingUp}
-                isLoading={isLoading}
-                valueClassName="text-green-600"
-                variant="green"
-              />
-              <StatCard
-                title={t('dashboard.losingTrades')}
-                value={dashboardStats.losingTrades}
-                icon={TrendingDown}
-                isLoading={isLoading}
-                valueClassName="text-red-600"
-                variant="red"
-              />
-            </div>
-          </div>
-          
-          {/* Account Growth Chart full width */}
-          <AccountGrowthChart 
-            trades={filteredTrades} 
-            isLoading={isLoading} 
-            initialBalance={currentJournal?.settings?.initialCapital || 10000} 
-          />
+        {/* Account Growth Chart full width */}
+        <AccountGrowthChart 
+          trades={filteredTrades} 
+          isLoading={isLoading} 
+          initialBalance={currentJournal?.settings?.initialCapital || 10000} 
+        />
 
-          <PerformanceChart 
-            trades={filteredTrades} 
-            isLoading={isLoading} 
-            initialTimePeriod={mapToPerfChartTimePeriod(timePeriod)}
-            hideTimePeriodSelector
-          />
-          
-          <div className="flex justify-center">
-            <Button variant="outline" onClick={() => setActiveTab("advanced")}>
-              {t('dashboard.viewAdvancedAnalytics')}
-            </Button>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="advanced" className="space-y-4 md:space-y-6">
-          <AdvancedAnalytics trades={filteredTrades} isLoading={isLoading} />
-        </TabsContent>
-      </Tabs>
+        <PerformanceChart 
+          trades={filteredTrades} 
+          isLoading={isLoading} 
+          initialTimePeriod={mapToPerfChartTimePeriod(timePeriod)}
+          hideTimePeriodSelector
+        />
+      </div>
     </div>
   );
 }
