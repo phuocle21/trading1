@@ -95,49 +95,57 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     
     const winRate = (winningTrades.length / filteredTrades.length) * 100;
     
-    const totalProfit = filteredTrades.reduce((acc, trade) => {
+    // Tính tổng lợi nhuận của các giao dịch thắng
+    const totalGainValue = winningTrades.reduce((acc, trade) => {
       if (trade.returnValue !== undefined && trade.returnValue !== null) {
-        return acc + trade.returnValue;
+        return acc + (trade.returnValue > 0 ? trade.returnValue : 0);
       }
       
       if (trade.entryPrice && trade.exitPrice && trade.quantity) {
         const entryAmount = trade.quantity * trade.entryPrice;
         const exitAmount = trade.quantity * trade.exitPrice;
+        let profit = 0;
         
         if (trade.tradeType === 'buy') {
-          return acc + (exitAmount - entryAmount);
+          profit = exitAmount - entryAmount;
         } else {
-          return acc + (entryAmount - exitAmount);
+          profit = entryAmount - exitAmount;
         }
+        
+        return acc + (profit > 0 ? profit : 0);
       }
       
       return acc;
     }, 0);
     
-    const avgProfit = totalProfit / filteredTrades.length;
+    // Tính lợi nhuận trung bình đúng: Tổng lợi nhuận của các giao dịch thắng chia cho số lượng giao dịch thắng
+    const avgProfit = winningTrades.length > 0 ? totalGainValue / winningTrades.length : 0;
     
-    // Tính thua lỗ trung bình cho các giao dịch thua lỗ
-    const totalLossAmount = losingTrades.reduce((acc, trade) => {
-      let lossValue = 0;
-      
+    // Tính tổng thua lỗ của các giao dịch thua
+    const totalLossValue = losingTrades.reduce((acc, trade) => {
       if (trade.returnValue !== undefined && trade.returnValue !== null) {
-        lossValue = trade.returnValue;
-      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
-        const entryAmount = trade.quantity * trade.entryPrice;
-        const exitAmount = trade.quantity * trade.exitPrice;
-        
-        if (trade.tradeType === 'buy') {
-          lossValue = exitAmount - entryAmount;
-        } else {
-          lossValue = entryAmount - exitAmount;
-        }
+        return acc + (trade.returnValue < 0 ? Math.abs(trade.returnValue) : 0);
       }
       
-      return acc + lossValue;
+      if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+        const entryAmount = trade.quantity * trade.entryPrice;
+        const exitAmount = trade.quantity * trade.exitPrice;
+        let loss = 0;
+        
+        if (trade.tradeType === 'buy') {
+          loss = exitAmount - entryAmount;
+        } else {
+          loss = entryAmount - exitAmount;
+        }
+        
+        return acc + (loss < 0 ? Math.abs(loss) : 0);
+      }
+      
+      return acc;
     }, 0);
     
-    // Tính giá trị thua lỗ trung bình (giá trị tuyệt đối)
-    const avgLoss = losingTrades.length > 0 ? Math.abs(totalLossAmount / losingTrades.length) : 0;
+    // Tính thua lỗ trung bình đúng: Tổng thua lỗ của các giao dịch thua chia cho số lượng giao dịch thua
+    const avgLoss = losingTrades.length > 0 ? totalLossValue / losingTrades.length : 0;
     
     // Tìm chuỗi thắng/thua lớn nhất
     let currentWins = 0;
@@ -223,76 +231,68 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     
     const averageHoldingTime = tradesWithTime > 0 ? totalHoldingTime / tradesWithTime : 0;
     
-    // Tìm lợi nhuận/lỗ lớn nhất
+    // Tìm lợi nhuận lớn nhất và thua lỗ lớn nhất
     let largestWin = 0;
     let largestLoss = 0;
     
-    filteredTrades.forEach(trade => {
-      let tradeValue = 0;
+    winningTrades.forEach(trade => {
+      let profitValue = 0;
       
       if (trade.returnValue !== undefined && trade.returnValue !== null) {
-        tradeValue = trade.returnValue;
+        profitValue = trade.returnValue > 0 ? trade.returnValue : 0;
       } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
         const entryAmount = trade.quantity * trade.entryPrice;
         const exitAmount = trade.quantity * trade.exitPrice;
         
         if (trade.tradeType === 'buy') {
-          tradeValue = exitAmount - entryAmount;
+          profitValue = exitAmount - entryAmount;
         } else {
-          tradeValue = entryAmount - exitAmount;
+          profitValue = entryAmount - exitAmount;
         }
+        
+        // Đảm bảo chỉ tính các giá trị lợi nhuận dương
+        profitValue = profitValue > 0 ? profitValue : 0;
       }
       
-      if (tradeValue > 0 && tradeValue > largestWin) {
-        largestWin = tradeValue;
-      }
-      
-      if (tradeValue < 0 && tradeValue < largestLoss) {
-        largestLoss = tradeValue;
+      if (profitValue > largestWin) {
+        largestWin = profitValue;
       }
     });
     
-    // Cải thiện cách tính profit factor để tránh lỗi chia cho 0
-    const totalGain = winningTrades.reduce((acc, trade) => {
-      let gain = 0;
+    losingTrades.forEach(trade => {
+      let lossValue = 0;
+      
       if (trade.returnValue !== undefined && trade.returnValue !== null) {
-        gain = trade.returnValue;
+        lossValue = trade.returnValue < 0 ? Math.abs(trade.returnValue) : 0;
       } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
         const entryAmount = trade.quantity * trade.entryPrice;
         const exitAmount = trade.quantity * trade.exitPrice;
+        let tradePnL = 0;
         
         if (trade.tradeType === 'buy') {
-          gain = exitAmount - entryAmount;
+          tradePnL = exitAmount - entryAmount;
         } else {
-          gain = entryAmount - exitAmount;
+          tradePnL = entryAmount - exitAmount;
         }
-      }
-      return acc + (gain > 0 ? gain : 0);
-    }, 0);
-    
-    const totalLoss = Math.abs(losingTrades.reduce((acc, trade) => {
-      let loss = 0;
-      if (trade.returnValue !== undefined && trade.returnValue !== null) {
-        loss = trade.returnValue;
-      } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
-        const entryAmount = trade.quantity * trade.entryPrice;
-        const exitAmount = trade.quantity * trade.exitPrice;
         
-        if (trade.tradeType === 'buy') {
-          loss = exitAmount - entryAmount;
-        } else {
-          loss = entryAmount - exitAmount;
-        }
+        // Tính giá trị tuyệt đối của khoản lỗ
+        lossValue = tradePnL < 0 ? Math.abs(tradePnL) : 0;
       }
-      return acc + (loss < 0 ? loss : 0);
-    }, 0));
+      
+      if (lossValue > largestLoss) {
+        largestLoss = lossValue;
+      }
+    });
     
-    const profitFactor = totalLoss > 0 ? totalGain / Math.abs(totalLoss) : (totalGain > 0 ? Infinity : 0);
+    // Cải thiện cách tính profit factor, sử dụng lại giá trị từ tính toán trước đó
+    // totalGainValue đã được tính từ trước (trong phần tính avgProfit)
+    // totalLossValue đã được tính từ trước (trong phần tính avgLoss)
+    const profitFactor = totalLossValue > 0 ? totalGainValue / totalLossValue : (totalGainValue > 0 ? Infinity : 0);
     
     setStats({
       winRate,
       avgProfit,
-      avgLoss, // Thêm giá trị thua lỗ trung bình vào state
+      avgLoss,
       totalTrades: filteredTrades.length,
       profitFactor,
       consecutiveWins: maxWins,
@@ -368,7 +368,7 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
                   <LineChart className="w-4 h-4 mr-1" /> {t('playbooks.profitFactor')}
                 </dt>
                 <dd className="text-2xl font-bold text-amber-800 dark:text-amber-300">
-                  {stats.profitFactor === Infinity ? "∞" : `${stats.profitFactor.toFixed(2)}R`}
+                  {stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2)}
                 </dd>
               </div>
             </dl>
