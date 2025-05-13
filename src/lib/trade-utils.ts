@@ -22,44 +22,45 @@ export function calculateProfitLoss(trade: Trade): number | null {
   }
 }
 
-// Hàm tính hệ số lợi nhuận với đơn vị R
+// Hàm tính hệ số lợi nhuận (trung bình lãi chia cho trung bình lỗ)
 export function calculateRMultiple(trades: Trade[]): number {
   if (!trades || trades.length === 0) return 0;
   
-  let totalProfit = 0;
-  let totalRisk = 0;
+  // Arrays to store profit and loss values
+  const profitValues: number[] = [];
+  const lossValues: number[] = [];
   
+  // Separate profitable trades and losing trades
   trades.forEach(trade => {
     const pnl = calculateProfitLoss(trade);
     if (pnl === null) return;
     
-    totalProfit += pnl;
-    
-    // Tính toán rủi ro (R) dựa trên stop loss
-    // Nếu không có stop loss, bỏ qua giao dịch này
-    if (trade.stopLoss && trade.entryPrice && trade.quantity) {
-      let riskPerTrade;
-      
-      if (trade.tradeType === 'buy') {
-        // Long: (Entry Price - Stop Loss) * Quantity
-        riskPerTrade = (trade.entryPrice - trade.stopLoss) * trade.quantity;
-      } else {
-        // Short: (Stop Loss - Entry Price) * Quantity
-        riskPerTrade = (trade.stopLoss - trade.entryPrice) * trade.quantity;
-      }
-      
-      // Chỉ tính các giao dịch có rủi ro hợp lệ (dương)
-      if (riskPerTrade > 0) {
-        totalRisk += riskPerTrade;
-      }
+    if (pnl > 0) {
+      profitValues.push(pnl);
+    } else if (pnl < 0) {
+      lossValues.push(Math.abs(pnl)); // Store absolute value of loss
     }
   });
   
-  // Nếu không có rủi ro, trả về 0
-  if (totalRisk <= 0) return 0;
+  // Calculate average profit and average loss
+  const avgProfit = profitValues.length > 0 
+    ? profitValues.reduce((sum, profit) => sum + profit, 0) / profitValues.length 
+    : 0;
+    
+  const avgLoss = lossValues.length > 0 
+    ? lossValues.reduce((sum, loss) => sum + loss, 0) / lossValues.length 
+    : 0;
   
-  // Tính R multiple (lợi nhuận chia cho tổng rủi ro)
-  return totalProfit / totalRisk;
+  // Handle edge cases
+  if (avgLoss === 0) {
+    if (avgProfit > 0) {
+      return 10; // If no losses but have profits, return a high value (can be customized)
+    }
+    return 0; // No profits and no losses
+  }
+  
+  // Calculate R-multiple as ratio of average profit to average loss
+  return avgProfit / avgLoss;
 }
 
 export function formatCurrency(amount: number | null | undefined, currency: string = 'USD', compact: boolean = false, showNegativeSign: boolean = true): string {

@@ -272,7 +272,12 @@ export default function DashboardPage() {
             />
             <StatCard
               title={t('dashboard.rMultiple')}
-              value={calculateRMultiple(filteredTrades).toFixed(2) + 'R'}
+              value={(() => {
+                const rMultiple = calculateRMultiple(filteredTrades);
+                return !isNaN(rMultiple) && isFinite(rMultiple) 
+                  ? `${rMultiple.toFixed(2)}R` 
+                  : `0.00R`;
+              })()}
               icon={BarChart}
               isLoading={isLoading}
               variant="amber"
