@@ -739,6 +739,126 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
     
+    // Xóa người dùng
+    if (path === 'delete') {
+      console.log('POST /api/user: Processing delete user request');
+      const cookieStore = await cookies();
+      const userIdCookie = cookieStore.get('userId');
+      
+      if (!userIdCookie) {
+        console.log('POST /api/user: No userId cookie found');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      const adminId = userIdCookie.value;
+      console.log(`POST /api/user: userId cookie found: ${adminId}`);
+      
+      let requestBody;
+      try {
+        requestBody = await request.json();
+        console.log('POST /api/user: Request body parsed', { bodyKeys: Object.keys(requestBody) });
+      } catch (e) {
+        console.error('POST /api/user: Error parsing request body:', e);
+        return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+      }
+      
+      const { userId } = requestBody;
+      
+      if (!userId) {
+        console.log('POST /api/user: Missing userId');
+        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      }
+      
+      // Kiểm tra quyền admin
+      const { data: adminData, error: adminError } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('id', adminId)
+        .single();
+      
+      if (adminError || !adminData || !adminData.is_admin) {
+        console.log(`POST /api/user: User ${adminId} is not an admin`);
+        return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+      }
+      
+      // Kiểm tra người dùng cần xóa
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', userId)
+        .single();
+      
+      if (userError || !userData) {
+        console.log(`POST /api/user: User with ID ${userId} not found`);
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      
+      // Không cho phép xóa admin gốc
+      if (userData.email === 'mrtinanpha@gmail.com') {
+        console.log(`POST /api/user: Attempted to delete primary admin`);
+        return NextResponse.json({ error: 'Cannot delete the primary admin' }, { status: 400 });
+      }
+      
+      // Đầu tiên, xóa tất cả bản ghi liên quan trong bảng trades
+      console.log(`POST /api/user: Deleting related trade records for user ${userId}`);
+      const { error: tradeDeleteError } = await supabase
+        .from('trades')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (tradeDeleteError) {
+        console.error('POST /api/user: Error deleting user trades:', tradeDeleteError);
+        return NextResponse.json({ 
+          error: 'Failed to delete user trades', 
+          details: tradeDeleteError.message 
+        }, { status: 500 });
+      }
+      
+      // Sau đó, xóa các bản ghi trong bảng journals
+      console.log(`POST /api/user: Deleting related journal records for user ${userId}`);
+      const { error: journalDeleteError } = await supabase
+        .from('journals')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (journalDeleteError) {
+        console.error('POST /api/user: Error deleting user journals:', journalDeleteError);
+        return NextResponse.json({ 
+          error: 'Failed to delete user journals', 
+          details: journalDeleteError.message 
+        }, { status: 500 });
+      }
+      
+      // Xóa tất cả bản ghi liên quan trong bảng playbooks (nếu có)
+      console.log(`POST /api/user: Deleting related playbook records for user ${userId}`);
+      const { error: playbookDeleteError } = await supabase
+        .from('playbooks')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (playbookDeleteError) {
+        console.error('POST /api/user: Error deleting user playbooks:', playbookDeleteError);
+        return NextResponse.json({ 
+          error: 'Failed to delete user playbooks', 
+          details: playbookDeleteError.message 
+        }, { status: 500 });
+      }
+      
+      // Cuối cùng xóa người dùng
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+      
+      if (deleteError) {
+        console.error('POST /api/user: Error deleting user:', deleteError);
+        return NextResponse.json({ error: 'Failed to delete user', details: deleteError.message }, { status: 500 });
+      }
+      
+      console.log(`POST /api/user: User ${userId} has been deleted`);
+      return NextResponse.json({ success: true });
+    }
+    
     console.log(`POST /api/user: Unknown path: ${path}`);
     return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
   } catch (error) {

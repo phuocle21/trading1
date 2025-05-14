@@ -24,6 +24,7 @@ interface AuthContextType {
   getUsersList: () => Promise<User[]>;
   updateUserAdmin: (userId: string, isAdmin: boolean) => Promise<void>;
   approveUser: (userId: string, isApproved: boolean) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -362,6 +363,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Delete user (admin only)
+  const deleteUser = async (userId: string): Promise<void> => {
+    if (!currentUser?.isAdmin) {
+      throw new Error("Permission denied: Only admins can delete users");
+    }
+
+    const response = await fetch('/api/user?path=delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    // Kiểm tra content type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`API returned non-JSON response: ${contentType}`);
+      const text = await response.text();
+      console.error('Response text:', text);
+      throw new Error("Server error: Received HTML instead of JSON.");
+    }
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (error.details && error.details.includes("foreign key constraint")) {
+        throw new Error("Không thể xóa người dùng vì họ còn có dữ liệu liên quan. Hãy xóa dữ liệu trước.");
+      }
+      throw new Error(error.error || "Failed to delete user");
+    }
+  };
+
   const value = {
     currentUser,
     loading,
@@ -372,7 +405,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     getUsersList,
     updateUserAdmin,
-    approveUser
+    approveUser,
+    deleteUser
   };
 
   return (
