@@ -203,17 +203,19 @@ export default function AdminPage() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      <p>Bạn có chắc chắn muốn xóa người dùng <span className="font-semibold">{user.email}</span>?</p>
-                      <p className="mt-2 text-red-500">Lưu ý: Tất cả dữ liệu của người dùng này sẽ bị xóa, bao gồm:</p>
-                      <ul className="list-disc pl-5 mt-1 text-muted-foreground">
+                    <div>
+                      <AlertDialogDescription>
+                        Bạn có chắc chắn muốn xóa người dùng <span className="font-semibold">{user.email}</span>?
+                      </AlertDialogDescription>
+                      <div className="mt-2 text-red-500 text-sm">Lưu ý: Tất cả dữ liệu của người dùng này sẽ bị xóa, bao gồm:</div>
+                      <ul className="list-disc pl-5 mt-1 text-sm text-muted-foreground">
                         <li>Nhật ký giao dịch</li>
                         <li>Lịch sử giao dịch</li>
                         <li>Playbooks</li>
                         <li>Các dữ liệu khác</li>
                       </ul>
-                      <p className="mt-2">Hành động này không thể hoàn tác!</p>
-                    </AlertDialogDescription>
+                      <div className="mt-2 text-sm text-muted-foreground">Hành động này không thể hoàn tác!</div>
+                    </div>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Hủy</AlertDialogCancel>
@@ -420,17 +422,19 @@ export default function AdminPage() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              <p>Bạn có chắc chắn muốn xóa người dùng <span className="font-semibold">{user.email}</span>?</p>
-                              <p className="mt-2 text-red-500">Lưu ý: Tất cả dữ liệu của người dùng này sẽ bị xóa, bao gồm:</p>
-                              <ul className="list-disc pl-5 mt-1 text-muted-foreground">
+                            <div>
+                              <AlertDialogDescription>
+                                Bạn có chắc chắn muốn xóa người dùng <span className="font-semibold">{user.email}</span>?
+                              </AlertDialogDescription>
+                              <div className="mt-2 text-red-500 text-sm">Lưu ý: Tất cả dữ liệu của người dùng này sẽ bị xóa, bao gồm:</div>
+                              <ul className="list-disc pl-5 mt-1 text-sm text-muted-foreground">
                                 <li>Nhật ký giao dịch</li>
                                 <li>Lịch sử giao dịch</li>
                                 <li>Playbooks</li>
                                 <li>Các dữ liệu khác</li>
                               </ul>
-                              <p className="mt-2">Hành động này không thể hoàn tác!</p>
-                            </AlertDialogDescription>
+                              <div className="mt-2 text-sm text-muted-foreground">Hành động này không thể hoàn tác!</div>
+                            </div>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
