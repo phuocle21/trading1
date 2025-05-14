@@ -407,7 +407,7 @@ export function TradeHistoryTable() {
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-1 sm:px-2"
+          className="px-1 sm:px-2 w-full flex justify-center"
         >
           {t('trade.pl')}
           <ArrowUpDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
@@ -415,7 +415,7 @@ export function TradeHistoryTable() {
       ),
       cell: (info) => {
         const profit = info.getValue();
-        if (profit === null || profit === undefined) return <Minus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mx-auto" />;
+        if (profit === null || profit === undefined) return <div className="flex justify-center"><Minus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" /></div>;
         const profitColor = profit > 0 ? "text-green-600" : profit < 0 ? "text-red-600" : "text-foreground";
         
         // Xử lý các số lớn bằng cách rút gọn tự động
@@ -425,7 +425,7 @@ export function TradeHistoryTable() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={`font-medium ${profitColor} text-right truncate max-w-[100px]`}>
+                <div className={`font-medium ${profitColor} text-center truncate max-w-[100px]`}>
                   {formatCurrency(profit, 'USD', useCompact)}
                 </div>
               </TooltipTrigger>
