@@ -12,6 +12,7 @@ interface TradeContextType {
   deleteTrade: (tradeId: string) => void;
   isLoading: boolean;
   loadDemoData: () => void;
+  refreshTrades: () => Promise<void>; // Thêm hàm refresh
 }
 
 const TradeContext = createContext<TradeContextType | undefined>(undefined);
@@ -20,34 +21,42 @@ export function TradeProvider({ children }: { children: ReactNode }) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  // Tạo hàm fetchTrades để có thể tái sử dụng
+  const fetchTrades = async () => {
     setIsLoading(true);
-    
-    const fetchTrades = async () => {
-      try {
-        console.log("Đang tải TẤT CẢ dữ liệu giao dịch của người dùng...");
-        // Thêm tham số allJournals=true để lấy tất cả giao dịch từ tất cả journal của người dùng
-        const response = await fetch('/api/trades?allJournals=true');
-        if (!response.ok) {
-          throw new Error('Failed to fetch trades');
+    try {
+      console.log("Đang tải TẤT CẢ dữ liệu giao dịch của người dùng...");
+      // Thêm tham số allJournals=true để lấy tất cả giao dịch từ tất cả journal của người dùng
+      // Thêm timestamp để tránh cache
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/trades?allJournals=true&_t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
-        
-        const data = await response.json();
-        if (data.trades && Array.isArray(data.trades)) {
-          console.log(`Đã tải ${data.trades.length} giao dịch từ TẤT CẢ các journal`);
-          setTrades(data.trades);
-        } else {
-          console.log("Không có dữ liệu giao dịch hoặc dữ liệu không phải mảng");
-          setTrades([]);
-        }
-      } catch (error) {
-        console.error('Error loading trades from server', error);
-        setTrades([]); // Đặt mảng rỗng nếu có lỗi
-      } finally {
-        setIsLoading(false);
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch trades');
       }
-    };
-    
+      
+      const data = await response.json();
+      if (data.trades && Array.isArray(data.trades)) {
+        console.log(`Đã tải ${data.trades.length} giao dịch từ TẤT CẢ các journal`);
+        setTrades(data.trades);
+      } else {
+        console.log("Không có dữ liệu giao dịch hoặc dữ liệu không phải mảng");
+        setTrades([]);
+      }
+    } catch (error) {
+      console.error('Error loading trades from server', error);
+      setTrades([]); // Đặt mảng rỗng nếu có lỗi
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Tải dữ liệu giao dịch khi component được mount
+  useEffect(() => {
     fetchTrades();
   }, []);
 
@@ -155,7 +164,7 @@ export function TradeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TradeContext.Provider value={{ trades, addTrade, updateTrade, deleteTrade, isLoading, loadDemoData }}>
+    <TradeContext.Provider value={{ trades, addTrade, updateTrade, deleteTrade, isLoading, loadDemoData, refreshTrades: fetchTrades }}>
       {children}
     </TradeContext.Provider>
   );

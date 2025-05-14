@@ -87,7 +87,7 @@ export default function PlaybooksPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { currentUser } = useAuth();
-  const { trades } = useTrades();
+  const { trades, refreshTrades } = useTrades();
   const { 
     playbooks, 
     loading, 
@@ -114,14 +114,33 @@ export default function PlaybooksPage() {
     },
   });
 
-  // Load playbooks when component mounts and auth is ready
+  // Load playbooks when component mounts, auth is ready, or when navigating back to this page
   useEffect(() => {
     if (isAuthReady) {
       console.log("Auth is ready in PlaybooksPage, fetching playbooks");
       fetchPlaybooks();
+      refreshTrades(); // Đồng thời refresh dữ liệu giao dịch để cập nhật thống kê
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthReady]); 
+  
+  // Auto-refresh playbooks data and trades when window regains focus 
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log("Window regained focus, refreshing data");
+      if (isAuthReady && currentUser) {
+        fetchPlaybooks();
+        refreshTrades(); // Đồng thời refresh dữ liệu giao dịch để cập nhật thống kê
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthReady, currentUser]);
 
   async function onSubmit(data: PlaybookFormValues) {
     try {
@@ -249,7 +268,7 @@ export default function PlaybooksPage() {
   const calculatePlaybookStats = (playbookId: string) => {
     if (!trades || trades.length === 0) {
       console.log(`Không có giao dịch nào để tính toán thống kê cho playbook: ${playbookId}`);
-      return { winRate: 0, avgProfit: 0, totalTrades: 0 };
+      return { winRate: 0, avgProfit: 0, totalTrades: 0, profitFactor: 0 };
     }
 
     console.log(`Tổng số giao dịch: ${trades.length}`);
@@ -260,7 +279,7 @@ export default function PlaybooksPage() {
       // Kiểm tra playbook ID khớp
       const playbookMatched = String(trade.playbook) === String(playbookId);
       
-      // Kiểm tra xem giao dịch đã đóng chưa - giao dịch được coi là đóng khi có exitDate hoặc trường status là 'closed'
+      // Kiểm tra xem giao dịch đã đóng chưa
       const isClosed = (trade.status === 'closed') || 
                        (trade.exitDate && trade.exitDate !== '');
       
@@ -270,7 +289,7 @@ export default function PlaybooksPage() {
     console.log(`Số giao dịch đã lọc theo playbook ${playbookId}: ${filteredTrades.length}`);
 
     if (filteredTrades.length === 0) {
-      return { winRate: 0, avgProfit: 0, totalTrades: 0 };
+      return { winRate: 0, avgProfit: 0, totalTrades: 0, profitFactor: 0 };
     }
 
     // Tính toán trades thắng/thua dựa trên returnValue hoặc giá mua/bán
@@ -314,7 +333,7 @@ export default function PlaybooksPage() {
         return acc + (profit > 0 ? profit : 0);
       }
       
-      return acc;
+      return acc; // Không đủ dữ liệu để tính
     }, 0);
     
     const losingTrades = filteredTrades.filter(trade => !winningTrades.includes(trade));

@@ -20,7 +20,7 @@ interface PlaybookStatsProps {
 
 export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps) {
   const { t } = useLanguage();
-  const { trades } = useTrades();
+  const { trades, refreshTrades } = useTrades();
   const [playbookTrades, setPlaybookTrades] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
@@ -37,6 +37,13 @@ export default function PlaybookStats({ playbook, onClose }: PlaybookStatsProps)
     largestWin: 0,
     largestLoss: 0
   });
+
+  // Refresh dữ liệu khi component này được hiển thị
+  useEffect(() => {
+    // Refresh trades data when the stats component opens
+    refreshTrades();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Lọc giao dịch thuộc playbook hiện tại và tính toán thống kê
   useEffect(() => {
