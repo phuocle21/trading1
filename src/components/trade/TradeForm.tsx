@@ -755,7 +755,10 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               src={image} 
                               alt={`Screenshot ${index + 1}`}
                               className="object-cover w-full h-full cursor-pointer"
-                              onClick={() => setDialogImage(image)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setDialogImage(image);
+                              }}
                             />
                           </div>
                           <button
@@ -943,8 +946,11 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
         <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
           <DialogContent className="max-w-4xl">
             <DialogTitle className="sr-only">{t('tradeForm.zoomedScreenshot')}</DialogTitle>
-            <div className="relative">
-              <img src={dialogImage} alt="Zoomed Screenshot" className="w-full h-auto rounded-md" />
+            <div className="relative flex justify-center items-center">
+              <img 
+                src={dialogImage} 
+                alt="Zoomed Screenshot" 
+                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-md" />
               <DialogClose asChild>
                 <Button
                   variant="outline"

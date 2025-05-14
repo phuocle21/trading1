@@ -382,6 +382,7 @@ export function TradeHistoryTable() {
                   size="icon"
                   className="h-7 w-7 mx-auto"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setCurrentImages(screenshots);
                     setCurrentImageIndex(0);
@@ -662,13 +663,19 @@ export function TradeHistoryTable() {
                           key={index} 
                           className="relative aspect-video rounded-md overflow-hidden border border-muted cursor-pointer"
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             setCurrentImages(trade.screenshots || []);
                             setCurrentImageIndex(index);
                             setDialogImage(screenshot);
                           }}
                         >
-                          <img src={screenshot} alt={`Screenshot ${index + 1}`} className="object-cover w-full h-full" />
+                          <img 
+                            src={screenshot} 
+                            alt={`Screenshot ${index + 1}`}
+                            className="object-cover w-full h-full" 
+                            onClick={(e) => e.preventDefault()}
+                          />
                         </div>
                       ))}
                       {trade.screenshots.length > 3 && (
@@ -1089,8 +1096,11 @@ export function TradeHistoryTable() {
         <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
           <DialogContent className="max-w-4xl p-0">
             <DialogTitle className="sr-only">Ảnh chụp màn hình</DialogTitle>
-            <div className="relative">
-              <img src={dialogImage} alt="Ảnh chụp màn hình" className="w-full h-auto rounded-md" />
+            <div className="relative flex justify-center items-center">
+              <img 
+                src={dialogImage} 
+                alt="Ảnh chụp màn hình" 
+                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-md" />
               
               <div className="absolute top-2 right-2 flex space-x-2">
                 <DialogClose asChild>
