@@ -388,9 +388,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       const error = await response.json();
-      if (error.details && error.details.includes("foreign key constraint")) {
-        throw new Error("Không thể xóa người dùng vì họ còn có dữ liệu liên quan. Hãy xóa dữ liệu trước.");
+      console.error("Error deleting user:", error);
+      
+      // Kiểm tra chi tiết lỗi để hiển thị thông báo phù hợp
+      if (error.details && (
+        error.details.includes("foreign key constraint") ||
+        error.details.includes("still referenced")
+      )) {
+        throw new Error("Không thể xóa người dùng vì vẫn còn dữ liệu liên quan. Vui lòng thử lại.");
       }
+      
       throw new Error(error.error || "Failed to delete user");
     }
   };

@@ -799,7 +799,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cannot delete the primary admin' }, { status: 400 });
       }
       
-      // Đầu tiên, xóa tất cả bản ghi liên quan trong bảng trades
+      // Đầu tiên, xóa tất cả bản ghi liên quan trong bảng user_preferences
+      console.log(`POST /api/user: Deleting related user_preferences records for user ${userId}`);
+      const { error: preferencesDeleteError } = await supabase
+        .from('user_preferences')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (preferencesDeleteError) {
+        console.error('POST /api/user: Error deleting user preferences:', preferencesDeleteError);
+        return NextResponse.json({ 
+          error: 'Failed to delete user preferences', 
+          details: preferencesDeleteError.message 
+        }, { status: 500 });
+      }
+      
+      // Tiếp theo, xóa tất cả bản ghi liên quan trong bảng trades
       console.log(`POST /api/user: Deleting related trade records for user ${userId}`);
       const { error: tradeDeleteError } = await supabase
         .from('trades')
