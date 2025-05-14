@@ -315,6 +315,10 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       exitTime = format(data.exitDateTime, 'HH:mm');
     }
 
+    // Lấy giá trị currentJournalId trực tiếp để đảm bảo mới nhất
+    const currentJournalIdValue = currentJournalId;
+    console.log('Using current journal ID for trade:', currentJournalIdValue);
+
     return {
       entryDate,
       entryTime,
@@ -334,7 +338,7 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       rating: data.rating ?? undefined,
       notes: data.notes || undefined,
       screenshots: data.screenshots || [],
-      journalId: currentJournalId, // Thêm trường journalId để đảm bảo giao dịch được gán với nhật ký đúng
+      journalId: currentJournalIdValue, // Lưu giá trị mới nhất của journalId
     };
   };
 
@@ -349,20 +353,28 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     }
 
     try {
+      // Đảm bảo journalId được cập nhật mới nhất
+      const currentJournalIdValue = currentJournalId;
+      console.log('Submitting trade for journal ID:', currentJournalIdValue);
+      
       const tradePayload = convertFormData(data);
+      // Chắc chắn gán journalId mới nhất
+      tradePayload.journalId = currentJournalIdValue;
       
       if (isEditMode && initialData) {
-        await updateTradeInJournal(currentJournalId, { ...initialData, ...tradePayload });
+        await updateTradeInJournal(currentJournalIdValue, { ...initialData, ...tradePayload });
         toast({ title: t('tradeForm.tradeUpdated'), description: t('tradeForm.tradeUpdatedDesc') });
       } else {
-        await addTradeToJournal(currentJournalId, tradePayload as Omit<Trade, 'id'>);
+        // Chờ API hoàn thành trước khi tiếp tục
+        const result = await addTradeToJournal(currentJournalIdValue, tradePayload as Omit<Trade, 'id'>);
+        console.log('Trade added result:', result);
         toast({ title: t('tradeForm.tradeAdded'), description: t('tradeForm.tradeAddedDesc') });
       }
       
-      // Thêm một chút delay để đảm bảo dữ liệu được lưu trữ đầy đủ trước khi chuyển hướng
+      // Tăng thời gian chờ để đảm bảo dữ liệu được lưu trữ đầy đủ trước khi chuyển hướng
       setTimeout(() => {
         router.push('/history');
-      }, 300);
+      }, 500);
     } catch (error) {
       console.error('Error submitting trade:', error);
       toast({ 

@@ -446,10 +446,10 @@ export async function saveTrade(trade: Trade): Promise<boolean> {
       return false;
     }
     
-    // Lấy journal hiện tại
-    const journalId = await getCurrentJournalId();
+    // Sử dụng journalId từ trade đầu tiên, nếu không có thì lấy từ currentJournalId
+    const journalId = trade.journalId || await getCurrentJournalId();
     if (!journalId) {
-      console.error('Error saving trade: No current journal found for user');
+      console.error('Error saving trade: No journal ID found');
       return false;
     }
     
@@ -472,7 +472,7 @@ export async function saveTrade(trade: Trade): Promise<boolean> {
       .from('trades')
       .upsert({
         id: trade.id,
-        journal_id: journalId,
+        journal_id: trade.journalId || journalId,  // Ưu tiên journalId trong trade
         user_id: userId,
         symbol: trade.symbol,
         type: trade.tradeType, // Sửa từ trade.type thành trade.tradeType

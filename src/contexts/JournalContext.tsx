@@ -60,15 +60,15 @@ const fetchTradesForJournal = async (journalId: string) => {
 interface JournalContextType {
   journals: Journal[];
   currentJournalId: string | null;
-  addJournal: (journal: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => Journal;
-  updateJournal: (updatedJournal: Journal) => void;
-  deleteJournal: (journalId: string) => void;
+  addJournal: (journal: Omit<Journal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Journal>;
+  updateJournal: (updatedJournal: Journal) => Promise<void>;
+  deleteJournal: (journalId: string) => Promise<void>;
   switchJournal: (journalId: string) => Promise<void>;
   getCurrentJournal: () => Journal | undefined;
   addTradeToJournal: (journalId: string, tradeData: Omit<Trade, 'id'>) => Promise<Trade>;
   updateTradeInJournal: (journalId: string, updatedTrade: Trade) => Promise<Trade>;
   deleteTradeFromJournal: (journalId: string, tradeId: string) => Promise<void>;
-  createTemplateJournal: (templateName: string) => Journal;
+  createTemplateJournal: (templateName: string) => Promise<Journal>;
   refreshJournalData: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
@@ -187,7 +187,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           setJournals(data.journals);
           
           // Set current journal ID
-          if (data.currentJournalId && data.journals.some(j => j.id === data.currentJournalId)) {
+          if (data.currentJournalId && data.journals.some((j: Journal) => j.id === data.currentJournalId)) {
             console.log(`Setting current journal to ${data.currentJournalId}`);
             setCurrentJournalId(data.currentJournalId);
           } else if (data.journals.length > 0) {
@@ -347,7 +347,11 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   const switchJournal = useCallback(async (journalId: string) => {
     if (journals.some(journal => journal.id === journalId)) {
       try {
-        await safeFetch('/api/journals', {
+        // Cập nhật trạng thái local trước để UI phản hồi ngay lập tức
+        setCurrentJournalId(journalId);
+        
+        // Sau đó gửi cập nhật đến server
+        const response = await safeFetch('/api/journals', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json'
@@ -355,8 +359,10 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ journalId })
         });
         
-        console.log('Switched to journal', journalId);
-        setCurrentJournalId(journalId);
+        console.log('Switched to journal', journalId, 'Server response:', response);
+        
+        // Thêm một khoảng thời gian nhỏ để đảm bảo server đã cập nhật trạng thái
+        await new Promise(resolve => setTimeout(resolve, 300));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error switching journal:', errorMessage);
@@ -371,19 +377,33 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
   const addTradeToJournal = useCallback(async (journalId: string, tradeData: Omit<Trade, 'id'>) => {
     try {
-      // Thay đổi: Sử dụng API /api/trades để thêm giao dịch thay vì lưu vào journal
+      // Xác nhận lại journalId hiện tại để đảm bảo dữ liệu được đồng bộ
+      const actualJournalId = journalId || currentJournalId;
+      if (!actualJournalId) {
+        throw new Error('No journal ID available');
+      }
+      
+      console.log(`Adding trade to journal ID: ${actualJournalId}`);
+      
+      // Đảm bảo tradeData có journalId mới nhất
+      const tradeWithJournalId = {
+        ...tradeData,
+        journalId: actualJournalId
+      };
+      
+      // Sử dụng API /api/trades để thêm giao dịch
       const { data } = await safeFetch('/api/trades', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ trade: tradeData })
+        body: JSON.stringify({ trade: tradeWithJournalId })
       });
       
       console.log('Trade added successfully via /api/trades', data.trade.id);
       
       // Cập nhật updateAt của journal để biết là có thay đổi
-      const journal = journals.find(j => j.id === journalId);
+      const journal = journals.find(j => j.id === actualJournalId);
       if (journal) {
         const updatedJournal = {
           ...journal,
@@ -395,7 +415,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ id: journalId, journal: updatedJournal })
+          body: JSON.stringify({ id: actualJournalId, journal: updatedJournal })
         });
       }
       
@@ -405,7 +425,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       console.error('Error adding trade:', errorMessage);
       throw new Error(`Failed to add trade: ${errorMessage}`);
     }
-  }, [journals]);
+  }, [journals, currentJournalId]);
 
   const updateTradeInJournal = useCallback(async (journalId: string, updatedTrade: Trade) => {
     try {
@@ -534,7 +554,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         setJournals(data.journals);
         
         // Cập nhật currentJournalId nếu cần
-        if (data.currentJournalId && data.journals.some(j => j.id === data.currentJournalId)) {
+        if (data.currentJournalId && data.journals.some((j: Journal) => j.id === data.currentJournalId)) {
           setCurrentJournalId(data.currentJournalId);
         }
       }

@@ -71,7 +71,12 @@ export async function POST(request: NextRequest) {
         id: crypto.randomUUID(),
       };
       
-      console.log('POST /api/trades: Saving trade to database', completeTrade);
+      console.log('POST /api/trades: Saving trade to database', {
+        id: completeTrade.id,
+        journalId: completeTrade.journalId,
+        symbol: completeTrade.symbol,
+        tradeType: completeTrade.tradeType
+      });
       
       // Lưu trade mới vào database
       const success = await saveTrade(completeTrade);
