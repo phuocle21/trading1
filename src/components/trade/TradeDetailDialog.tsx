@@ -135,97 +135,95 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Column 1: Thông tin giao dịch chính */}
               <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                    <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
-                    Số lượng
-                  </h3>
-                  <p className="text-lg font-medium">{trade.quantity}</p>
-                </div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
+                  <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
+                  Thông tin giao dịch
+                </h3>
                 
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                    <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
-                    Giá mở lệnh
-                  </h3>
-                  <p className="text-lg font-medium">{formatCurrency(trade.entryPrice)}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Số lượng</h3>
+                    <p className="text-lg font-medium">{trade.quantity}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Giá mở lệnh</h3>
+                    <p className="text-lg font-medium">{formatCurrency(trade.entryPrice)}</p>
+                  </div>
                 </div>
                 
                 {trade.exitPrice && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
-                      Giá đóng lệnh
-                    </h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Giá đóng lệnh</h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.exitPrice)}</p>
                   </div>
                 )}
               </div>
               
+              {/* Column 2: Thông tin bổ sung */}
               <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
-                {trade.playbook && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-blue-500 rounded-full mr-2 inline-block"></span>
-                      Chiến lược
-                    </h3>
-                    <Badge variant="outline" className="mt-1 px-2.5 py-1 text-sm">
-                      {selectedPlaybook ? selectedPlaybook.name : trade.playbook}
-                    </Badge>
-                  </div>
-                )}
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
+                  <span className="w-1.5 h-5 bg-blue-500 rounded-full mr-2 inline-block"></span>
+                  Thông tin bổ sung
+                </h3>
                 
-                {trade.risk && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-blue-500 rounded-full mr-2 inline-block"></span>
-                      Mức độ rủi ro
-                    </h3>
-                    <Badge 
-                      variant="outline" 
-                      className={`capitalize px-2.5 py-1 text-sm ${
-                        trade.risk === 'low' 
-                          ? 'bg-green-50 text-green-700 border-green-200' 
-                          : trade.risk === 'medium' 
-                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                            : 'bg-red-50 text-red-700 border-red-200'
-                      }`}
-                    >
-                      {trade.risk === 'low' 
-                        ? 'Thấp' 
-                        : trade.risk === 'medium' 
-                          ? 'Trung bình' 
-                          : 'Cao'}
-                    </Badge>
-                  </div>
-                )}
-                
-                {trade.mood && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-purple-500 rounded-full mr-2 inline-block"></span>
-                      Tâm trạng
-                    </h3>
-                    <Badge variant="outline" className="px-2.5 py-1 text-sm">{trade.mood}</Badge>
-                  </div>
-                )}
-                
-                {trade.rating && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-yellow-500 rounded-full mr-2 inline-block"></span>
-                      Đánh giá
-                    </h3>
-                    <div className="mt-1">
-                      {renderRating(trade.rating)}
+                <div className="grid grid-cols-2 gap-4">
+                  {trade.playbook && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Chiến lược</h3>
+                      <Badge variant="outline" className="mt-1 px-2.5 py-1 text-sm">
+                        {selectedPlaybook ? selectedPlaybook.name : trade.playbook}
+                      </Badge>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {trade.risk && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Mức độ rủi ro</h3>
+                      <Badge 
+                        variant="outline" 
+                        className={`capitalize px-2.5 py-1 text-sm ${
+                          trade.risk === 'low' 
+                            ? 'bg-green-50 text-green-700 border-green-200' 
+                            : trade.risk === 'medium' 
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
+                        {trade.risk === 'low' 
+                          ? 'Thấp' 
+                          : trade.risk === 'medium' 
+                            ? 'Trung bình' 
+                            : 'Cao'}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {trade.mood && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Tâm trạng</h3>
+                      <Badge variant="outline" className="px-2.5 py-1 text-sm">{trade.mood}</Badge>
+                    </div>
+                  )}
+                  
+                  {trade.rating && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Đánh giá</h3>
+                      <div className="mt-1">
+                        {renderRating(trade.rating)}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
+            {/* Ghi chú */}
             {trade.notes && (
               <div className="bg-accent/5 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
@@ -238,6 +236,7 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
               </div>
             )}
             
+            {/* Ảnh chụp màn hình */}
             {trade.screenshots && trade.screenshots.length > 0 && (
               <div className="bg-accent/5 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
