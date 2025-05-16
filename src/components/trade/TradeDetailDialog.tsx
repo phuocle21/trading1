@@ -66,6 +66,23 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
       </div>
     );
   };
+  
+  // Chuyển đổi tâm trạng sang tiếng Việt
+  const translateMood = (mood: string): string => {
+    const moodTranslations: Record<string, string> = {
+      'calm': 'Bình tĩnh',
+      'excited': 'Phấn khích',
+      'anxious': 'Lo lắng',
+      'confident': 'Tự tin',
+      'unsure': 'Không chắc chắn/Do dự',
+      'greedy': 'Tham lam',
+      'fearful': 'Sợ hãi',
+      'tired': 'Mệt mỏi',
+      'confused': 'Bối rối'
+    };
+    
+    return moodTranslations[mood.toLowerCase()] || mood;
+  };
 
   // Xử lý khi người dùng click vào ảnh
   const handleImageClick = (image: string, index: number) => {
@@ -207,7 +224,7 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                   {trade.mood && (
                     <div>
                       <h3 className="text-sm font-medium text-muted-foreground mb-1">Tâm trạng</h3>
-                      <Badge variant="outline" className="px-2.5 py-1 text-sm">{trade.mood}</Badge>
+                      <Badge variant="outline" className="px-2.5 py-1 text-sm">{translateMood(trade.mood)}</Badge>
                     </div>
                   )}
                   
