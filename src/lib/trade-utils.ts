@@ -45,7 +45,8 @@ export function calculateRMultiple(trades: Trade[]): number {
   // Xử lý trường hợp đặc biệt
   if (totalLoss === 0) {
     if (totalGain > 0) {
-      return 10; // Nếu không có thua lỗ nhưng có lợi nhuận, trả về giá trị cao (có thể tùy chỉnh)
+       // Nếu không có thua lỗ nhưng có lợi nhuận, trả về biểu tượng vô cực
+       return '∞' as unknown as number;
     }
     return 0; // Không có lợi nhuận và không có thua lỗ
   }
