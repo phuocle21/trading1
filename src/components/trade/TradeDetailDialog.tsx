@@ -79,98 +79,131 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <span>{trade.symbol || trade.stockSymbol}</span>
-              <span>
-                {trade.tradeType === 'buy' ? (
-                  <Badge className="bg-green-50 text-green-700 border-green-200">
-                    <TrendingUp className="mr-1 h-4 w-4" /> Mua
-                  </Badge>
-                ) : (
-                  <Badge className="bg-red-50 text-red-700 border-red-200">
-                    <TrendingDown className="mr-1 h-4 w-4" /> Bán
-                  </Badge>
-                )}
-              </span>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-5 sm:p-6">
+          <DialogHeader className="pb-4 border-b mb-4">
+            <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xl sm:text-2xl mb-3">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-2xl sm:text-3xl">{trade.symbol}</span>
+                <span>
+                  {trade.tradeType === 'buy' ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-200 text-xs sm:text-sm px-2 py-1">
+                      <TrendingUp className="mr-1 h-4 w-4" /> Mua
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-red-100 text-red-800 border-red-200 text-xs sm:text-sm px-2 py-1">
+                      <TrendingDown className="mr-1 h-4 w-4" /> Bán
+                    </Badge>
+                  )}
+                </span>
+              </div>
               {profitOrLoss !== null && (
-                <span className={`ml-auto ${profitColor} font-bold`}>
+                <span className={`sm:ml-auto ${profitColor} font-bold text-xl sm:text-3xl`}>
                   {formatCurrency(profitOrLoss)}
                 </span>
               )}
             </DialogTitle>
-            <div className="flex items-center text-sm text-muted-foreground mt-1">
-              <Calendar className="h-3.5 w-3.5 mr-1.5" />
-              {trade.entryDate && formatDate(trade.entryDate)}
-              {trade.entryTime && (
-                <span className="flex items-center ml-3">
-                  <Clock className="h-3.5 w-3.5 mr-1.5" />
-                  {trade.entryTime}
-                </span>
-              )}
+            <div className="flex flex-wrap gap-2 sm:gap-4 items-center text-sm text-muted-foreground">
+              <div className="flex items-center bg-accent/20 rounded-full px-3 py-1.5 shadow-sm">
+                <Calendar className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                <span className="font-medium">{trade.entryDate && formatDate(trade.entryDate)}</span>
+                {trade.entryTime && (
+                  <span className="flex items-center ml-2 border-l border-muted pl-2">
+                    <Clock className="h-3.5 w-3.5 mr-1.5 text-primary/70" />
+                    {trade.entryTime}
+                  </span>
+                )}
+              </div>
+              
               {trade.exitDate && (
-                <span className="mx-2">→</span>
-              )}
-              {trade.exitDate && formatDate(trade.exitDate)}
-              {trade.exitTime && (
-                <span className="flex items-center ml-3">
-                  <Clock className="h-3.5 w-3.5 mr-1.5" />
-                  {trade.exitTime}
-                </span>
+                <>
+                  <div className="flex items-center text-muted-foreground">
+                    <span className="font-medium px-1">→</span>
+                  </div>
+                  <div className="flex items-center bg-accent/20 rounded-full px-3 py-1.5 shadow-sm">
+                    <Calendar className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                    <span className="font-medium">{formatDate(trade.exitDate)}</span>
+                    {trade.exitTime && (
+                      <span className="flex items-center ml-2 border-l border-muted pl-2">
+                        <Clock className="h-3.5 w-3.5 mr-1.5 text-primary/70" />
+                        {trade.exitTime}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-4">
+              <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Số lượng</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                    <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
+                    Số lượng
+                  </h3>
                   <p className="text-lg font-medium">{trade.quantity}</p>
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Giá mở lệnh</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                    <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
+                    Giá mở lệnh
+                  </h3>
                   <p className="text-lg font-medium">{formatCurrency(trade.entryPrice)}</p>
                 </div>
                 
                 {trade.exitPrice && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Giá đóng lệnh</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-primary rounded-full mr-2 inline-block"></span>
+                      Giá đóng lệnh
+                    </h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.exitPrice)}</p>
                   </div>
                 )}
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
                 {trade.stopLoss && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Dừng lỗ</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-red-500 rounded-full mr-2 inline-block"></span>
+                      Dừng lỗ
+                    </h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.stopLoss)}</p>
                   </div>
                 )}
                 
                 {trade.takeProfit && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Chốt lời</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-green-500 rounded-full mr-2 inline-block"></span>
+                      Chốt lời
+                    </h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.takeProfit)}</p>
                   </div>
                 )}
                 
                 {trade.fees !== undefined && trade.fees > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Phí giao dịch</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-orange-500 rounded-full mr-2 inline-block"></span>
+                      Phí giao dịch
+                    </h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.fees)}</p>
                   </div>
                 )}
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
                 {trade.playbook && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Chiến lược</h3>
-                    <Badge variant="outline" className="mt-1">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-blue-500 rounded-full mr-2 inline-block"></span>
+                      Chiến lược
+                    </h3>
+                    <Badge variant="outline" className="mt-1 px-2.5 py-1 text-sm">
                       {selectedPlaybook ? selectedPlaybook.name : trade.playbook}
                     </Badge>
                   </div>
@@ -178,10 +211,13 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                 
                 {trade.risk && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Mức độ rủi ro</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-blue-500 rounded-full mr-2 inline-block"></span>
+                      Mức độ rủi ro
+                    </h3>
                     <Badge 
                       variant="outline" 
-                      className={`capitalize ${
+                      className={`capitalize px-2.5 py-1 text-sm ${
                         trade.risk === 'low' 
                           ? 'bg-green-50 text-green-700 border-green-200' 
                           : trade.risk === 'medium' 
@@ -200,37 +236,51 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                 
                 {trade.mood && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Tâm trạng</h3>
-                    <Badge variant="outline">{trade.mood}</Badge>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-purple-500 rounded-full mr-2 inline-block"></span>
+                      Tâm trạng
+                    </h3>
+                    <Badge variant="outline" className="px-2.5 py-1 text-sm">{trade.mood}</Badge>
                   </div>
                 )}
                 
                 {trade.rating && (
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Đánh giá</h3>
-                    {renderRating(trade.rating)}
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                      <span className="w-1.5 h-5 bg-yellow-500 rounded-full mr-2 inline-block"></span>
+                      Đánh giá
+                    </h3>
+                    <div className="mt-1">
+                      {renderRating(trade.rating)}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             
             {trade.notes && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Ghi chú</h3>
-                <div className="bg-accent/10 rounded-lg p-4 whitespace-pre-wrap">
+              <div className="bg-accent/5 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+                  <span className="w-1.5 h-5 bg-gray-500 rounded-full mr-2 inline-block"></span>
+                  Ghi chú
+                </h3>
+                <div className="bg-white/50 dark:bg-black/10 rounded-lg p-4 whitespace-pre-wrap shadow-inner border border-muted/30">
                   {trade.notes}
                 </div>
               </div>
             )}
             
             {trade.screenshots && trade.screenshots.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Ảnh chụp màn hình</h3>
+              <div className="bg-accent/5 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
+                  <span className="w-1.5 h-5 bg-indigo-500 rounded-full mr-2 inline-block"></span>
+                  Ảnh chụp màn hình
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {trade.screenshots.map((image, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-video rounded-md overflow-hidden border border-muted cursor-pointer group"
+                      className="relative aspect-video rounded-md overflow-hidden border border-muted cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
                       onClick={() => handleImageClick(image, index)}
                     >
                       <img 
@@ -239,7 +289,9 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                         className="object-cover w-full h-full"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <ImageIcon className="h-6 w-6 text-white" />
+                        <div className="bg-black/60 p-2 rounded-full">
+                          <ImageIcon className="h-5 w-5 text-white" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -250,13 +302,13 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
           
           <DialogFooter className="border-t pt-4 flex-col sm:flex-row gap-2">
             <DialogClose asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto px-6">
                 Đóng
               </Button>
             </DialogClose>
             <Button 
               onClick={() => router.push(`/edit-trade/${trade.id}`)} 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
             >
               <Edit3 className="mr-2 h-4 w-4" /> Chỉnh sửa giao dịch
             </Button>
