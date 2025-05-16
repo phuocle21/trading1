@@ -112,7 +112,7 @@ export function TradeHistoryTable() {
     risk: false,
     mood: false,
     rating: false,
-    screenshots: true,  // Hiển thị cột ảnh mặc định
+    screenshots: false,  // Hiển thị cột ảnh mặc định
   });
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
