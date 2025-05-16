@@ -114,6 +114,7 @@ export const translations: Translations = {
   "trade.rating": "Đánh Giá",
   "trade.pl": "Lãi/Lỗ",
   "trade.editTrade": "Sửa giao dịch",
+  "trade.viewTrade": "Xem chi tiết",
   "trade.deleteTrade": "Xóa giao dịch",
   "trade.confirmDeleteTitle": "Bạn có chắc không?",
   "trade.confirmDeleteDescription": "Hành động này không thể hoàn tác. Giao dịch cho {symbol} sẽ bị xóa vĩnh viễn.",

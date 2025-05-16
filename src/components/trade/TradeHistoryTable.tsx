@@ -87,6 +87,9 @@ import {
 } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// Import the TradeDetailDialog component
+import { TradeDetailDialog } from "./TradeDetailDialog";
+
 const columnHelper = createColumnHelper<TradeWithProfit>();
 
 export function TradeHistoryTable() {
@@ -100,6 +103,8 @@ export function TradeHistoryTable() {
   const [dialogImage, setDialogImage] = useState<string | null>(null);
   const [currentImages, setCurrentImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     entryTime: false,
     exitTime: false,
@@ -168,7 +173,11 @@ export function TradeHistoryTable() {
       filteredTrades = filteredTrades.filter(trade => trade.exitDate);
     }
     
-    return filteredTrades.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+    return filteredTrades.sort((a, b) => {
+      const dateA = a.entryDate ? new Date(a.entryDate).getTime() : 0;
+      const dateB = b.entryDate ? new Date(b.entryDate).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [tradeData, isLoading, activeTab]);
 
   // Thay đổi: Xử lý xóa giao dịch và cập nhật state sau khi xóa
@@ -453,6 +462,25 @@ export function TradeHistoryTable() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
+                    onClick={() => {
+                      setSelectedTrade(trade);
+                      setIsDetailDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="h-3 w-3 text-indigo-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Xem chi tiết</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
                     onClick={() => router.push(`/edit-trade/${trade.id}`)}
                   >
                     <Edit3 className="h-3 w-3 text-blue-600" />
@@ -658,7 +686,7 @@ export function TradeHistoryTable() {
                   <div className="col-span-2 mt-2">
                     <div className="text-muted-foreground mb-2">{t('trade.screenshots') || "Ảnh chụp màn hình"}</div>
                     <div className="grid grid-cols-3 gap-2">
-                      {trade.screenshots.slice(0, 3).map((screenshot, index) => (
+                      {trade.screenshots.slice(0, 3).map((screenshot: string, index: number) => (
                         <div 
                           key={index} 
                           className="relative aspect-video rounded-md overflow-hidden border border-muted cursor-pointer"
@@ -708,23 +736,36 @@ export function TradeHistoryTable() {
               <div className="flex justify-end gap-2 mt-3">
                 <Button 
                   variant="outline" 
-                  size="sm" 
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTrade(trade);
+                    setIsDetailDialogOpen(true);
+                  }}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-8 w-8" 
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(`/edit-trade/${trade.id}`);
                   }}
                 >
-                  <Edit3 className="h-3.5 w-3.5 mr-1.5" /> {t('trade.edit')}
+                  <Edit3 className="h-3.5 w-3.5" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="outline" 
-                      size="sm" 
-                      className="text-destructive"
+                      size="icon" 
+                      className="text-destructive h-8 w-8"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t('trade.delete')}
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -1151,6 +1192,13 @@ export function TradeHistoryTable() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Trade detail dialog */}
+      <TradeDetailDialog 
+        trade={selectedTrade}
+        isOpen={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+      />
     </div>
   );
 }
