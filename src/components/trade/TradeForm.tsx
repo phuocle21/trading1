@@ -52,7 +52,7 @@ const tradeFormSchema = z.object({
   fees: z.coerce.number().min(0, "Fees cannot be negative.").optional().nullable(),
   playbook: z.string().optional().nullable(),
   risk: z.enum(['low', 'medium', 'high']).optional().nullable(),
-  mood: z.enum(['calm', 'excited', 'anxious', 'confident', 'unsure']).optional().nullable(),
+  mood: z.enum(['calm', 'excited', 'anxious', 'confident', 'unsure', 'greedy', 'fearful', 'tired', 'confused']).optional().nullable(),
   rating: z.coerce.number().min(1).max(5).optional().nullable(),
   notes: z.string().max(500, "Notes too long.").optional().nullable(),
   screenshots: z.array(z.string()).optional().default([]),
@@ -871,6 +871,10 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               <SelectItem value="anxious">{t('tradeForm.moods.anxious')}</SelectItem>
                               <SelectItem value="confident">{t('tradeForm.moods.confident')}</SelectItem>
                               <SelectItem value="unsure">{t('tradeForm.moods.unsure')}</SelectItem>
+                              <SelectItem value="greedy">{t('tradeForm.moods.greedy')}</SelectItem>
+                              <SelectItem value="fearful">{t('tradeForm.moods.fearful')}</SelectItem>
+                              <SelectItem value="tired">{t('tradeForm.moods.tired')}</SelectItem>
+                              <SelectItem value="confused">{t('tradeForm.moods.confused')}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
