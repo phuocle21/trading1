@@ -566,7 +566,7 @@ export function TradeHistoryTable() {
     return (
       <Card 
         key={trade.id} 
-        className={`mb-3 overflow-hidden transition-all ${isExpanded ? 'border-primary' : ''}`}
+        className={`mb-3 overflow-hidden transition-all max-w-2xl mx-auto ${isExpanded ? 'border-primary' : ''}`}
         onClick={() => setActiveTradeMobile(isExpanded ? null : trade.id)}
       >
         <CardHeader className="p-3 pb-2">
@@ -989,7 +989,7 @@ export function TradeHistoryTable() {
           {/* Mobile view */}
           {table.getFilteredRowModel().rows.length > 0 && (
             <>
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 {table.getRowModel().rows.map((row) => renderMobileTradeCard(row.original))}
                 
                 {/* Mobile pagination */}
@@ -1021,9 +1021,9 @@ export function TradeHistoryTable() {
               </div>
               
               {/* Desktop view */}
-              <div className="hidden md:block overflow-x-auto">
-                <div className="rounded-md border shadow-sm overflow-hidden min-w-full">
-                  <Table className="w-full [&_tr:not(:last-child)]:border-b [&_th]:border-r [&_th:last-child]:border-r-0 [&_td]:border-r [&_td:last-child]:border-r-0">
+              <div className="hidden lg:block overflow-x-auto">
+                <div className="rounded-md border shadow-sm overflow-hidden" style={{ maxWidth: 'calc(100vw - 40px)' }}>
+                  <Table className="w-auto [&_tr:not(:last-child)]:border-b [&_th]:border-r [&_th:last-child]:border-r-0 [&_td]:border-r [&_td:last-child]:border-r-0">
                     <TableHeader className="bg-muted/30">
                       {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
