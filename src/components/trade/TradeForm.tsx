@@ -454,12 +454,12 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                     {t('tradeForm.entryInfo')}
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="entryDateTime"
                       render={({ field }) => (
-                        <FormItem className="col-span-1 md:col-span-2">
+                        <FormItem className="col-span-1">
                           <FormLabel>{t('tradeForm.entryDateTime')}*</FormLabel>
                           <FormControl>
                             <Input 
@@ -488,56 +488,58 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem className="col-span-1 md:col-span-1">
-                          <FormLabel>{t('tradeForm.quantity')}*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder={t('tradeForm.quantityPlaceholder')} 
-                              {...field}
-                              value={field.value ?? ''} 
-                              onChange={e => {
-                                const val = e.target.value;
-                                field.onChange(val === '' ? undefined : parseFloat(val));
-                              }}
-                              className="w-full"
-                              inputMode="decimal"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="quantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('tradeForm.quantity')}*</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder={t('tradeForm.quantityPlaceholder')} 
+                                {...field}
+                                value={field.value ?? ''} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  field.onChange(val === '' ? undefined : parseFloat(val));
+                                }}
+                                className="w-full"
+                                inputMode="decimal"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="entryPrice"
-                      render={({ field }) => (
-                        <FormItem className="col-span-1 md:col-span-2">
-                          <FormLabel>{t('tradeForm.entryPrice')}*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder={t('tradeForm.pricePlaceholder')} 
-                              {...field}
-                              value={field.value ?? ''}
-                              onChange={e => {
-                                 const val = e.target.value;
-                                 field.onChange(val === '' ? undefined : parseFloat(val));
-                              }}
-                              className="w-full"
-                              inputMode="decimal"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="entryPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('tradeForm.entryPrice')}*</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder={t('tradeForm.pricePlaceholder')} 
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={e => {
+                                   const val = e.target.value;
+                                   field.onChange(val === '' ? undefined : parseFloat(val));
+                                }}
+                                className="w-full"
+                                inputMode="decimal"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
 
