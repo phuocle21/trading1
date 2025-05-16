@@ -108,9 +108,6 @@ export function TradeHistoryTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     entryTime: false,
     exitTime: false,
-    stopLoss: false,
-    takeProfit: false,
-    fees: false,
     playbook: true,
     risk: false,
     mood: false,
@@ -278,27 +275,6 @@ export function TradeHistoryTable() {
     }),
     columnHelper.accessor("exitPrice", {
       header: "Giá Đóng lệnh",
-      cell: (info) => {
-        const value = info.getValue();
-        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
-      },
-    }),
-    columnHelper.accessor("stopLoss", {
-      header: t('trade.stopLoss'),
-      cell: (info) => {
-        const value = info.getValue();
-        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
-      },
-    }),
-    columnHelper.accessor("takeProfit", {
-      header: t('trade.takeProfit'),
-      cell: (info) => {
-        const value = info.getValue();
-        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
-      },
-    }),
-    columnHelper.accessor("fees", {
-      header: t('trade.fees'),
       cell: (info) => {
         const value = info.getValue();
         return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;

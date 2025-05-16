@@ -11,14 +11,12 @@ export function calculateProfitLoss(trade: Trade): number | null {
     return null; // Trade is open or data is invalid for P/L calculation
   }
 
-  const fees = trade.fees || 0;
-
   if (trade.tradeType === 'buy') {
-    // Long trade: (Exit Price - Entry Price) * Quantity - Fees
-    return (trade.exitPrice - trade.entryPrice) * trade.quantity - fees;
+    // Long trade: (Exit Price - Entry Price) * Quantity
+    return (trade.exitPrice - trade.entryPrice) * trade.quantity;
   } else {
-    // Short trade: (Entry Price - Exit Price) * Quantity - Fees
-    return (trade.entryPrice - trade.exitPrice) * trade.quantity - fees;
+    // Short trade: (Entry Price - Exit Price) * Quantity
+    return (trade.entryPrice - trade.exitPrice) * trade.quantity;
   }
 }
 

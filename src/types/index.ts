@@ -19,12 +19,9 @@ export interface Trade {
   quantity: number;
   entryPrice: number;
   exitPrice?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  fees?: number;
   playbook?: string;
   risk?: 'low' | 'medium' | 'high';
-  mood?: 'calm' | 'excited' | 'anxious' | 'confident' | 'unsure';
+  mood?: 'calm' | 'excited' | 'anxious' | 'confident' | 'unsure' | 'greedy' | 'fearful' | 'tired' | 'confused';
   rating?: number;
   notes?: string;
   screenshots?: string[];

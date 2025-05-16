@@ -47,8 +47,8 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
   // Tính lợi nhuận/lỗ
   const profitOrLoss = trade.exitPrice 
     ? (trade.tradeType === 'buy' 
-        ? (trade.exitPrice - trade.entryPrice) * trade.quantity - (trade.fees || 0)
-        : (trade.entryPrice - trade.exitPrice) * trade.quantity - (trade.fees || 0))
+        ? (trade.exitPrice - trade.entryPrice) * trade.quantity
+        : (trade.entryPrice - trade.exitPrice) * trade.quantity)
     : null;
   
   const profitColor = profitOrLoss !== null
@@ -160,38 +160,6 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                       Giá đóng lệnh
                     </h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.exitPrice)}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-4 bg-accent/5 p-4 rounded-lg">
-                {trade.stopLoss && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-red-500 rounded-full mr-2 inline-block"></span>
-                      Dừng lỗ
-                    </h3>
-                    <p className="text-lg font-medium">{formatCurrency(trade.stopLoss)}</p>
-                  </div>
-                )}
-                
-                {trade.takeProfit && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-green-500 rounded-full mr-2 inline-block"></span>
-                      Chốt lời
-                    </h3>
-                    <p className="text-lg font-medium">{formatCurrency(trade.takeProfit)}</p>
-                  </div>
-                )}
-                
-                {trade.fees !== undefined && trade.fees > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
-                      <span className="w-1.5 h-5 bg-orange-500 rounded-full mr-2 inline-block"></span>
-                      Phí giao dịch
-                    </h3>
-                    <p className="text-lg font-medium">{formatCurrency(trade.fees)}</p>
                   </div>
                 )}
               </div>

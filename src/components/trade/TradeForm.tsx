@@ -47,9 +47,6 @@ const tradeFormSchema = z.object({
   quantity: z.coerce.number().positive("Quantity must be positive."),
   entryPrice: z.coerce.number().positive("Entry price must be positive."),
   exitPrice: z.coerce.number().positive("Exit price must be positive.").optional().nullable(),
-  stopLoss: z.coerce.number().positive("Stop loss must be positive.").optional().nullable(),
-  takeProfit: z.coerce.number().positive("Take profit must be positive.").optional().nullable(),
-  fees: z.coerce.number().min(0, "Fees cannot be negative.").optional().nullable(),
   playbook: z.string().optional().nullable(),
   risk: z.enum(['low', 'medium', 'high']).optional().nullable(),
   mood: z.enum(['calm', 'excited', 'anxious', 'confident', 'unsure', 'greedy', 'fearful', 'tired', 'confused']).optional().nullable(),
@@ -136,9 +133,6 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       quantity: data.quantity,
       entryPrice: data.entryPrice,
       exitPrice: data.exitPrice ?? null,
-      stopLoss: data.stopLoss ?? null,
-      takeProfit: data.takeProfit ?? null,
-      fees: data.fees ?? null,
       playbook: data.playbook ?? null,
       risk: data.risk ?? null,
       mood: data.mood ?? null,
@@ -160,9 +154,6 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
           quantity: undefined, 
           entryPrice: undefined, 
           exitPrice: null, 
-          stopLoss: null,
-          takeProfit: null,
-          fees: null,
           playbook: null,
           risk: null,
           mood: null,
@@ -329,9 +320,6 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       quantity: data.quantity,
       entryPrice: data.entryPrice,
       exitPrice: data.exitPrice ?? undefined,
-      stopLoss: data.stopLoss ?? undefined,
-      takeProfit: data.takeProfit ?? undefined,
-      fees: data.fees ?? 0,
       playbook: data.playbook || undefined,
       risk: data.risk || undefined,
       mood: data.mood || undefined,
@@ -616,96 +604,6 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               inputMode="decimal"
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-accent/10 rounded-lg p-4 space-y-4">
-                  <h3 className="text-base font-medium flex items-center">
-                    <AlertCircle className="mr-2 h-4 w-4" />
-                    {t('tradeForm.riskManagement')}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="stopLoss"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('tradeForm.stopLossPrice')}</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder={t('tradeForm.pricePlaceholder')} 
-                              {...field}
-                              value={field.value ?? ''}
-                              onChange={e => {
-                                 const val = e.target.value;
-                                 field.onChange(val === '' ? null : parseFloat(val));
-                              }}
-                              className="w-full text-left"
-                              inputMode="decimal"
-                            />
-                          </FormControl>
-                          <FormDescription>{t('tradeForm.stopLossDesc')}</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="takeProfit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('tradeForm.takeProfitPrice')}</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder={t('tradeForm.pricePlaceholder')} 
-                              {...field}
-                              value={field.value ?? ''}
-                              onChange={e => {
-                                 const val = e.target.value;
-                                 field.onChange(val === '' ? null : parseFloat(val));
-                              }}
-                              className="w-full text-left"
-                              inputMode="decimal"
-                            />
-                          </FormControl>
-                          <FormDescription>{t('tradeForm.takeProfitDesc')}</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="fees"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('tradeForm.tradingFees')}</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder={t('tradeForm.feesPlaceholder')} 
-                              {...field}
-                              value={field.value ?? ''}
-                              onChange={e => {
-                                 const val = e.target.value;
-                                 field.onChange(val === '' ? null : parseFloat(val));
-                              }}
-                              className="w-full text-left"
-                              inputMode="decimal"
-                            />
-                          </FormControl>
-                          <FormDescription>{t('tradeForm.feesDesc')}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
