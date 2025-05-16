@@ -287,6 +287,9 @@ export default function DashboardPage() {
               title={t('dashboard.profitFactor')}
               value={(() => {
                 const profitFactor = calculateRMultiple(filteredTrades);
+                if (profitFactor === Infinity) {
+                  return "∞";
+                }
                 return !isNaN(profitFactor) && isFinite(profitFactor) 
                   ? profitFactor.toFixed(2) 
                   : "0.00";
