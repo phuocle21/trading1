@@ -106,7 +106,10 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     let exitDateTime: Date | null = null;
 
     if (data.entryDate) {
-      entryDateTime = new Date(data.entryDate);
+      // Tạo date bằng cách phân tích cú pháp yyyy-MM-dd để đảm bảo giữ đúng ngày
+      const [year, month, day] = data.entryDate.split('-').map(Number);
+      entryDateTime = new Date(year, month - 1, day); // Lưu ý: month trong JavaScript bắt đầu từ 0
+      
       if (data.entryTime) {
         const [hours, minutes] = data.entryTime.split(':').map(Number);
         entryDateTime.setHours(hours, minutes);
@@ -116,7 +119,10 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     }
 
     if (data.exitDate) {
-      exitDateTime = new Date(data.exitDate);
+      // Tạo date bằng cách phân tích cú pháp yyyy-MM-dd để đảm bảo giữ đúng ngày
+      const [year, month, day] = data.exitDate.split('-').map(Number);
+      exitDateTime = new Date(year, month - 1, day); // Lưu ý: month trong JavaScript bắt đầu từ 0
+      
       if (data.exitTime) {
         const [hours, minutes] = data.exitTime.split(':').map(Number);
         exitDateTime.setHours(hours, minutes);
@@ -295,14 +301,14 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
   };
 
   const convertFormData = (data: TradeFormValues): Partial<Trade> => {
-    const entryDate = data.entryDateTime.toISOString().split('T')[0];
+    const entryDate = format(data.entryDateTime, 'yyyy-MM-dd');
     const entryTime = format(data.entryDateTime, 'HH:mm');
 
     let exitDate: string | undefined = undefined;
     let exitTime: string | undefined = undefined;
     
     if (data.exitDateTime) {
-      exitDate = data.exitDateTime.toISOString().split('T')[0];
+      exitDate = format(data.exitDateTime, 'yyyy-MM-dd');
       exitTime = format(data.exitDateTime, 'HH:mm');
     }
 
@@ -319,12 +325,13 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       tradeType: data.tradeType,
       quantity: data.quantity,
       entryPrice: data.entryPrice,
-      exitPrice: data.exitPrice ?? undefined,
-      playbook: data.playbook || undefined,
-      risk: data.risk || undefined,
-      mood: data.mood || undefined,
-      rating: data.rating ?? undefined,
-      notes: data.notes || undefined,
+      // Chuyển đổi null thành undefined
+      exitPrice: data.exitPrice === null ? undefined : data.exitPrice,
+      playbook: data.playbook === null ? undefined : data.playbook,
+      risk: data.risk === null ? undefined : data.risk, 
+      mood: data.mood === null ? undefined : data.mood,
+      rating: data.rating === null ? undefined : data.rating,
+      notes: data.notes === null ? undefined : data.notes,
       screenshots: data.screenshots || [],
       journalId: currentJournalIdValue, // Lưu giá trị mới nhất của journalId
     };
@@ -468,7 +475,18 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               onChange={(e) => {
                                 const value = e.target.value;
                                 if (value) {
-                                  field.onChange(new Date(value));
+                                  // Cách xử lý mới, giữ đúng ngày đã chọn bất kể múi giờ
+                                  const [datePart, timePart] = value.split('T');
+                                  if (datePart && timePart) {
+                                    const [year, month, day] = datePart.split('-').map(Number);
+                                    const [hours, minutes] = timePart.split(':').map(Number);
+                                    const date = new Date();
+                                    date.setFullYear(year, month - 1, day);
+                                    date.setHours(hours, minutes, 0, 0);
+                                    field.onChange(date);
+                                  } else {
+                                    field.onChange(new Date(value));
+                                  }
                                 }
                               }}
                               className="w-full text-left focus-visible:ring-1 focus-visible:ring-primary px-3 py-2 text-base mobile:text-sm"
@@ -563,7 +581,18 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               onChange={(e) => {
                                 const value = e.target.value;
                                 if (value) {
-                                  field.onChange(new Date(value));
+                                  // Cách xử lý mới, giữ đúng ngày đã chọn bất kể múi giờ
+                                  const [datePart, timePart] = value.split('T');
+                                  if (datePart && timePart) {
+                                    const [year, month, day] = datePart.split('-').map(Number);
+                                    const [hours, minutes] = timePart.split(':').map(Number);
+                                    const date = new Date();
+                                    date.setFullYear(year, month - 1, day);
+                                    date.setHours(hours, minutes, 0, 0);
+                                    field.onChange(date);
+                                  } else {
+                                    field.onChange(new Date(value));
+                                  }
                                 } else {
                                   field.onChange(null);
                                 }
