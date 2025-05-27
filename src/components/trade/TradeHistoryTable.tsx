@@ -113,6 +113,7 @@ export function TradeHistoryTable() {
     mood: false,
     rating: false,
     screenshots: false,  // Hiển thị cột ảnh mặc định
+    fees: false,  // Ẩn cột phí giao dịch mặc định
   });
   
   const [activeTab, setActiveTab] = useState<"all" | "open" | "closed">("all");
@@ -217,8 +218,8 @@ export function TradeHistoryTable() {
         );
       },
       sortingFn: (a, b, columnId) => {
-        const aDate = new Date(a.original.entryDate).getTime();
-        const bDate = new Date(b.original.entryDate).getTime();
+        const aDate = new Date(a.original.entryDate || '').getTime();
+        const bDate = new Date(b.original.entryDate || '').getTime();
         return aDate - bDate;
       },
     }),
@@ -623,18 +624,6 @@ export function TradeHistoryTable() {
           {isExpanded && (
             <>
               <div className="border-t my-3 pt-3 grid grid-cols-2 gap-2 text-sm">
-                {trade.stopLoss && (
-                  <div>
-                    <div className="text-muted-foreground">{t('trade.stopLoss')}</div>
-                    <div>{formatCurrency(trade.stopLoss)}</div>
-                  </div>
-                )}
-                {trade.takeProfit && (
-                  <div>
-                    <div className="text-muted-foreground">{t('trade.takeProfit')}</div>
-                    <div>{formatCurrency(trade.takeProfit)}</div>
-                  </div>
-                )}
                 {trade.risk && (
                   <div>
                     <div className="text-muted-foreground">{t('trade.risk')}</div>
@@ -689,18 +678,18 @@ export function TradeHistoryTable() {
                           />
                         </div>
                       ))}
-                      {trade.screenshots.length > 3 && (
+                      {(trade.screenshots?.length || 0) > 3 && (
                         <div 
                           className="relative aspect-video rounded-md overflow-hidden border border-muted bg-accent/20 flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             setCurrentImages(trade.screenshots || []);
                             setCurrentImageIndex(3);
-                            setDialogImage(trade.screenshots[3]);
+                            setDialogImage((trade.screenshots || [])[3]);
                           }}
                         >
                           <div className="text-center">
-                            <span className="text-sm font-medium">+{trade.screenshots.length - 3}</span>
+                            <span className="text-sm font-medium">+{(trade.screenshots?.length || 0) - 3}</span>
                             <span className="block text-xs text-muted-foreground">Hình ảnh</span>
                           </div>
                         </div>
@@ -921,8 +910,6 @@ export function TradeHistoryTable() {
                         else if (column.id === "quantity") label = "Số Lượng";
                         else if (column.id === "entryPrice") label = "Giá Mở lệnh";
                         else if (column.id === "exitPrice") label = "Giá Đóng lệnh";
-                        else if (column.id === "stopLoss") label = "Dừng Lỗ";
-                        else if (column.id === "takeProfit") label = "Chốt Lời";
                         else if (column.id === "fees") label = "Phí";
                         else if (column.id === "playbook") label = "Chiến lược";
                         else if (column.id === "risk") label = "Rủi Ro";
