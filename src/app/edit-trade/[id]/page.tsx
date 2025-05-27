@@ -24,8 +24,14 @@ export default function EditTradePage() {
       
       setIsLoading(true);
       try {
-        // Tải giao dịch trực tiếp từ API để đảm bảo đồng bộ với trang lịch sử giao dịch
-        const response = await fetch('/api/trades');
+        // Tải giao dịch từ tất cả nhật ký để đảm bảo đồng bộ với trang lịch sử giao dịch
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/trades?allJournals=true&_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
@@ -34,33 +40,34 @@ export default function EditTradePage() {
         if (data.trades && Array.isArray(data.trades)) {
           const foundTrade = data.trades.find(trade => trade.id === id);
           if (foundTrade) {
+            console.log(`Found trade ${id} in journal ${foundTrade.journalId}`);
             setTradeToEdit(foundTrade);
           } else {
-            // Nếu không tìm thấy trong API, hãy thử tìm trong context nhật ký (dự phòng)
-            const currentJournal = getCurrentJournal();
-            const journalTrades = currentJournal?.trades || [];
-            const journalTrade = journalTrades.find(trade => trade.id === id);
-            
-            if (journalTrade) {
-              setTradeToEdit(journalTrade);
-            } else {
-              setNotFound(true);
-            }
+            console.log(`Trade ${id} not found in any journal`);
+            setNotFound(true);
           }
         } else {
+          console.log('No trades data received from API');
           setNotFound(true);
         }
       } catch (error) {
         console.error('Error loading trade data:', error);
         
         // Dự phòng: Nếu API thất bại, hãy thử tìm trong context nhật ký
-        const currentJournal = getCurrentJournal();
-        const journalTrades = currentJournal?.trades || [];
-        const journalTrade = journalTrades.find(trade => trade.id === id);
-        
-        if (journalTrade) {
-          setTradeToEdit(journalTrade);
-        } else {
+        try {
+          const currentJournal = getCurrentJournal();
+          const journalTrades = currentJournal?.trades || [];
+          const journalTrade = journalTrades.find((trade: Trade) => trade.id === id);
+          
+          if (journalTrade) {
+            console.log(`Found trade ${id} in current journal context as fallback`);
+            setTradeToEdit(journalTrade);
+          } else {
+            console.log(`Trade ${id} not found in current journal context`);
+            setNotFound(true);
+          }
+        } catch (fallbackError) {
+          console.error('Error in fallback trade lookup:', fallbackError);
           setNotFound(true);
         }
       } finally {

@@ -40,26 +40,66 @@ export default function ViewTradePage() {
   useEffect(() => {
     const fetchTradeData = async () => {
       try {
-        const currentJournal = await getCurrentJournal();
-        if (!currentJournal) {
-          setNotFound(true);
-          return;
+        setIsLoading(true);
+        
+        // Tải giao dịch từ tất cả nhật ký để đảm bảo tìm thấy trade
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/trades?allJournals=true&_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch trades');
         }
         
-        const journalTrades = currentJournal.trades || [];
-        const journalTrade = journalTrades.find(trade => trade.id === id);
-        
-        if (journalTrade) {
-          setTrade(journalTrade);
-          if (journalTrade.screenshots && journalTrade.screenshots.length > 0) {
-            setCurrentImages(journalTrade.screenshots);
+        const data = await response.json();
+        if (data.trades && Array.isArray(data.trades)) {
+          const foundTrade = data.trades.find((trade: Trade) => trade.id === id);
+          if (foundTrade) {
+            console.log(`Found trade ${id} in journal ${foundTrade.journalId}`);
+            setTrade(foundTrade);
+            if (foundTrade.screenshots && foundTrade.screenshots.length > 0) {
+              setCurrentImages(foundTrade.screenshots);
+            }
+          } else {
+            console.log(`Trade ${id} not found in any journal`);
+            setNotFound(true);
           }
         } else {
+          console.log('No trades data received from API');
           setNotFound(true);
         }
       } catch (error) {
-        console.error('Error fetching trade:', error);
-        setNotFound(true);
+        console.error('Error loading trade data:', error);
+        
+        // Dự phòng: Nếu API thất bại, hãy thử tìm trong context nhật ký
+        try {
+          const currentJournal = getCurrentJournal();
+          if (!currentJournal) {
+            setNotFound(true);
+            return;
+          }
+          
+          const journalTrades = currentJournal.trades || [];
+          const journalTrade = journalTrades.find((trade: Trade) => trade.id === id);
+          
+          if (journalTrade) {
+            console.log(`Found trade ${id} in current journal context as fallback`);
+            setTrade(journalTrade);
+            if (journalTrade.screenshots && journalTrade.screenshots.length > 0) {
+              setCurrentImages(journalTrade.screenshots);
+            }
+          } else {
+            console.log(`Trade ${id} not found in current journal context`);
+            setNotFound(true);
+          }
+        } catch (fallbackError) {
+          console.error('Error in fallback trade lookup:', fallbackError);
+          setNotFound(true);
+        }
       } finally {
         setIsLoading(false);
       }
