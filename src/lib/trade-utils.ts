@@ -11,13 +11,18 @@ export function calculateProfitLoss(trade: Trade): number | null {
     return null; // Trade is open or data is invalid for P/L calculation
   }
 
+  let profitLoss: number;
+  const fees = trade.fees || 0; // Default to 0 if fees is not provided
+
   if (trade.tradeType === 'buy') {
-    // Long trade: (Exit Price - Entry Price) * Quantity
-    return (trade.exitPrice - trade.entryPrice) * trade.quantity;
+    // Long trade: (Exit Price - Entry Price) * Quantity - Fees
+    profitLoss = (trade.exitPrice - trade.entryPrice) * trade.quantity - fees;
   } else {
-    // Short trade: (Entry Price - Exit Price) * Quantity
-    return (trade.entryPrice - trade.exitPrice) * trade.quantity;
+    // Short trade: (Entry Price - Exit Price) * Quantity - Fees
+    profitLoss = (trade.entryPrice - trade.exitPrice) * trade.quantity - fees;
   }
+
+  return profitLoss;
 }
 
 // Hàm tính hệ số lợi nhuận (Profit Factor)

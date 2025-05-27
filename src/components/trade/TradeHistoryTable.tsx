@@ -280,6 +280,13 @@ export function TradeHistoryTable() {
         return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
       },
     }),
+    columnHelper.accessor("fees", {
+      header: "Phí GD",
+      cell: (info) => {
+        const value = info.getValue();
+        return value ? formatCurrency(value) : <Minus className="h-3 w-3 text-muted-foreground mx-auto" />;
+      },
+    }),
     columnHelper.accessor("playbook", {
       header: "Chiến lược",
       cell: (info) => {

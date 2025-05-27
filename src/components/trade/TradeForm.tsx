@@ -47,6 +47,7 @@ const tradeFormSchema = z.object({
   quantity: z.coerce.number().positive("Quantity must be positive."),
   entryPrice: z.coerce.number().positive("Entry price must be positive."),
   exitPrice: z.coerce.number().positive("Exit price must be positive.").optional().nullable(),
+  fees: z.coerce.number().min(0, "Fees must be zero or positive.").optional().nullable(),
   playbook: z.string().optional().nullable(),
   risk: z.enum(['low', 'medium', 'high']).optional().nullable(),
   mood: z.enum(['calm', 'excited', 'anxious', 'confident', 'unsure', 'greedy', 'fearful', 'tired', 'confused']).optional().nullable(),
@@ -132,13 +133,14 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
     }
 
     return {
-      entryDateTime: entryDateTime,
-      exitDateTime: exitDateTime,
+      entryDateTime: entryDateTime || undefined,
+      exitDateTime: exitDateTime || undefined,
       stockSymbol: data.symbol || '',
       tradeType: data.tradeType,
       quantity: data.quantity,
       entryPrice: data.entryPrice,
       exitPrice: data.exitPrice ?? null,
+      fees: data.fees ?? null,
       playbook: data.playbook ?? null,
       risk: data.risk ?? null,
       mood: data.mood ?? null,
@@ -159,7 +161,8 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
           tradeType: 'buy', 
           quantity: undefined, 
           entryPrice: undefined, 
-          exitPrice: null, 
+          exitPrice: null,
+          fees: null,
           playbook: null,
           risk: null,
           mood: null,
@@ -327,13 +330,14 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
       entryPrice: data.entryPrice,
       // Chuyển đổi null thành undefined
       exitPrice: data.exitPrice === null ? undefined : data.exitPrice,
+      fees: data.fees === null ? undefined : data.fees,
       playbook: data.playbook === null ? undefined : data.playbook,
       risk: data.risk === null ? undefined : data.risk, 
       mood: data.mood === null ? undefined : data.mood,
       rating: data.rating === null ? undefined : data.rating,
       notes: data.notes === null ? undefined : data.notes,
       screenshots: data.screenshots || [],
-      journalId: currentJournalIdValue, // Lưu giá trị mới nhất của journalId
+      journalId: currentJournalIdValue || undefined, // Lưu giá trị mới nhất của journalId
     };
   };
 
@@ -635,6 +639,35 @@ export function TradeForm({ initialData, isEditMode = false }: TradeFormProps) {
                               inputMode="decimal"
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fees"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phí giao dịch</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="Nhập phí giao dịch (VND)" 
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={e => {
+                                 const val = e.target.value;
+                                 field.onChange(val === '' ? undefined : parseFloat(val));
+                              }}
+                              className="w-full text-left"
+                              inputMode="decimal"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Phí môi giới, phí lưu ký và các phí liên quan khác
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

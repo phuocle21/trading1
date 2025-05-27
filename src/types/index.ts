@@ -19,6 +19,7 @@ export interface Trade {
   quantity: number;
   entryPrice: number;
   exitPrice?: number;
+  fees?: number;
   playbook?: string;
   risk?: 'low' | 'medium' | 'high';
   mood?: 'calm' | 'excited' | 'anxious' | 'confident' | 'unsure' | 'greedy' | 'fearful' | 'tired' | 'confused';
@@ -40,6 +41,11 @@ export interface Trade {
     after?: string;
   };
   mistakes?: string[];
+}
+
+export interface TradeWithProfit extends Trade {
+  profitOrLoss?: number | null;
+  stockSymbol?: string;
 }
 
 export interface Journal {

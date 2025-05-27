@@ -103,9 +103,7 @@ export default function ViewTradePage() {
 
   if (!trade) return null;
 
-  const profitOrLoss = trade.exitPrice 
-    ? calculateProfitLoss(trade.tradeType, trade.quantity, trade.entryPrice, trade.exitPrice, trade.fees)
-    : null;
+  const profitOrLoss = calculateProfitLoss(trade);
   
   const profitColor = profitOrLoss !== null
     ? (profitOrLoss > 0 ? "text-green-600" : profitOrLoss < 0 ? "text-red-600" : "text-foreground")
@@ -136,7 +134,7 @@ export default function ViewTradePage() {
           <div className="flex flex-col md:flex-row md:justify-between md:items-center">
             <div>
               <CardTitle className="text-2xl font-bold flex items-center">
-                {trade.symbol || trade.stockSymbol}
+                {trade.symbol}
                 <span className="ml-3">
                   {trade.tradeType === 'buy' ? (
                     <Badge className="bg-green-50 text-green-700 border-green-200">
@@ -201,20 +199,6 @@ export default function ViewTradePage() {
             </div>
             
             <div className="space-y-4">
-              {trade.stopLoss && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Dừng lỗ</h3>
-                  <p className="text-lg font-medium">{formatCurrency(trade.stopLoss)}</p>
-                </div>
-              )}
-              
-              {trade.takeProfit && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Chốt lời</h3>
-                  <p className="text-lg font-medium">{formatCurrency(trade.takeProfit)}</p>
-                </div>
-              )}
-              
               {trade.fees !== undefined && trade.fees > 0 && (
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">Phí giao dịch</h3>

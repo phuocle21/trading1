@@ -45,11 +45,7 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
   const selectedPlaybook = trade.playbook ? playbooks.find(p => p.id === trade.playbook) : null;
   
   // Tính lợi nhuận/lỗ
-  const profitOrLoss = trade.exitPrice 
-    ? (trade.tradeType === 'buy' 
-        ? (trade.exitPrice - trade.entryPrice) * trade.quantity
-        : (trade.entryPrice - trade.exitPrice) * trade.quantity)
-    : null;
+  const profitOrLoss = calculateProfitLoss(trade);
   
   const profitColor = profitOrLoss !== null
     ? (profitOrLoss > 0 ? "text-green-600" : profitOrLoss < 0 ? "text-red-600" : "text-foreground")
@@ -176,6 +172,13 @@ export function TradeDetailDialog({ trade, isOpen, onOpenChange }: TradeDetailDi
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-1">Giá đóng lệnh</h3>
                     <p className="text-lg font-medium">{formatCurrency(trade.exitPrice)}</p>
+                  </div>
+                )}
+
+                {trade.fees !== undefined && trade.fees > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Phí giao dịch</h3>
+                    <p className="text-lg font-medium">{formatCurrency(trade.fees)}</p>
                   </div>
                 )}
               </div>
